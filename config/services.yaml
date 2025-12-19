@@ -20,3 +20,19 @@ services:
             $providers: !tagged_iterator { tag: 'xmon_ai_content.image_provider', default_priority_method: 'getPriority' }
             $retries: 3
             $retryDelay: 5
+
+    # Image Options Service (styles, compositions, palettes, extras, presets)
+    Xmon\AiContentBundle\Service\ImageOptionsService:
+        arguments:
+            $styles: []
+            $compositions: []
+            $palettes: []
+            $extras: []
+            $presets: []
+
+    # Prompt Builder (combines subject with style options)
+    Xmon\AiContentBundle\Service\PromptBuilder: ~
+
+    # Console Commands
+    Xmon\AiContentBundle\Command\DebugConfigCommand:
+        tags: ['console.command']

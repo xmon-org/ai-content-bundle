@@ -363,6 +363,292 @@ $s3->putObject([
 ]);
 ```
 
+## Sistema de estilos y presets
+
+El bundle incluye un sistema de opciones de imagen (estilos, composiciones, paletas, extras) y presets que combinan estas opciones.
+
+### Servicios disponibles
+
+- `ImageOptionsService`: Acceso a estilos, composiciones, paletas, extras y presets
+- `PromptBuilder`: Construye prompts combinando subject + opciones
+
+### Opciones por defecto
+
+El bundle incluye opciones predefinidas que puedes sobrescribir o extender:
+
+**Estilos artísticos:**
+| Key | Label | Descripción |
+|-----|-------|-------------|
+| `sumi_e` | Sumi-e (tinta japonesa) | Estilo tradicional de pintura japonesa |
+| `watercolor` | Acuarela | Pintura con bordes suaves |
+| `oil_painting` | Óleo clásico | Estilo de pintura al óleo |
+| `digital_art` | Arte digital | Estilo moderno digital |
+| `photography` | Fotografía artística | Estilo fotográfico profesional |
+
+**Composiciones:**
+| Key | Label |
+|-----|-------|
+| `centered` | Centrada |
+| `rule_of_thirds` | Regla de tercios |
+| `negative_space` | Espacio negativo |
+| `panoramic` | Panorámica |
+| `close_up` | Primer plano |
+
+**Paletas de color:**
+| Key | Label |
+|-----|-------|
+| `monochrome` | Monocromo |
+| `earth_tones` | Tonos tierra |
+| `japanese_traditional` | Tradicional japonés |
+| `muted` | Colores apagados |
+| `high_contrast` | Alto contraste |
+
+**Extras (modificadores):**
+| Key | Label |
+|-----|-------|
+| `no_text` | Sin texto |
+| `silhouettes` | Siluetas |
+| `atmospheric` | Atmosférico |
+| `dramatic_light` | Luz dramática |
+
+### Presets predefinidos
+
+Los presets combinan opciones en configuraciones listas para usar:
+
+| Key | Nombre | Style | Composition | Palette | Extras |
+|-----|--------|-------|-------------|---------|--------|
+| `sumi_e_clasico` | Sumi-e Clásico | sumi_e | negative_space | monochrome | no_text, silhouettes, atmospheric |
+| `zen_contemplativo` | Zen Contemplativo | sumi_e | centered | muted | no_text, atmospheric |
+| `fotografia_aikido` | Fotografía Aikido | photography | rule_of_thirds | muted | dramatic_light |
+
+### Uso del PromptBuilder
+
+#### Con preset (modo simple)
+
+```php
+use Xmon\AiContentBundle\Service\PromptBuilder;
+use Xmon\AiContentBundle\Service\AiImageService;
+
+class MyService
+{
+    public function __construct(
+        private readonly PromptBuilder $promptBuilder,
+        private readonly AiImageService $aiImageService,
+    ) {}
+
+    public function generateImage(): ImageResult
+    {
+        // Construir prompt con preset
+        $prompt = $this->promptBuilder->build(
+            subject: 'aikidoka meditating in a traditional dojo',
+            options: ['preset' => 'sumi_e_clasico']
+        );
+
+        // Resultado:
+        // "aikidoka meditating in a traditional dojo, sumi-e Japanese ink wash
+        //  painting, elegant brushstrokes, traditional, generous negative space,
+        //  minimalist, breathing room, monochromatic color scheme, no text, ..."
+
+        return $this->aiImageService->generate($prompt);
+    }
+}
+```
+
+#### Con opciones individuales (modo avanzado)
+
+```php
+$prompt = $this->promptBuilder->build(
+    subject: 'serene bamboo forest at dawn',
+    options: [
+        'style' => 'watercolor',
+        'composition' => 'panoramic',
+        'palette' => 'earth_tones',
+        'extras' => ['atmospheric', 'no_text'],
+    ]
+);
+```
+
+#### Preset + override de opciones
+
+Puedes usar un preset como base y sobrescribir opciones específicas:
+
+```php
+$prompt = $this->promptBuilder->build(
+    subject: 'aikido seminar group photo',
+    options: [
+        'preset' => 'zen_contemplativo',
+        'composition' => 'rule_of_thirds', // Override del preset
+    ]
+);
+```
+
+#### Texto libre con custom_prompt
+
+Además de los extras predefinidos (multiselect), puedes añadir texto libre al final del prompt:
+
+```php
+$prompt = $this->promptBuilder->build(
+    subject: 'aikidoka meditating in dojo',
+    options: [
+        'preset' => 'sumi_e_clasico',
+        'extras' => ['no_text', 'atmospheric'],       // Extras predefinidos
+        'custom_prompt' => 'cinematic 16:9 ratio, 4k resolution',  // Texto libre
+    ]
+);
+
+// Resultado:
+// "aikidoka meditating in dojo, sumi-e Japanese ink wash painting, ...,
+//  no text, atmospheric perspective, cinematic 16:9 ratio, 4k resolution"
+```
+
+**Casos de uso para `custom_prompt`:**
+- Input en el Admin para añadir modificadores al vuelo
+- Configuración fija en código para ciertos contextos
+- Parámetros técnicos (aspect ratio, resolución, etc.)
+
+### Obtener opciones para UI
+
+`ImageOptionsService` proporciona métodos para poblar selects en formularios:
+
+```php
+use Xmon\AiContentBundle\Service\ImageOptionsService;
+
+class MyAdmin
+{
+    public function __construct(
+        private readonly ImageOptionsService $imageOptions,
+    ) {}
+
+    public function getFormChoices(): array
+    {
+        return [
+            'styles' => $this->imageOptions->getStyles(),
+            // ['sumi_e' => 'Sumi-e (tinta japonesa)', 'watercolor' => 'Acuarela', ...]
+
+            'compositions' => $this->imageOptions->getCompositions(),
+            'palettes' => $this->imageOptions->getPalettes(),
+            'extras' => $this->imageOptions->getExtras(),
+            'presets' => $this->imageOptions->getPresets(),
+        ];
+    }
+}
+```
+
+### Personalizar opciones en tu proyecto
+
+Las opciones del bundle se **fusionan** con las tuyas automáticamente. Tus opciones se añaden a los defaults, y si usas la misma key puedes sobrescribirlos.
+
+#### Añadir opciones (merge automático)
+
+```yaml
+# config/packages/xmon_ai_content.yaml
+xmon_ai_content:
+    image_options:
+        # Añadir estilos artísticos
+        styles:
+            ukiyo_e:
+                label: 'Ukiyo-e'
+                prompt: 'ukiyo-e Japanese woodblock print style, bold outlines, flat colors'
+            manga:
+                label: 'Manga'
+                prompt: 'manga art style, anime aesthetic, bold lines'
+
+        # Añadir composiciones
+        compositions:
+            diagonal:
+                label: 'Diagonal'
+                prompt: 'diagonal composition, dynamic angles, leading lines'
+            symmetrical:
+                label: 'Simétrica'
+                prompt: 'perfect symmetry, mirror balance, architectural precision'
+
+        # Añadir paletas de color
+        palettes:
+            neon:
+                label: 'Neón'
+                prompt: 'neon colors, cyberpunk palette, glowing accents'
+            pastel:
+                label: 'Pastel'
+                prompt: 'soft pastel colors, gentle hues, dreamy tones'
+
+        # Añadir extras/modificadores
+        extras:
+            cinematic:
+                label: 'Cinematográfico'
+                prompt: 'cinematic lighting, movie scene, dramatic atmosphere'
+            vintage:
+                label: 'Vintage'
+                prompt: 'vintage film look, grain, faded colors, retro aesthetic'
+
+    # Añadir presets (combinaciones predefinidas)
+    presets:
+        dojo_moderno:
+            name: 'Dojo Moderno'
+            style: 'photography'
+            composition: 'diagonal'
+            palette: 'high_contrast'
+            extras: ['cinematic', 'no_text']
+        manga_action:
+            name: 'Manga Acción'
+            style: 'manga'
+            composition: 'diagonal'
+            palette: 'neon'
+            extras: ['dramatic_light']
+```
+
+**Resultado**: Todas las opciones se fusionan con los defaults del bundle.
+
+#### Sobrescribir un default
+
+Usa la misma key para modificar un default:
+
+```yaml
+xmon_ai_content:
+    image_options:
+        styles:
+            # Sobrescribir el estilo photography del bundle
+            photography:
+                label: 'Fotografía profesional'
+                prompt: 'professional studio photography, product shot, clean background'
+```
+
+#### Deshabilitar defaults específicos
+
+Si no quieres usar algunos defaults del bundle, puedes deshabilitarlos:
+
+```yaml
+xmon_ai_content:
+    image_options:
+        disable_defaults:
+            styles: ['oil_painting', 'digital_art']
+            compositions: ['panoramic']
+            palettes: ['high_contrast']
+            extras: ['silhouettes']
+
+    # Para presets, usa esta opción a nivel raíz
+    disable_preset_defaults: ['zen_contemplativo']
+```
+
+**Resultado**: Los estilos, composiciones, etc. listados se eliminan de los disponibles.
+
+> **Importante**: Si deshabilitas una opción que está siendo usada por un preset, ese preset se deshabilita automáticamente. Por ejemplo, si deshabilitas `sumi_e`, los presets `sumi_e_clasico` y `zen_contemplativo` también se desactivan.
+
+> **Tip**: Usa `bin/console xmon:ai:debug` para ver todas las opciones configuradas actualmente.
+
+### Validación
+
+El `PromptBuilder` valida que las opciones existan y lanza `AiProviderException` si no:
+
+```php
+try {
+    $prompt = $this->promptBuilder->build('subject', [
+        'preset' => 'invalid_preset'
+    ]);
+} catch (AiProviderException $e) {
+    // "Unknown preset: invalid_preset"
+}
+```
+
 ## Sistema de fallback
 
 El bundle implementa un sistema de fallback automático entre proveedores:
@@ -436,10 +722,14 @@ xmon/ai-content-bundle/
     ├── Service/
     │   ├── AiImageService.php        # Orquestador imagen con fallback
     │   ├── AiTextService.php         # Orquestador texto con fallback
+    │   ├── ImageOptionsService.php   # Gestión de estilos/presets
+    │   ├── PromptBuilder.php         # Construye prompts con opciones
     │   └── MediaStorageService.php   # SonataMedia (condicional)
     ├── Model/
     │   ├── ImageResult.php           # DTO inmutable
     │   └── TextResult.php            # DTO inmutable
+    ├── Command/
+    │   └── DebugConfigCommand.php    # xmon:ai:debug
     └── Exception/
         └── AiProviderException.php   # Excepciones tipadas
 ```
@@ -528,14 +818,53 @@ Este bundle usa path repository durante desarrollo:
 ### Comandos útiles
 
 ```bash
+# Ver resumen de configuración del bundle
+bin/console xmon:ai:debug
+
 # Limpiar caché después de cambios en el bundle
 bin/console cache:clear
 
 # Ver proveedores registrados
 bin/console debug:container --tag=xmon_ai_content.text_provider
 
-# Ver configuración del bundle
+# Ver configuración YAML completa del bundle
 bin/console debug:config xmon_ai_content
+```
+
+### Comando xmon:ai:debug
+
+El bundle incluye un comando de diagnóstico que muestra:
+
+- Proveedores de texto disponibles
+- Proveedores de imagen disponibles
+- Estilos, composiciones, paletas y extras configurados
+- Presets con sus opciones
+
+```
+$ bin/console xmon:ai:debug
+
+xmon/ai-content-bundle Configuration
+====================================
+
+Text Providers
+--------------
+ ✓   gemini
+ ✓   openrouter
+ ✓   pollinations
+
+Image Providers
+---------------
+ ✓   pollinations
+
+Styles
+------
+ sumi_e         Sumi-e (tinta japonesa)
+ watercolor     Acuarela
+ ...
+
+Presets
+-------
+ sumi_e_clasico   Sumi-e Clásico   sumi_e   negative_space   monochrome   ...
 ```
 
 ## Roadmap
@@ -543,7 +872,7 @@ bin/console debug:config xmon_ai_content
 - [x] Fase 1: Estructura base + Pollinations
 - [x] Fase 2: Integración SonataMedia
 - [x] Fase 3: Proveedores de texto (Gemini, OpenRouter, Pollinations)
-- [ ] Fase 4: Sistema de estilos/presets
+- [x] Fase 4: Sistema de estilos/presets (ImageOptionsService, PromptBuilder)
 - [ ] Fase 5: Entidades editables en Admin
 - [ ] Fase 6: System prompts configurables
 - [ ] Fase 7: UI de regeneración en Admin

@@ -11,7 +11,7 @@ class AiProviderException extends RuntimeException
 {
     public function __construct(
         string $message,
-        private readonly string $provider,
+        private readonly ?string $provider = null,
         private readonly ?int $httpStatusCode = null,
         int $code = 0,
         ?Throwable $previous = null,
@@ -22,7 +22,7 @@ class AiProviderException extends RuntimeException
     /**
      * Get the provider name that caused the exception
      */
-    public function getProvider(): string
+    public function getProvider(): ?string
     {
         return $this->provider;
     }
