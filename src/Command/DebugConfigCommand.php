@@ -12,6 +12,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Xmon\AiContentBundle\Service\AiImageService;
 use Xmon\AiContentBundle\Service\AiTextService;
 use Xmon\AiContentBundle\Service\ImageOptionsService;
+use Xmon\AiContentBundle\Service\PromptTemplateService;
 
 #[AsCommand(
     name: 'xmon:ai:debug',
@@ -23,6 +24,7 @@ class DebugConfigCommand extends Command
         private readonly AiTextService $textService,
         private readonly AiImageService $imageService,
         private readonly ImageOptionsService $imageOptions,
+        private readonly PromptTemplateService $promptTemplates,
     ) {
         parent::__construct();
     }
@@ -133,6 +135,32 @@ class DebugConfigCommand extends Command
             }
             $io->table(
                 ['Key', 'Name', 'Style', 'Composition', 'Palette', 'Extras'],
+                $rows
+            );
+        }
+
+        // Prompt Templates
+        $io->section('Prompt Templates');
+        $templates = $this->promptTemplates->getTemplates();
+        if (empty($templates)) {
+            $io->text('No prompt templates configured');
+        } else {
+            $rows = [];
+            foreach ($templates as $key => $name) {
+                $template = $this->promptTemplates->getTemplate($key);
+                $description = $template['description'] ?? '-';
+                // Truncate description if too long
+                if (strlen($description) > 60) {
+                    $description = substr($description, 0, 57) . '...';
+                }
+                $rows[] = [
+                    $key,
+                    $name,
+                    $description,
+                ];
+            }
+            $io->table(
+                ['Key', 'Name', 'Description'],
                 $rows
             );
         }

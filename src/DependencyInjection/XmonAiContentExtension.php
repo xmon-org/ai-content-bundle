@@ -16,6 +16,7 @@ use Xmon\AiContentBundle\Provider\Text\PollinationsTextProvider;
 use Xmon\AiContentBundle\Service\AiTextService;
 use Xmon\AiContentBundle\Service\ImageOptionsService;
 use Xmon\AiContentBundle\Service\MediaStorageService;
+use Xmon\AiContentBundle\Service\PromptTemplateService;
 
 class XmonAiContentExtension extends Extension
 {
@@ -49,6 +50,9 @@ class XmonAiContentExtension extends Extension
             $config['presets'] ?? [],
             $config['disable_preset_defaults'] ?? []
         );
+
+        // Configure prompt templates
+        $this->configurePromptTemplates($container, $config['prompts'] ?? []);
     }
 
     /**
@@ -309,6 +313,131 @@ class XmonAiContentExtension extends Extension
         $container->setParameter('xmon_ai_content.image_options.palettes', $palettes);
         $container->setParameter('xmon_ai_content.image_options.extras', $extras);
         $container->setParameter('xmon_ai_content.presets', $presets);
+    }
+
+    private function configurePromptTemplates(ContainerBuilder $container, array $promptsConfig): void
+    {
+        $disableDefaults = $promptsConfig['disable_defaults'] ?? [];
+        $userTemplates = $promptsConfig['templates'] ?? [];
+
+        // Bundle default prompts
+        $defaultTemplates = [
+            'image_subject' => [
+                'name' => 'Image Subject Generator',
+                'description' => 'Generates a visual subject description for image generation from news/content. Uses two-step classification for accurate categorization.',
+                'system' => <<<'PROMPT'
+You are an expert in prompts for artistic image generation.
+
+STEP 1 - ANALYZE the content and identify:
+- Category: TRIBUTE/DEATH | CELEBRATION/AWARD | SEMINAR/COURSE | FEDERATION/INSTITUTION | TECHNIQUE/PRACTICE | GENERAL
+- Emotional tone: solemn, celebratory, educational, institutional, reflective
+- Key visual concept: what single scene best represents this content?
+
+STEP 2 - CREATE ONE SUBJECT (maximum 40 words) following these rules by category:
+
+TRIBUTE/DEATH: memorial atmosphere, single practitioner silhouette in seiza, falling petals, empty dojo, respectful solitude
+CELEBRATION/AWARD: subtle golden accents, ceremonial bow, warm lighting, achievement feeling
+SEMINAR/COURSE: multiple silhouettes practicing together, instructor demonstrating, attentive students
+FEDERATION/INSTITUTION: enso circle, unity of practitioners, formal atmosphere, group harmony
+TECHNIQUE/PRACTICE: focused practitioner, precise stance, traditional elements
+GENERAL: serene dojo atmosphere, meditative mood, traditional elements
+
+ALWAYS INCLUDE: martial arts elements (tatami, traditional clothing), static/meditative poses, silhouettes (no detailed faces)
+NEVER INCLUDE: text/letters, aggressive combat, dynamic fighting poses, bright saturated colors
+
+OUTPUT: Only the subject in English, no explanations, no quotes, no category label.
+PROMPT,
+                'user' => "Title: {title}\n\nSummary: {summary}",
+            ],
+            'summarizer' => [
+                'name' => 'Content Summarizer',
+                'description' => 'Summarizes content while preserving key information and tone.',
+                'system' => <<<'PROMPT'
+You are an expert content summarizer. Your task is to create concise, accurate summaries that:
+
+1. Preserve the key information and main points
+2. Maintain the original tone and intent
+3. Be clear and readable
+4. Avoid adding opinions or information not in the original
+
+Guidelines:
+- Focus on WHO, WHAT, WHEN, WHERE, WHY
+- Use active voice when possible
+- Keep the summary proportional to the original length
+- Preserve important names, dates, and specific details
+PROMPT,
+                'user' => "{content}",
+            ],
+            'title_generator' => [
+                'name' => 'Title Generator',
+                'description' => 'Generates engaging titles for content.',
+                'system' => <<<'PROMPT'
+You are an expert headline writer. Create compelling, accurate titles that:
+
+1. Capture the essence of the content
+2. Are engaging but not clickbait
+3. Are appropriate length (50-70 characters ideal)
+4. Use active voice when possible
+
+Guidelines:
+- Be specific, not vague
+- Avoid sensationalism
+- Include key information
+- Match the tone of the content
+PROMPT,
+                'user' => "Content:\n{content}\n\nGenerate a title.",
+            ],
+            'content_generator' => [
+                'name' => 'All-in-One Content Generator',
+                'description' => 'Generates all content fields in a single API call (title, summary, SEO, image subject). Returns JSON.',
+                'system' => <<<'PROMPT'
+You are an expert content generator. Given raw content, generate ALL fields in a single JSON response.
+
+OUTPUT FORMAT (valid JSON only, no markdown):
+{
+    "title": "Engaging title (50-70 characters)",
+    "summary": "Brief summary (2-3 sentences, max 200 characters)",
+    "metaTitle": "SEO optimized title (max 60 characters)",
+    "metaDescription": "SEO meta description (150-160 characters)",
+    "imageSubject": "Visual subject for image generation (max 40 words, English)"
+}
+
+GUIDELINES:
+- title: Engaging, accurate, not clickbait
+- summary: Key information, WHO/WHAT/WHEN/WHERE
+- metaTitle: Include main keyword, compelling for search results
+- metaDescription: Call to action, include keyword naturally
+- imageSubject:
+  * First classify content: TRIBUTE | CELEBRATION | SEMINAR | INSTITUTION | TECHNIQUE | GENERAL
+  * TRIBUTE: memorial atmosphere, silhouette in seiza, falling petals
+  * CELEBRATION: golden accents, ceremonial bow, warm lighting
+  * SEMINAR: multiple silhouettes practicing, instructor demonstrating
+  * INSTITUTION: enso circle, unity, formal atmosphere
+  * TECHNIQUE: focused practitioner, precise stance
+  * GENERAL: serene dojo, meditative mood
+  * ALWAYS: silhouettes (no faces), static poses, traditional elements
+  * NEVER: text/letters, aggressive combat, bright colors
+
+OUTPUT: Only valid JSON, no explanations, no markdown code blocks.
+PROMPT,
+                'user' => "{content}",
+            ],
+        ];
+
+        // Filter out disabled defaults
+        $defaultTemplates = array_diff_key($defaultTemplates, array_flip($disableDefaults));
+
+        // Merge: defaults first, user templates override
+        $templates = array_merge($defaultTemplates, $userTemplates);
+
+        // Configure PromptTemplateService
+        if ($container->hasDefinition(PromptTemplateService::class)) {
+            $definition = $container->getDefinition(PromptTemplateService::class);
+            $definition->setArgument('$templates', $templates);
+        }
+
+        // Store parameters for external access
+        $container->setParameter('xmon_ai_content.prompts.templates', $templates);
     }
 
     public function getAlias(): string

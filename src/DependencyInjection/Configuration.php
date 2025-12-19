@@ -170,6 +170,29 @@ class Configuration implements ConfigurationInterface
                     ->scalarPrototype()->end()
                     ->defaultValue([])
                 ->end()
+                // Configurable prompt templates
+                ->arrayNode('prompts')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        // Disable specific bundle prompt defaults
+                        ->arrayNode('disable_defaults')
+                            ->scalarPrototype()->end()
+                            ->defaultValue([])
+                        ->end()
+                        // Custom prompts (merged with bundle defaults)
+                        ->arrayNode('templates')
+                            ->useAttributeAsKey('key')
+                            ->arrayPrototype()
+                                ->children()
+                                    ->scalarNode('name')->isRequired()->end()
+                                    ->scalarNode('description')->defaultNull()->end()
+                                    ->scalarNode('system')->isRequired()->end()
+                                    ->scalarNode('user')->isRequired()->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
             ->end();
 
         return $treeBuilder;

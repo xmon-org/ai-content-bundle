@@ -649,6 +649,230 @@ try {
 }
 ```
 
+## System prompts configurables
+
+El bundle incluye un sistema de plantillas de prompts (system + user) configurables via YAML.
+
+### Servicios disponibles
+
+- `PromptTemplateService`: Acceso a plantillas de prompts con renderizado de variables
+
+### Plantillas por defecto
+
+El bundle incluye plantillas predefinidas que puedes sobrescribir o extender:
+
+| Key | Nombre | Descripción |
+|-----|--------|-------------|
+| `image_subject` | Image Subject Generator | Genera descripciones visuales para imágenes. Usa clasificación de dos pasos para categorización precisa |
+| `summarizer` | Content Summarizer | Resume contenido preservando información clave |
+| `title_generator` | Title Generator | Genera títulos atractivos para contenido |
+| `content_generator` | All-in-One Content Generator | **Optimizado**: Genera todos los campos en una sola llamada (título, resumen, SEO, image subject). Devuelve JSON |
+
+### Uso de PromptTemplateService
+
+```php
+use Xmon\AiContentBundle\Service\PromptTemplateService;
+use Xmon\AiContentBundle\Service\AiTextService;
+
+class MyService
+{
+    public function __construct(
+        private readonly PromptTemplateService $promptTemplates,
+        private readonly AiTextService $aiTextService,
+    ) {}
+
+    public function generateImageSubject(string $title, string $summary): string
+    {
+        // Renderizar plantilla con variables
+        $prompts = $this->promptTemplates->render('image_subject', [
+            'title' => $title,
+            'summary' => $summary,
+        ]);
+
+        // $prompts = ['system' => '...', 'user' => 'Title: ...\n\nSummary: ...']
+
+        $result = $this->aiTextService->generate(
+            $prompts['system'],
+            $prompts['user']
+        );
+
+        return $result->getText();
+    }
+
+    public function summarize(string $content): string
+    {
+        $prompts = $this->promptTemplates->render('summarizer', [
+            'content' => $content,
+        ]);
+
+        return $this->aiTextService->generate(
+            $prompts['system'],
+            $prompts['user']
+        )->getText();
+    }
+}
+```
+
+### Uso optimizado con content_generator (recomendado)
+
+La plantilla `content_generator` genera todos los campos en **una sola llamada API**, optimizando costes y latencia:
+
+```php
+public function generateAllContent(string $rawContent): array
+{
+    $prompts = $this->promptTemplates->render('content_generator', [
+        'content' => $rawContent,
+    ]);
+
+    $result = $this->aiTextService->generate($prompts['system'], $prompts['user']);
+
+    // El resultado es JSON estructurado
+    $data = json_decode($result->getText(), true);
+
+    // Una sola llamada → todos los campos
+    return [
+        'title' => $data['title'],           // "Seminario de Aikido en Madrid"
+        'summary' => $data['summary'],       // "El próximo mes se celebrará..."
+        'metaTitle' => $data['metaTitle'],   // "Seminario Aikido Madrid 2025"
+        'metaDescription' => $data['metaDescription'],
+        'imageSubject' => $data['imageSubject'], // "multiple silhouettes practicing..."
+    ];
+}
+```
+
+**Ventajas vs llamadas individuales:**
+- ⚡ **1 llamada** en lugar de 5 (título + resumen + metaTitle + metaDescription + imageSubject)
+- 💰 **Menos tokens** consumidos (el contexto no se repite)
+- 🚀 **Menor latencia** total
+
+**Personalización:** Copia esta plantilla y adáptala a los campos que necesite tu proyecto.
+
+### Acceso individual a partes del prompt
+
+```php
+// Obtener solo el system prompt
+$systemPrompt = $this->promptTemplates->getSystemPrompt('image_subject');
+
+// Obtener y renderizar solo el user message
+$userMessage = $this->promptTemplates->renderUserMessage('image_subject', [
+    'title' => 'Mi título',
+    'summary' => 'Mi resumen',
+]);
+
+// Verificar si existe una plantilla
+if ($this->promptTemplates->hasTemplate('custom_prompt')) {
+    // ...
+}
+```
+
+### Personalizar plantillas en tu proyecto
+
+Las plantillas del bundle se **fusionan** con las tuyas automáticamente. Tus plantillas se añaden a los defaults, y si usas la misma key puedes sobrescribirlas.
+
+#### Añadir plantillas (merge automático)
+
+```yaml
+# config/packages/xmon_ai_content.yaml
+xmon_ai_content:
+    prompts:
+        templates:
+            seo_description:
+                name: 'SEO Description Generator'
+                description: 'Genera meta descriptions optimizadas para SEO'
+                system: |
+                    You are an SEO expert. Generate meta descriptions that:
+                    1. Are between 150-160 characters
+                    2. Include the main keyword naturally
+                    3. Have a clear call to action
+                    4. Are compelling and accurate
+                user: |
+                    Title: {title}
+                    Content: {content}
+                    Keyword: {keyword}
+
+                    Generate a meta description.
+
+            social_post:
+                name: 'Social Media Post'
+                description: 'Crea posts para redes sociales'
+                system: |
+                    Create engaging social media posts that are concise and shareable.
+                    Use emojis appropriately. Include relevant hashtags.
+                user: |
+                    Content: {content}
+                    Platform: {platform}
+```
+
+**Variables en plantillas**: Usa la sintaxis `{variable_name}` para definir placeholders que se reemplazarán al llamar a `render()` o `renderUserMessage()`.
+
+#### Sobrescribir un default
+
+Usa la misma key para modificar un default:
+
+```yaml
+xmon_ai_content:
+    prompts:
+        templates:
+            # Sobrescribir el summarizer del bundle para tu contexto
+            summarizer:
+                name: 'Resumidor de noticias de Aikido'
+                description: 'Resume noticias manteniendo el contexto de artes marciales'
+                system: |
+                    You are an expert summarizer for aikido and martial arts news.
+                    Focus on:
+                    - Key events, seminars, and courses
+                    - Names of senseis and instructors
+                    - Dates and locations
+                    - Technical terms in their original form
+
+                    Keep summaries concise but informative.
+                user: "{content}"
+```
+
+#### Deshabilitar defaults específicos
+
+Si no quieres usar algunas plantillas del bundle:
+
+```yaml
+xmon_ai_content:
+    prompts:
+        disable_defaults:
+            - title_generator
+            - summarizer
+```
+
+**Resultado**: Las plantillas listadas se eliminan de las disponibles.
+
+### Obtener plantillas para UI
+
+`PromptTemplateService` proporciona métodos para mostrar las plantillas disponibles:
+
+```php
+// Lista de plantillas disponibles (key => name)
+$templates = $this->promptTemplates->getTemplates();
+// ['image_subject' => 'Image Subject Generator', 'summarizer' => 'Content Summarizer', ...]
+
+// Obtener datos completos de una plantilla
+$template = $this->promptTemplates->getTemplate('image_subject');
+// ['name' => '...', 'description' => '...', 'system' => '...', 'user' => '...']
+
+// Todas las keys disponibles
+$keys = $this->promptTemplates->getTemplateKeys();
+// ['image_subject', 'summarizer', 'title_generator']
+```
+
+### Validación
+
+El `PromptTemplateService` valida que las plantillas existan:
+
+```php
+try {
+    $prompts = $this->promptTemplates->render('invalid_template', []);
+} catch (AiProviderException $e) {
+    // "Prompt template not found: invalid_template"
+}
+```
+
 ## Sistema de fallback
 
 El bundle implementa un sistema de fallback automático entre proveedores:
@@ -724,6 +948,7 @@ xmon/ai-content-bundle/
     │   ├── AiTextService.php         # Orquestador texto con fallback
     │   ├── ImageOptionsService.php   # Gestión de estilos/presets
     │   ├── PromptBuilder.php         # Construye prompts con opciones
+    │   ├── PromptTemplateService.php # Plantillas de prompts configurables
     │   └── MediaStorageService.php   # SonataMedia (condicional)
     ├── Model/
     │   ├── ImageResult.php           # DTO inmutable
@@ -873,7 +1098,7 @@ Presets
 - [x] Fase 2: Integración SonataMedia
 - [x] Fase 3: Proveedores de texto (Gemini, OpenRouter, Pollinations)
 - [x] Fase 4: Sistema de estilos/presets (ImageOptionsService, PromptBuilder)
-- [ ] Fase 5: System prompts configurables
+- [x] Fase 5: System prompts configurables (PromptTemplateService)
 - [ ] Fase 6: UI de regeneración en Admin
 - [ ] Fase 7: Migración proyecto Aikido
 - [ ] Fase 8: Publicación en Packagist

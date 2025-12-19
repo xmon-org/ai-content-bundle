@@ -1,0 +1,185 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Xmon\AiContentBundle\Service;
+
+use Xmon\AiContentBundle\Exception\AiProviderException;
+
+/**
+ * Service for managing configurable prompt templates.
+ *
+ * Provides access to system and user prompts configured via YAML.
+ * Each prompt template has:
+ * - name: Human-readable name
+ * - description: Optional explanation of what the prompt does
+ * - system: The system prompt (instructions for the AI)
+ * - user: The user message template (supports {variable} placeholders)
+ *
+ * Used by services that need to generate text with configurable prompts.
+ */
+class PromptTemplateService
+{
+    /**
+     * @param array<string, array{name: string, description: ?string, system: string, user: string}> $templates
+     */
+    public function __construct(
+        private readonly array $templates,
+    ) {
+    }
+
+    // ==========================================
+    // GETTERS FOR UI (list available prompts)
+    // ==========================================
+
+    /**
+     * Get all available prompt templates as key => name pairs.
+     *
+     * @return array<string, string>
+     */
+    public function getTemplates(): array
+    {
+        $result = [];
+        foreach ($this->templates as $key => $template) {
+            $result[$key] = $template['name'];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get all template keys.
+     *
+     * @return string[]
+     */
+    public function getTemplateKeys(): array
+    {
+        return array_keys($this->templates);
+    }
+
+    // ==========================================
+    // TEMPLATE ACCESS
+    // ==========================================
+
+    /**
+     * Check if a template exists.
+     */
+    public function hasTemplate(string $key): bool
+    {
+        return isset($this->templates[$key]);
+    }
+
+    /**
+     * Get the full template data.
+     *
+     * @return array{name: string, description: ?string, system: string, user: string}|null
+     */
+    public function getTemplate(string $key): ?array
+    {
+        return $this->templates[$key] ?? null;
+    }
+
+    /**
+     * Get the system prompt for a template.
+     */
+    public function getSystemPrompt(string $key): ?string
+    {
+        return $this->templates[$key]['system'] ?? null;
+    }
+
+    /**
+     * Get the user message template for a template.
+     */
+    public function getUserTemplate(string $key): ?string
+    {
+        return $this->templates[$key]['user'] ?? null;
+    }
+
+    /**
+     * Get the description for a template.
+     */
+    public function getDescription(string $key): ?string
+    {
+        return $this->templates[$key]['description'] ?? null;
+    }
+
+    // ==========================================
+    // TEMPLATE RENDERING
+    // ==========================================
+
+    /**
+     * Render a user message template with variables.
+     *
+     * Variables in the template use {variable_name} syntax.
+     * Example: "Title: {title}\nContent: {content}"
+     *
+     * @param string $key The template key
+     * @param array<string, string> $variables Key-value pairs to replace in template
+     *
+     * @throws AiProviderException If template not found
+     */
+    public function renderUserMessage(string $key, array $variables): string
+    {
+        $template = $this->getUserTemplate($key);
+
+        if ($template === null) {
+            throw new AiProviderException(sprintf('Prompt template not found: %s', $key));
+        }
+
+        return $this->replaceVariables($template, $variables);
+    }
+
+    /**
+     * Get both system and rendered user message for a template.
+     *
+     * @param string $key The template key
+     * @param array<string, string> $variables Variables for user message template
+     *
+     * @return array{system: string, user: string}
+     *
+     * @throws AiProviderException If template not found
+     */
+    public function render(string $key, array $variables = []): array
+    {
+        if (!$this->hasTemplate($key)) {
+            throw new AiProviderException(sprintf('Prompt template not found: %s', $key));
+        }
+
+        return [
+            'system' => $this->getSystemPrompt($key),
+            'user' => $this->renderUserMessage($key, $variables),
+        ];
+    }
+
+    // ==========================================
+    // RAW DATA ACCESS
+    // ==========================================
+
+    /**
+     * Get all raw template data.
+     *
+     * @return array<string, array{name: string, description: ?string, system: string, user: string}>
+     */
+    public function getAllTemplates(): array
+    {
+        return $this->templates;
+    }
+
+    // ==========================================
+    // PRIVATE HELPERS
+    // ==========================================
+
+    /**
+     * Replace {variable} placeholders in a template string.
+     *
+     * @param array<string, string> $variables
+     */
+    private function replaceVariables(string $template, array $variables): string
+    {
+        foreach ($variables as $name => $value) {
+            $template = str_replace('{' . $name . '}', $value, $template);
+        }
+
+        return $template;
+    }
+}

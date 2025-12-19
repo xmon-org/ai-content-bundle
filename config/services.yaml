@@ -30,6 +30,11 @@ services:
             $extras: []
             $presets: []
 
+    # Prompt Template Service (configurable system/user prompts)
+    Xmon\AiContentBundle\Service\PromptTemplateService:
+        arguments:
+            $templates: []
+
     # Prompt Builder (combines subject with style options)
     Xmon\AiContentBundle\Service\PromptBuilder: ~
 
