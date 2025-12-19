@@ -8,10 +8,28 @@ Symfony 7 bundle para generación de contenido con IA (texto e imágenes) con si
 - Symfony >= 7.0
 - symfony/http-client
 
+## Dependencias opcionales
+
+El bundle detecta automáticamente qué dependencias opcionales están instaladas y habilita las funcionalidades correspondientes:
+
+| Dependencia | Funcionalidad | Servicio habilitado |
+|-------------|---------------|---------------------|
+| `sonata-project/media-bundle` | Guardar imágenes en SonataMedia | `MediaStorageService` |
+| `sonata-project/admin-bundle` | UI de administración | Admin classes (próximamente) |
+
+**Sin SonataMedia instalado**: El bundle funciona perfectamente para generar imágenes. Puedes guardarlas donde quieras (disco, S3, etc.) usando `ImageResult::getBytes()`.
+
+**Con SonataMedia instalado**: Se habilita `MediaStorageService` para guardar directamente en SonataMedia.
+
 ## Instalación
 
 ```bash
 composer require xmon/ai-content-bundle
+```
+
+Para habilitar integración con SonataMedia:
+```bash
+composer require sonata-project/media-bundle
 ```
 
 ## Configuración
@@ -41,6 +59,8 @@ xmon_ai_content:
             height: 720
             retries: 3
             retry_delay: 5
+
+    # Solo si tienes SonataMedia instalado
     media:
         default_context: 'default'        # SonataMedia context
         provider: 'sonata.media.provider.image'
@@ -99,31 +119,59 @@ $result = $this->aiImageService->generate('prompt here', [
 
 ### Guardar en SonataMedia
 
+> Requiere `sonata-project/media-bundle` instalado
+
 ```php
 use Xmon\AiContentBundle\Service\AiImageService;
 use Xmon\AiContentBundle\Service\MediaStorageService;
 
-class MyController
+class MyService
 {
     public function __construct(
         private readonly AiImageService $aiImageService,
         private readonly MediaStorageService $mediaStorageService,
     ) {}
 
-    public function generateAndSave(): MediaInterface
+    public function generateForNoticia(): MediaInterface
     {
         $result = $this->aiImageService->generate('A serene dojo');
 
-        // Guardar en SonataMedia
-        $media = $this->mediaStorageService->save(
+        // Guardar en el context de la entidad destino
+        return $this->mediaStorageService->save(
             imageResult: $result,
-            filename: 'my-image',           // Opcional
-            context: 'noticias',            // Opcional (usa default_context)
+            filename: 'noticia-ai-image',   // Opcional (genera automático)
+            context: 'noticias',            // Context de SonataMedia de la entidad
         );
+    }
 
-        return $media;  // SonataMedia entity
+    public function generateForEvento(): MediaInterface
+    {
+        $result = $this->aiImageService->generate('Aikido seminar');
+
+        // Cada entidad puede usar su propio context
+        return $this->mediaStorageService->save(
+            imageResult: $result,
+            context: 'eventos',
+        );
     }
 }
+```
+
+**Nota sobre contexts**: Usa el mismo context que la entidad destino para que los formatos de imagen (thumbnails, etc.) sean consistentes. El `default_context` de la configuración es solo un fallback.
+
+### Guardar manualmente (sin SonataMedia)
+
+```php
+$result = $this->aiImageService->generate('A serene dojo');
+
+// Guardar a disco
+file_put_contents('image.' . $result->getExtension(), $result->getBytes());
+
+// O enviar a S3, otro servicio, etc.
+$s3->putObject([
+    'Body' => $result->getBytes(),
+    'ContentType' => $result->getMimeType(),
+]);
 ```
 
 ## Proveedores disponibles
@@ -131,23 +179,32 @@ class MyController
 | Proveedor | Estado | Requiere API Key |
 |-----------|--------|------------------|
 | Pollinations | ✅ Implementado | Opcional (sin key = rate limits) |
-| Together.ai | 🚧 Próximamente | Sí |
 
 ## Arquitectura
 
 ```
-src/
-├── Provider/
-│   ├── ImageProviderInterface.php    # Contrato para proveedores
-│   └── Image/
-│       └── PollinationsImageProvider.php
-├── Service/
-│   ├── AiImageService.php            # Orquestador con fallback
-│   └── MediaStorageService.php       # Integración SonataMedia
-├── Model/
-│   └── ImageResult.php               # DTO inmutable
-└── Exception/
-    └── AiProviderException.php       # Excepciones tipadas
+xmon/ai-content-bundle/
+├── composer.json
+├── README.md
+├── config/
+│   ├── services.yaml                 # Servicios core (siempre)
+│   └── services_media.yaml           # SonataMedia (si está instalado)
+└── src/
+    ├── XmonAiContentBundle.php       # Bundle class
+    ├── DependencyInjection/
+    │   ├── Configuration.php         # Configuración YAML validada
+    │   └── XmonAiContentExtension.php # Carga condicional de servicios
+    ├── Provider/
+    │   ├── ImageProviderInterface.php # Contrato para proveedores
+    │   └── Image/
+    │       └── PollinationsImageProvider.php
+    ├── Service/
+    │   ├── AiImageService.php        # Orquestador con fallback
+    │   └── MediaStorageService.php   # SonataMedia (condicional)
+    ├── Model/
+    │   └── ImageResult.php           # DTO inmutable
+    └── Exception/
+        └── AiProviderException.php   # Excepciones tipadas
 ```
 
 ## Desarrollo

@@ -20,9 +20,3 @@ services:
             $providers: !tagged_iterator { tag: 'xmon_ai_content.image_provider', default_priority_method: 'getPriority' }
             $retries: 3
             $retryDelay: 5
-
-    # Media Storage Service (SonataMedia integration)
-    Xmon\AiContentBundle\Service\MediaStorageService:
-        arguments:
-            $defaultContext: 'default'
-            $providerName: 'sonata.media.provider.image'

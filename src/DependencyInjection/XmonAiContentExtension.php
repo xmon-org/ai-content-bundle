@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Xmon\AiContentBundle\DependencyInjection;
 
+use Sonata\MediaBundle\Model\MediaManagerInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
@@ -19,13 +20,26 @@ class XmonAiContentExtension extends Extension
         $config = $this->processConfiguration($configuration, $configs);
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
+
+        // Always load core services
         $loader->load('services.yaml');
+
+        // Load SonataMedia integration only if available
+        if ($this->isSonataMediaAvailable()) {
+            $loader->load('services_media.yaml');
+            $this->configureMediaStorage($container, $config['media'] ?? []);
+        }
 
         // Set image provider configuration
         $this->configureImageProviders($container, $config['image'] ?? []);
+    }
 
-        // Set media storage configuration
-        $this->configureMediaStorage($container, $config['media'] ?? []);
+    /**
+     * Check if SonataMediaBundle is installed and available
+     */
+    private function isSonataMediaAvailable(): bool
+    {
+        return interface_exists(MediaManagerInterface::class);
     }
 
     private function configureImageProviders(ContainerBuilder $container, array $imageConfig): void
