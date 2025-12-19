@@ -41,6 +41,9 @@ xmon_ai_content:
             height: 720
             retries: 3
             retry_delay: 5
+    media:
+        default_context: 'default'        # SonataMedia context
+        provider: 'sonata.media.provider.image'
 ```
 
 ## Uso
@@ -94,6 +97,35 @@ $result = $this->aiImageService->generate('prompt here', [
 ]);
 ```
 
+### Guardar en SonataMedia
+
+```php
+use Xmon\AiContentBundle\Service\AiImageService;
+use Xmon\AiContentBundle\Service\MediaStorageService;
+
+class MyController
+{
+    public function __construct(
+        private readonly AiImageService $aiImageService,
+        private readonly MediaStorageService $mediaStorageService,
+    ) {}
+
+    public function generateAndSave(): MediaInterface
+    {
+        $result = $this->aiImageService->generate('A serene dojo');
+
+        // Guardar en SonataMedia
+        $media = $this->mediaStorageService->save(
+            imageResult: $result,
+            filename: 'my-image',           // Opcional
+            context: 'noticias',            // Opcional (usa default_context)
+        );
+
+        return $media;  // SonataMedia entity
+    }
+}
+```
+
 ## Proveedores disponibles
 
 | Proveedor | Estado | Requiere API Key |
@@ -110,7 +142,8 @@ src/
 │   └── Image/
 │       └── PollinationsImageProvider.php
 ├── Service/
-│   └── AiImageService.php            # Orquestador con fallback
+│   ├── AiImageService.php            # Orquestador con fallback
+│   └── MediaStorageService.php       # Integración SonataMedia
 ├── Model/
 │   └── ImageResult.php               # DTO inmutable
 └── Exception/
@@ -136,7 +169,7 @@ Este bundle usa path repository durante desarrollo:
 ## Roadmap
 
 - [x] Fase 1: Estructura base + Pollinations
-- [ ] Fase 2: Integración SonataMedia
+- [x] Fase 2: Integración SonataMedia
 - [ ] Fase 3: Proveedores de texto (Gemini, OpenRouter)
 - [ ] Fase 4: Sistema de estilos/presets
 - [ ] Fase 5: Entidades editables en Admin

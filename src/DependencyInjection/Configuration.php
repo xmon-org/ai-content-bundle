@@ -43,6 +43,14 @@ class Configuration implements ConfigurationInterface
                         ->end()
                     ->end()
                 ->end()
+                // SonataMedia integration
+                ->arrayNode('media')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->scalarNode('default_context')->defaultValue('default')->end()
+                        ->scalarNode('provider')->defaultValue('sonata.media.provider.image')->end()
+                    ->end()
+                ->end()
             ->end();
 
         return $treeBuilder;

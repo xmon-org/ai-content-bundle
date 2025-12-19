@@ -9,6 +9,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Xmon\AiContentBundle\Provider\Image\PollinationsImageProvider;
+use Xmon\AiContentBundle\Service\MediaStorageService;
 
 class XmonAiContentExtension extends Extension
 {
@@ -22,6 +23,9 @@ class XmonAiContentExtension extends Extension
 
         // Set image provider configuration
         $this->configureImageProviders($container, $config['image'] ?? []);
+
+        // Set media storage configuration
+        $this->configureMediaStorage($container, $config['media'] ?? []);
     }
 
     private function configureImageProviders(ContainerBuilder $container, array $imageConfig): void
@@ -46,6 +50,22 @@ class XmonAiContentExtension extends Extension
         // Store config for AiImageService
         $container->setParameter('xmon_ai_content.image.providers', $providers);
         $container->setParameter('xmon_ai_content.image.defaults', $defaults);
+    }
+
+    private function configureMediaStorage(ContainerBuilder $container, array $mediaConfig): void
+    {
+        $defaultContext = $mediaConfig['default_context'] ?? 'default';
+        $providerName = $mediaConfig['provider'] ?? 'sonata.media.provider.image';
+
+        if ($container->hasDefinition(MediaStorageService::class)) {
+            $definition = $container->getDefinition(MediaStorageService::class);
+            $definition->setArgument('$defaultContext', $defaultContext);
+            $definition->setArgument('$providerName', $providerName);
+        }
+
+        // Store parameters
+        $container->setParameter('xmon_ai_content.media.default_context', $defaultContext);
+        $container->setParameter('xmon_ai_content.media.provider', $providerName);
     }
 
     public function getAlias(): string
