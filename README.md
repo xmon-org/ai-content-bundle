@@ -1,5 +1,14 @@
 # xmon/ai-content-bundle
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/xmon/ai-content-bundle.svg?style=flat-square)](https://packagist.org/packages/xmon/ai-content-bundle)
+[![PHP Version](https://img.shields.io/packagist/php-v/xmon/ai-content-bundle.svg?style=flat-square)](https://packagist.org/packages/xmon/ai-content-bundle)
+[![Symfony](https://img.shields.io/badge/Symfony-7.x-purple.svg?style=flat-square&logo=symfony)](https://symfony.com)
+[![Total Downloads](https://img.shields.io/packagist/dt/xmon/ai-content-bundle.svg?style=flat-square)](https://packagist.org/packages/xmon/ai-content-bundle)
+[![License](https://img.shields.io/packagist/l/xmon/ai-content-bundle.svg?style=flat-square)](LICENSE)
+
+[![CI](https://github.com/xmon-org/ai-content-bundle/actions/workflows/ci.yml/badge.svg)](https://github.com/xmon-org/ai-content-bundle/actions/workflows/ci.yml)
+[![semantic-release](https://img.shields.io/badge/semantic--release-conventionalcommits-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
+
 Symfony 7 bundle for AI content generation (text and images) with automatic fallback between providers.
 
 ## Features

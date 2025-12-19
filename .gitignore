@@ -1,0 +1,33 @@
+# Dependencies
+/vendor/
+
+# Composer
+composer.lock
+
+# PHPUnit
+.phpunit.result.cache
+.phpunit.cache/
+coverage/
+
+# PHP-CS-Fixer
+.php-cs-fixer.cache
+
+# PHPStan
+phpstan.neon.dist
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+/build/
+/dist/
+
+# Environment
+.env.local
+.env.*.local
