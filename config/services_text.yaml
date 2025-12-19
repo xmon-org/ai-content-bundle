@@ -1,0 +1,46 @@
+# Text providers and services
+# This file is loaded when text providers are configured
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    # Text Providers
+    # Priority: higher number = tried first (Symfony tagged_iterator sorts descending)
+    # AutoconfigureTag on interface enables external providers, bundle providers need explicit tags
+    Xmon\AiContentBundle\Provider\Text\GeminiTextProvider:
+        arguments:
+            $apiKey: null
+            $model: 'gemini-2.0-flash-lite'
+            $fallbackModels: []
+            $timeout: 30
+            $priority: 100
+        tags:
+            - { name: 'xmon_ai_content.text_provider', priority: 100 }
+
+    Xmon\AiContentBundle\Provider\Text\OpenRouterTextProvider:
+        arguments:
+            $apiKey: null
+            $model: 'google/gemini-2.0-flash-exp:free'
+            $fallbackModels: []
+            $timeout: 90
+            $priority: 50
+        tags:
+            - { name: 'xmon_ai_content.text_provider', priority: 50 }
+
+    Xmon\AiContentBundle\Provider\Text\PollinationsTextProvider:
+        arguments:
+            $model: 'openai'
+            $fallbackModels: []
+            $timeout: 60
+            $priority: 10
+        tags:
+            - { name: 'xmon_ai_content.text_provider', priority: 10 }
+
+    # Main Text Service
+    Xmon\AiContentBundle\Service\AiTextService:
+        arguments:
+            $providers: !tagged_iterator { tag: 'xmon_ai_content.text_provider' }
+            $retries: 2
+            $retryDelay: 3
