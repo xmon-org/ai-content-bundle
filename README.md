@@ -136,15 +136,15 @@ Este bundle usa path repository durante desarrollo:
 ## Roadmap
 
 - [x] Fase 1: Estructura base + Pollinations
-- [ ] Fase 2: Fallback con Together.ai
-- [ ] Fase 3: Integración SonataMedia
-- [ ] Fase 4: Proveedores de texto (Gemini, OpenRouter)
-- [ ] Fase 5: Sistema de estilos/presets
-- [ ] Fase 6: Entidades editables en Admin
-- [ ] Fase 7: System prompts configurables
-- [ ] Fase 8: UI de regeneración en Admin
-- [ ] Fase 9: Migración proyecto Aikido
-- [ ] Fase 10: Publicación en Packagist
+- [ ] Fase 2: Integración SonataMedia
+- [ ] Fase 3: Proveedores de texto (Gemini, OpenRouter)
+- [ ] Fase 4: Sistema de estilos/presets
+- [ ] Fase 5: Entidades editables en Admin
+- [ ] Fase 6: System prompts configurables
+- [ ] Fase 7: UI de regeneración en Admin
+- [ ] Fase 8: Migración proyecto Aikido
+- [ ] Fase 9: Publicación en Packagist
+- [ ] Extra: Fallback con Together.ai (opcional)
 
 ## Licencia
 
