@@ -34,7 +34,7 @@ class PollinationsTextProvider implements TextProviderInterface
     }
 
     /**
-     * Pollinations is always available (free, no API key)
+     * Pollinations is always available (free, no API key).
      */
     public function isAvailable(): bool
     {
@@ -58,8 +58,8 @@ class PollinationsTextProvider implements TextProviderInterface
 
         $this->logger?->debug('Pollinations: Generating text', [
             'model' => $model,
-            'system_length' => strlen($systemPrompt),
-            'user_length' => strlen($userMessage),
+            'system_length' => \strlen($systemPrompt),
+            'user_length' => \strlen($userMessage),
         ]);
 
         try {
@@ -77,33 +77,24 @@ class PollinationsTextProvider implements TextProviderInterface
             $statusCode = $response->getStatusCode();
             if ($statusCode !== 200) {
                 $body = $response->getContent(false);
-                throw new AiProviderException(
-                    "Pollinations API returned status {$statusCode}: " . substr($body, 0, 300),
-                    $this->getName()
-                );
+                throw new AiProviderException("Pollinations API returned status {$statusCode}: ".substr($body, 0, 300), $this->getName());
             }
 
             $data = $response->toArray();
 
             if (!isset($data['choices'][0]['message']['content'])) {
-                throw new AiProviderException(
-                    'Pollinations response missing content',
-                    $this->getName()
-                );
+                throw new AiProviderException('Pollinations response missing content', $this->getName());
             }
 
             $text = trim($data['choices'][0]['message']['content']);
 
             if (empty($text)) {
-                throw new AiProviderException(
-                    'Pollinations returned empty response',
-                    $this->getName()
-                );
+                throw new AiProviderException('Pollinations returned empty response', $this->getName());
             }
 
             $this->logger?->info('Pollinations: Text generated successfully', [
                 'model' => $model,
-                'response_length' => strlen($text),
+                'response_length' => \strlen($text),
             ]);
 
             // Pollinations may provide usage info
@@ -120,11 +111,7 @@ class PollinationsTextProvider implements TextProviderInterface
         } catch (AiProviderException $e) {
             throw $e;
         } catch (\Exception $e) {
-            throw new AiProviderException(
-                message: 'Pollinations request failed: ' . $e->getMessage(),
-                provider: $this->getName(),
-                previous: $e
-            );
+            throw new AiProviderException(message: 'Pollinations request failed: '.$e->getMessage(), provider: $this->getName(), previous: $e);
         }
     }
 }

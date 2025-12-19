@@ -52,12 +52,12 @@ class GeminiTextProvider implements TextProviderInterface
         $temperature = $options['temperature'] ?? 0.9;
         $maxTokens = $options['max_tokens'] ?? 200;
 
-        $url = self::API_BASE . "/models/{$model}:generateContent";
+        $url = self::API_BASE."/models/{$model}:generateContent";
 
         $this->logger?->debug('Gemini: Generating text', [
             'model' => $model,
-            'system_length' => strlen($systemPrompt),
-            'user_length' => strlen($userMessage),
+            'system_length' => \strlen($systemPrompt),
+            'user_length' => \strlen($userMessage),
         ]);
 
         try {
@@ -69,7 +69,7 @@ class GeminiTextProvider implements TextProviderInterface
                         [
                             'role' => 'user',
                             'parts' => [
-                                ['text' => $systemPrompt . "\n\n" . $userMessage],
+                                ['text' => $systemPrompt."\n\n".$userMessage],
                             ],
                         ],
                     ],
@@ -84,19 +84,13 @@ class GeminiTextProvider implements TextProviderInterface
             $statusCode = $response->getStatusCode();
             if ($statusCode !== 200) {
                 $body = $response->getContent(false);
-                throw new AiProviderException(
-                    "Gemini API returned status {$statusCode}: {$body}",
-                    $this->getName()
-                );
+                throw new AiProviderException("Gemini API returned status {$statusCode}: {$body}", $this->getName());
             }
 
             $data = $response->toArray();
 
             if (!isset($data['candidates'][0]['content']['parts'][0]['text'])) {
-                throw new AiProviderException(
-                    'Gemini response missing text content',
-                    $this->getName()
-                );
+                throw new AiProviderException('Gemini response missing text content', $this->getName());
             }
 
             $text = $data['candidates'][0]['content']['parts'][0]['text'];
@@ -108,7 +102,7 @@ class GeminiTextProvider implements TextProviderInterface
 
             $this->logger?->info('Gemini: Text generated successfully', [
                 'model' => $model,
-                'response_length' => strlen($text),
+                'response_length' => \strlen($text),
             ]);
 
             return new TextResult(
@@ -122,11 +116,7 @@ class GeminiTextProvider implements TextProviderInterface
         } catch (AiProviderException $e) {
             throw $e;
         } catch (\Exception $e) {
-            throw new AiProviderException(
-                message: 'Gemini request failed: ' . $e->getMessage(),
-                provider: $this->getName(),
-                previous: $e
-            );
+            throw new AiProviderException(message: 'Gemini request failed: '.$e->getMessage(), provider: $this->getName(), previous: $e);
         }
     }
 }

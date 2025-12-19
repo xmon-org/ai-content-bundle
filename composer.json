@@ -56,7 +56,10 @@
             "@cs-check",
             "@phpstan",
             "@test"
-        ]
+        ],
+        "setup-hooks": "git config core.hooksPath .githooks",
+        "post-install-cmd": "@setup-hooks",
+        "post-update-cmd": "@setup-hooks"
     },
     "config": {
         "sort-packages": true,

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Xmon\AiContentBundle\Model;
 
 /**
- * Immutable DTO representing the result of a text generation
+ * Immutable DTO representing the result of a text generation.
  */
 final readonly class TextResult
 {
@@ -20,7 +20,7 @@ final readonly class TextResult
     }
 
     /**
-     * Get the generated text
+     * Get the generated text.
      */
     public function getText(): string
     {
@@ -28,7 +28,7 @@ final readonly class TextResult
     }
 
     /**
-     * Get the provider name that generated the text
+     * Get the provider name that generated the text.
      */
     public function getProvider(): string
     {
@@ -36,7 +36,7 @@ final readonly class TextResult
     }
 
     /**
-     * Get the model used for generation (if available)
+     * Get the model used for generation (if available).
      */
     public function getModel(): ?string
     {
@@ -44,7 +44,7 @@ final readonly class TextResult
     }
 
     /**
-     * Get the number of tokens in the prompt (if available)
+     * Get the number of tokens in the prompt (if available).
      */
     public function getPromptTokens(): ?int
     {
@@ -52,7 +52,7 @@ final readonly class TextResult
     }
 
     /**
-     * Get the number of tokens in the completion (if available)
+     * Get the number of tokens in the completion (if available).
      */
     public function getCompletionTokens(): ?int
     {
@@ -60,7 +60,7 @@ final readonly class TextResult
     }
 
     /**
-     * Get the total number of tokens used
+     * Get the total number of tokens used.
      */
     public function getTotalTokens(): ?int
     {
@@ -72,7 +72,7 @@ final readonly class TextResult
     }
 
     /**
-     * Get the finish reason (e.g., 'stop', 'length', 'content_filter')
+     * Get the finish reason (e.g., 'stop', 'length', 'content_filter').
      */
     public function getFinishReason(): ?string
     {
@@ -80,7 +80,7 @@ final readonly class TextResult
     }
 
     /**
-     * Get the text trimmed of whitespace
+     * Get the text trimmed of whitespace.
      */
     public function getTextTrimmed(): string
     {
@@ -88,7 +88,7 @@ final readonly class TextResult
     }
 
     /**
-     * Check if the generation completed normally
+     * Check if the generation completed normally.
      */
     public function isComplete(): bool
     {

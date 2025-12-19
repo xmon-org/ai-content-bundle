@@ -21,11 +21,11 @@ class MediaStorageService
     }
 
     /**
-     * Save an ImageResult to SonataMedia
+     * Save an ImageResult to SonataMedia.
      *
      * @param ImageResult $imageResult The generated image
-     * @param string|null $filename Optional filename (auto-generated if null)
-     * @param string|null $context SonataMedia context (uses default if null)
+     * @param string|null $filename    Optional filename (auto-generated if null)
+     * @param string|null $context     SonataMedia context (uses default if null)
      *
      * @return MediaInterface The created media entity
      */
@@ -40,7 +40,7 @@ class MediaStorageService
         $this->logger?->info('[MediaStorage] Saving image to SonataMedia', [
             'context' => $context,
             'filename' => $filename,
-            'size' => strlen($imageResult->getBytes()),
+            'size' => \strlen($imageResult->getBytes()),
             'mime_type' => $imageResult->getMimeType(),
         ]);
 
@@ -71,7 +71,7 @@ class MediaStorageService
     }
 
     /**
-     * Generate a filename from ImageResult metadata
+     * Generate a filename from ImageResult metadata.
      */
     private function generateFilename(ImageResult $imageResult): string
     {
@@ -79,17 +79,17 @@ class MediaStorageService
         $timestamp = date('Ymd-His');
         $extension = $imageResult->getExtension();
 
-        return sprintf('ai-%s-%s.%s', $provider, $timestamp, $extension);
+        return \sprintf('ai-%s-%s.%s', $provider, $timestamp, $extension);
     }
 
     /**
-     * Create a temporary file from ImageResult bytes
+     * Create a temporary file from ImageResult bytes.
      */
     private function createTempFile(ImageResult $imageResult): string
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'ai_image_');
         $extension = $imageResult->getExtension();
-        $tempFilePath = $tempFile . '.' . $extension;
+        $tempFilePath = $tempFile.'.'.$extension;
 
         rename($tempFile, $tempFilePath);
         file_put_contents($tempFilePath, $imageResult->getBytes());

@@ -113,7 +113,7 @@ class PromptTemplateService
      * Variables in the template use {variable_name} syntax.
      * Example: "Title: {title}\nContent: {content}"
      *
-     * @param string $key The template key
+     * @param string                $key       The template key
      * @param array<string, string> $variables Key-value pairs to replace in template
      *
      * @throws AiProviderException If template not found
@@ -123,7 +123,7 @@ class PromptTemplateService
         $template = $this->getUserTemplate($key);
 
         if ($template === null) {
-            throw new AiProviderException(sprintf('Prompt template not found: %s', $key));
+            throw new AiProviderException(\sprintf('Prompt template not found: %s', $key));
         }
 
         return $this->replaceVariables($template, $variables);
@@ -132,17 +132,17 @@ class PromptTemplateService
     /**
      * Get both system and rendered user message for a template.
      *
-     * @param string $key The template key
+     * @param string                $key       The template key
      * @param array<string, string> $variables Variables for user message template
      *
-     * @return array{system: string, user: string}
-     *
      * @throws AiProviderException If template not found
+     *
+     * @return array{system: string, user: string}
      */
     public function render(string $key, array $variables = []): array
     {
         if (!$this->hasTemplate($key)) {
-            throw new AiProviderException(sprintf('Prompt template not found: %s', $key));
+            throw new AiProviderException(\sprintf('Prompt template not found: %s', $key));
         }
 
         return [
@@ -177,7 +177,7 @@ class PromptTemplateService
     private function replaceVariables(string $template, array $variables): string
     {
         foreach ($variables as $name => $value) {
-            $template = str_replace('{' . $name . '}', $value, $template);
+            $template = str_replace('{'.$name.'}', $value, $template);
         }
 
         return $template;

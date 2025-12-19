@@ -23,25 +23,25 @@ use Xmon\AiContentBundle\Model\TextResult;
 interface TextProviderInterface
 {
     /**
-     * Get the provider name (e.g., 'gemini', 'openrouter', 'pollinations')
+     * Get the provider name (e.g., 'gemini', 'openrouter', 'pollinations').
      */
     public function getName(): string;
 
     /**
-     * Check if the provider is available (has required credentials, etc.)
+     * Check if the provider is available (has required credentials, etc.).
      */
     public function isAvailable(): bool;
 
     /**
-     * Get the priority for fallback ordering (higher = tried first)
+     * Get the priority for fallback ordering (higher = tried first).
      */
     public function getPriority(): int;
 
     /**
-     * Generate text from a prompt
+     * Generate text from a prompt.
      *
      * @param string $systemPrompt The system prompt/instructions
-     * @param string $userMessage The user message/content to process
+     * @param string $userMessage  The user message/content to process
      * @param array{
      *     model?: string,
      *     temperature?: float,

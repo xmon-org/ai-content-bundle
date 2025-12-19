@@ -18,7 +18,7 @@ class OpenRouterTextProvider implements TextProviderInterface
 
     /**
      * Default fallback models (free tier).
-     * Updated list: https://openrouter.ai/models?pricing=free
+     * Updated list: https://openrouter.ai/models?pricing=free.
      */
     private const DEFAULT_FALLBACK_MODELS = [
         'meta-llama/llama-3.3-70b-instruct:free',
@@ -95,11 +95,7 @@ class OpenRouterTextProvider implements TextProviderInterface
             }
         }
 
-        throw new AiProviderException(
-            message: 'All OpenRouter models failed' . ($lastError ? ': ' . $lastError->getMessage() : ''),
-            provider: $this->getName(),
-            previous: $lastError
-        );
+        throw new AiProviderException(message: 'All OpenRouter models failed'.($lastError ? ': '.$lastError->getMessage() : ''), provider: $this->getName(), previous: $lastError);
     }
 
     private function callWithModel(
@@ -107,7 +103,7 @@ class OpenRouterTextProvider implements TextProviderInterface
         string $systemPrompt,
         string $userMessage,
         int $maxTokens,
-        float $temperature
+        float $temperature,
     ): ?TextResult {
         $this->logger?->debug('OpenRouter: Trying model', ['model' => $model]);
 
@@ -119,7 +115,7 @@ class OpenRouterTextProvider implements TextProviderInterface
 
         $response = $this->httpClient->request('POST', self::API_URL, [
             'headers' => [
-                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Authorization' => 'Bearer '.$this->apiKey,
                 'Content-Type' => 'application/json',
                 'HTTP-Referer' => $this->referer,
                 'X-Title' => $this->title,
@@ -139,6 +135,7 @@ class OpenRouterTextProvider implements TextProviderInterface
                 'model' => $model,
                 'status' => $statusCode,
             ]);
+
             return null;
         }
 
@@ -146,6 +143,7 @@ class OpenRouterTextProvider implements TextProviderInterface
 
         if (!isset($data['choices'][0]['message']['content'])) {
             $this->logger?->warning('OpenRouter: Response missing content', ['model' => $model]);
+
             return null;
         }
 
@@ -153,12 +151,13 @@ class OpenRouterTextProvider implements TextProviderInterface
 
         if (empty($text)) {
             $this->logger?->warning('OpenRouter: Empty response', ['model' => $model]);
+
             return null;
         }
 
         $this->logger?->info('OpenRouter: Text generated successfully', [
             'model' => $model,
-            'response_length' => strlen($text),
+            'response_length' => \strlen($text),
         ]);
 
         // OpenRouter provides token usage in the response
@@ -175,7 +174,7 @@ class OpenRouterTextProvider implements TextProviderInterface
     }
 
     /**
-     * Get the primary model
+     * Get the primary model.
      */
     public function getModel(): string
     {
@@ -183,7 +182,7 @@ class OpenRouterTextProvider implements TextProviderInterface
     }
 
     /**
-     * Get the list of fallback models
+     * Get the list of fallback models.
      */
     public function getFallbackModels(): array
     {

@@ -122,7 +122,7 @@ trait AiImageHistoryTrait
             return $this->subject;
         }
 
-        return $this->subject . ', ' . $this->style;
+        return $this->subject.', '.$this->style;
     }
 
     /**

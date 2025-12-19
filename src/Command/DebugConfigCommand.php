@@ -75,7 +75,7 @@ class DebugConfigCommand extends Command
         } else {
             $io->table(
                 ['Key', 'Label'],
-                array_map(fn($k, $v) => [$k, $v], array_keys($styles), array_values($styles))
+                array_map(fn ($k, $v) => [$k, $v], array_keys($styles), array_values($styles))
             );
         }
 
@@ -87,7 +87,7 @@ class DebugConfigCommand extends Command
         } else {
             $io->table(
                 ['Key', 'Label'],
-                array_map(fn($k, $v) => [$k, $v], array_keys($compositions), array_values($compositions))
+                array_map(fn ($k, $v) => [$k, $v], array_keys($compositions), array_values($compositions))
             );
         }
 
@@ -99,7 +99,7 @@ class DebugConfigCommand extends Command
         } else {
             $io->table(
                 ['Key', 'Label'],
-                array_map(fn($k, $v) => [$k, $v], array_keys($palettes), array_values($palettes))
+                array_map(fn ($k, $v) => [$k, $v], array_keys($palettes), array_values($palettes))
             );
         }
 
@@ -111,7 +111,7 @@ class DebugConfigCommand extends Command
         } else {
             $io->table(
                 ['Key', 'Label'],
-                array_map(fn($k, $v) => [$k, $v], array_keys($extras), array_values($extras))
+                array_map(fn ($k, $v) => [$k, $v], array_keys($extras), array_values($extras))
             );
         }
 
@@ -150,8 +150,8 @@ class DebugConfigCommand extends Command
                 $template = $this->promptTemplates->getTemplate($key);
                 $description = $template['description'] ?? '-';
                 // Truncate description if too long
-                if (strlen($description) > 60) {
-                    $description = substr($description, 0, 57) . '...';
+                if (\strlen($description) > 60) {
+                    $description = substr($description, 0, 57).'...';
                 }
                 $rows[] = [
                     $key,

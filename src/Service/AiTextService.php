@@ -23,10 +23,10 @@ class AiTextService
     }
 
     /**
-     * Generate text using available providers with fallback
+     * Generate text using available providers with fallback.
      *
      * @param string $systemPrompt The system prompt/instructions
-     * @param string $userMessage The user message/content to process
+     * @param string $userMessage  The user message/content to process
      * @param array{
      *     model?: string,
      *     temperature?: float,
@@ -45,10 +45,7 @@ class AiTextService
         if ($preferredProvider !== null) {
             $provider = $this->findProvider($preferredProvider);
             if ($provider === null) {
-                throw new AiProviderException(
-                    message: sprintf('Provider "%s" not found', $preferredProvider),
-                    provider: $preferredProvider
-                );
+                throw new AiProviderException(message: \sprintf('Provider "%s" not found', $preferredProvider), provider: $preferredProvider);
             }
 
             return $this->generateWithRetries($provider, $systemPrompt, $userMessage, $options);
@@ -80,19 +77,16 @@ class AiTextService
 
         // All providers failed
         $errorDetails = implode('; ', array_map(
-            fn(string $provider, string $error) => sprintf('%s: %s', $provider, $error),
+            fn (string $provider, string $error) => \sprintf('%s: %s', $provider, $error),
             array_keys($errors),
             array_values($errors)
         ));
 
-        throw new AiProviderException(
-            message: sprintf('All text providers failed: %s', $errorDetails ?: 'No providers available'),
-            provider: 'all'
-        );
+        throw new AiProviderException(message: \sprintf('All text providers failed: %s', $errorDetails ?: 'No providers available'), provider: 'all');
     }
 
     /**
-     * Get list of available provider names
+     * Get list of available provider names.
      *
      * @return array<string>
      */
@@ -104,20 +98,22 @@ class AiTextService
                 $available[] = $provider->getName();
             }
         }
+
         return $available;
     }
 
     /**
-     * Check if a specific provider is available
+     * Check if a specific provider is available.
      */
     public function isProviderAvailable(string $name): bool
     {
         $provider = $this->findProvider($name);
+
         return $provider !== null && $provider->isAvailable();
     }
 
     /**
-     * Find a provider by name
+     * Find a provider by name.
      */
     private function findProvider(string $name): ?TextProviderInterface
     {
@@ -126,21 +122,22 @@ class AiTextService
                 return $provider;
             }
         }
+
         return null;
     }
 
     /**
-     * Generate with retry logic
+     * Generate with retry logic.
      */
     private function generateWithRetries(
         TextProviderInterface $provider,
         string $systemPrompt,
         string $userMessage,
-        array $options
+        array $options,
     ): TextResult {
         $lastException = null;
 
-        for ($attempt = 1; $attempt <= $this->retries; $attempt++) {
+        for ($attempt = 1; $attempt <= $this->retries; ++$attempt) {
             try {
                 return $provider->generate($systemPrompt, $userMessage, $options);
             } catch (AiProviderException $e) {
@@ -164,9 +161,6 @@ class AiTextService
             }
         }
 
-        throw $lastException ?? new AiProviderException(
-            message: 'Generation failed after retries',
-            provider: $provider->getName()
-        );
+        throw $lastException ?? new AiProviderException(message: 'Generation failed after retries', provider: $provider->getName());
     }
 }

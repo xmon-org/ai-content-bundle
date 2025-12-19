@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Pre-commit hook: ejecuta PHP-CS-Fixer antes de cada commit
+
+echo "🔧 Ejecutando PHP-CS-Fixer..."
+
+# Verificar si vendor existe
+if [ ! -d "vendor" ]; then
+    echo "⚠️  vendor/ no existe. Ejecuta 'composer install' primero."
+    exit 1
+fi
+
+# Ejecutar cs-fix solo en archivos staged
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.php$')
+
+if [ -z "$STAGED_FILES" ]; then
+    echo "✅ No hay archivos PHP staged, saltando CS-Fixer."
+    exit 0
+fi
+
+# Ejecutar cs-fix en los archivos staged
+echo "$STAGED_FILES" | xargs vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --quiet
+
+# Re-añadir los archivos arreglados al stage
+echo "$STAGED_FILES" | xargs git add
+
+echo "✅ PHP-CS-Fixer completado."
+exit 0

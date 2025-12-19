@@ -23,7 +23,7 @@ class AiImageService
     }
 
     /**
-     * Generate an image using available providers with fallback
+     * Generate an image using available providers with fallback.
      *
      * @param string $prompt The text prompt describing the image
      * @param array{
@@ -47,10 +47,7 @@ class AiImageService
         if ($preferredProvider !== null) {
             $provider = $this->findProvider($preferredProvider);
             if ($provider === null) {
-                throw new AiProviderException(
-                    sprintf('Provider "%s" not found', $preferredProvider),
-                    $preferredProvider
-                );
+                throw new AiProviderException(\sprintf('Provider "%s" not found', $preferredProvider), $preferredProvider);
             }
 
             return $this->generateWithRetries($provider, $prompt, $options);
@@ -82,19 +79,16 @@ class AiImageService
 
         // All providers failed
         $errorDetails = implode('; ', array_map(
-            fn(string $provider, string $error) => sprintf('%s: %s', $provider, $error),
+            fn (string $provider, string $error) => \sprintf('%s: %s', $provider, $error),
             array_keys($errors),
             array_values($errors)
         ));
 
-        throw new AiProviderException(
-            sprintf('All image providers failed: %s', $errorDetails ?: 'No providers available'),
-            'all'
-        );
+        throw new AiProviderException(\sprintf('All image providers failed: %s', $errorDetails ?: 'No providers available'), 'all');
     }
 
     /**
-     * Get list of available provider names
+     * Get list of available provider names.
      *
      * @return array<string>
      */
@@ -106,20 +100,22 @@ class AiImageService
                 $available[] = $provider->getName();
             }
         }
+
         return $available;
     }
 
     /**
-     * Check if a specific provider is available
+     * Check if a specific provider is available.
      */
     public function isProviderAvailable(string $name): bool
     {
         $provider = $this->findProvider($name);
+
         return $provider !== null && $provider->isAvailable();
     }
 
     /**
-     * Find a provider by name
+     * Find a provider by name.
      */
     private function findProvider(string $name): ?ImageProviderInterface
     {
@@ -128,20 +124,21 @@ class AiImageService
                 return $provider;
             }
         }
+
         return null;
     }
 
     /**
-     * Generate with retry logic
+     * Generate with retry logic.
      */
     private function generateWithRetries(
         ImageProviderInterface $provider,
         string $prompt,
-        array $options
+        array $options,
     ): ImageResult {
         $lastException = null;
 
-        for ($attempt = 1; $attempt <= $this->retries; $attempt++) {
+        for ($attempt = 1; $attempt <= $this->retries; ++$attempt) {
             try {
                 return $provider->generate($prompt, $options);
             } catch (AiProviderException $e) {
@@ -165,9 +162,6 @@ class AiImageService
             }
         }
 
-        throw $lastException ?? new AiProviderException(
-            'Generation failed after retries',
-            $provider->getName()
-        );
+        throw $lastException ?? new AiProviderException('Generation failed after retries', $provider->getName());
     }
 }

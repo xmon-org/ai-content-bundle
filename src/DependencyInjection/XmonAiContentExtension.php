@@ -26,7 +26,7 @@ class XmonAiContentExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../../config'));
+        $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../../config'));
 
         // Always load core services (image providers)
         $loader->load('services.yaml');
@@ -380,7 +380,7 @@ Guidelines:
 - Keep the summary proportional to the original length
 - Preserve important names, dates, and specific details
 PROMPT,
-                'user' => "{content}",
+                'user' => '{content}',
             ],
             'title_generator' => [
                 'name' => 'Title Generator',
@@ -434,7 +434,7 @@ GUIDELINES:
 
 OUTPUT: Only valid JSON, no explanations, no markdown code blocks.
 PROMPT,
-                'user' => "{content}",
+                'user' => '{content}',
             ],
         ];
 
@@ -460,7 +460,7 @@ PROMPT,
     }
 
     /**
-     * Filter out presets that reference non-existent options (due to disabled defaults)
+     * Filter out presets that reference non-existent options (due to disabled defaults).
      */
     private function filterBrokenPresets(array $presets, array $styles, array $compositions, array $palettes, array $extras): array
     {

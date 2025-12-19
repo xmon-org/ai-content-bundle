@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Xmon\AiContentBundle\Model;
 
 /**
- * Immutable DTO representing the result of an image generation
+ * Immutable DTO representing the result of an image generation.
  */
 final readonly class ImageResult
 {
@@ -22,7 +22,7 @@ final readonly class ImageResult
     }
 
     /**
-     * Get the raw image bytes
+     * Get the raw image bytes.
      */
     public function getBytes(): string
     {
@@ -30,7 +30,7 @@ final readonly class ImageResult
     }
 
     /**
-     * Get the MIME type (e.g., 'image/png', 'image/jpeg')
+     * Get the MIME type (e.g., 'image/png', 'image/jpeg').
      */
     public function getMimeType(): string
     {
@@ -38,7 +38,7 @@ final readonly class ImageResult
     }
 
     /**
-     * Get the provider name that generated the image
+     * Get the provider name that generated the image.
      */
     public function getProvider(): string
     {
@@ -46,7 +46,7 @@ final readonly class ImageResult
     }
 
     /**
-     * Get the image width in pixels
+     * Get the image width in pixels.
      */
     public function getWidth(): int
     {
@@ -54,7 +54,7 @@ final readonly class ImageResult
     }
 
     /**
-     * Get the image height in pixels
+     * Get the image height in pixels.
      */
     public function getHeight(): int
     {
@@ -62,7 +62,7 @@ final readonly class ImageResult
     }
 
     /**
-     * Get the model used for generation (if available)
+     * Get the model used for generation (if available).
      */
     public function getModel(): ?string
     {
@@ -70,7 +70,7 @@ final readonly class ImageResult
     }
 
     /**
-     * Get the seed used for generation (if available)
+     * Get the seed used for generation (if available).
      */
     public function getSeed(): ?int
     {
@@ -78,7 +78,7 @@ final readonly class ImageResult
     }
 
     /**
-     * Get the prompt used for generation
+     * Get the prompt used for generation.
      */
     public function getPrompt(): ?string
     {
@@ -86,7 +86,7 @@ final readonly class ImageResult
     }
 
     /**
-     * Get the file extension based on MIME type
+     * Get the file extension based on MIME type.
      */
     public function getExtension(): string
     {
@@ -100,7 +100,7 @@ final readonly class ImageResult
     }
 
     /**
-     * Get the image as a base64 encoded string
+     * Get the image as a base64 encoded string.
      */
     public function toBase64(): string
     {
@@ -108,10 +108,10 @@ final readonly class ImageResult
     }
 
     /**
-     * Get the image as a data URI
+     * Get the image as a data URI.
      */
     public function toDataUri(): string
     {
-        return 'data:' . $this->mimeType . ';base64,' . $this->toBase64();
+        return 'data:'.$this->mimeType.';base64,'.$this->toBase64();
     }
 }

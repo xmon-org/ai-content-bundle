@@ -14,10 +14,10 @@ namespace Xmon\AiContentBundle\Service;
 class ImageOptionsService
 {
     /**
-     * @param array<string, array{label: string, prompt: string}> $styles
-     * @param array<string, array{label: string, prompt: string}> $compositions
-     * @param array<string, array{label: string, prompt: string}> $palettes
-     * @param array<string, array{label: string, prompt: string}> $extras
+     * @param array<string, array{label: string, prompt: string}>                                                          $styles
+     * @param array<string, array{label: string, prompt: string}>                                                          $compositions
+     * @param array<string, array{label: string, prompt: string}>                                                          $palettes
+     * @param array<string, array{label: string, prompt: string}>                                                          $extras
      * @param array<string, array{name: string, style: ?string, composition: ?string, palette: ?string, extras: string[]}> $presets
      */
     public function __construct(
@@ -230,6 +230,7 @@ class ImageOptionsService
      * Extract labels from an options array.
      *
      * @param array<string, array{label: string, prompt: string}> $options
+     *
      * @return array<string, string>
      */
     private function extractLabels(array $options): array

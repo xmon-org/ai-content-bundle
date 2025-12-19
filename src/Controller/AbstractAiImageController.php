@@ -85,8 +85,8 @@ abstract class AbstractAiImageController extends AbstractController
             // Generate the subject using the template
             $result = $this->textService->generate(
                 systemPrompt: $template['system'] ?? 'You are a helpful assistant that creates image descriptions.',
-                userMessage: sprintf(
-                    $template['user'] ?? "Create a visual description for: %s",
+                userMessage: \sprintf(
+                    $template['user'] ?? 'Create a visual description for: %s',
                     $entity->getContentForImageGeneration()
                 ),
             );
@@ -97,7 +97,7 @@ abstract class AbstractAiImageController extends AbstractController
                 'model' => $result->getModel(),
             ]);
         } catch (\Exception $e) {
-            return $this->errorResponse('Error: ' . $e->getMessage());
+            return $this->errorResponse('Error: '.$e->getMessage());
         }
     }
 
@@ -136,7 +136,7 @@ abstract class AbstractAiImageController extends AbstractController
             $baseStyle = $this->resolveStyle($styleMode, $request);
 
             // Build full prompt: subject + style
-            $fullPrompt = trim($subject) . ($baseStyle ? ', ' . $baseStyle : '');
+            $fullPrompt = trim($subject).($baseStyle ? ', '.$baseStyle : '');
 
             // Generate the image
             $imageResult = $this->imageService->generate($fullPrompt);
@@ -168,7 +168,7 @@ abstract class AbstractAiImageController extends AbstractController
                 'promptUsed' => $fullPrompt,
             ]);
         } catch (\Exception $e) {
-            return $this->errorResponse('Error: ' . $e->getMessage());
+            return $this->errorResponse('Error: '.$e->getMessage());
         }
     }
 
@@ -199,7 +199,7 @@ abstract class AbstractAiImageController extends AbstractController
                 'style' => $historyItem->getStyle(),
             ]);
         } catch (\Exception $e) {
-            return $this->errorResponse('Error: ' . $e->getMessage());
+            return $this->errorResponse('Error: '.$e->getMessage());
         }
     }
 
@@ -235,7 +235,7 @@ abstract class AbstractAiImageController extends AbstractController
                 'message' => 'Image deleted from history',
             ]);
         } catch (\Exception $e) {
-            return $this->errorResponse('Error: ' . $e->getMessage());
+            return $this->errorResponse('Error: '.$e->getMessage());
         }
     }
 
@@ -301,7 +301,7 @@ abstract class AbstractAiImageController extends AbstractController
      */
     protected function generateFilename(AiImageAwareInterface $entity): string
     {
-        return sprintf('ai-image-%d-%s', $entity->getId(), date('YmdHis'));
+        return \sprintf('ai-image-%d-%s', $entity->getId(), date('YmdHis'));
     }
 
     // ==========================================
@@ -323,7 +323,7 @@ abstract class AbstractAiImageController extends AbstractController
         ?object $media,
         string $subject,
         string $style,
-        string $model
+        string $model,
     ): ?AiImageHistoryInterface;
 
     /**

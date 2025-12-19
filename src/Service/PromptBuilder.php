@@ -56,7 +56,7 @@ class PromptBuilder
         if (!empty($options['style'])) {
             $prompt = $this->imageOptions->getStylePrompt($options['style']);
             if ($prompt === null) {
-                throw new AiProviderException(sprintf('Unknown style: %s', $options['style']));
+                throw new AiProviderException(\sprintf('Unknown style: %s', $options['style']));
             }
             $parts[] = $prompt;
         }
@@ -65,7 +65,7 @@ class PromptBuilder
         if (!empty($options['composition'])) {
             $prompt = $this->imageOptions->getCompositionPrompt($options['composition']);
             if ($prompt === null) {
-                throw new AiProviderException(sprintf('Unknown composition: %s', $options['composition']));
+                throw new AiProviderException(\sprintf('Unknown composition: %s', $options['composition']));
             }
             $parts[] = $prompt;
         }
@@ -74,17 +74,17 @@ class PromptBuilder
         if (!empty($options['palette'])) {
             $prompt = $this->imageOptions->getPalettePrompt($options['palette']);
             if ($prompt === null) {
-                throw new AiProviderException(sprintf('Unknown palette: %s', $options['palette']));
+                throw new AiProviderException(\sprintf('Unknown palette: %s', $options['palette']));
             }
             $parts[] = $prompt;
         }
 
         // Add extras (predefined modifiers)
-        if (!empty($options['extras']) && is_array($options['extras'])) {
+        if (!empty($options['extras']) && \is_array($options['extras'])) {
             foreach ($options['extras'] as $extraKey) {
                 $prompt = $this->imageOptions->getExtraPrompt($extraKey);
                 if ($prompt === null) {
-                    throw new AiProviderException(sprintf('Unknown extra: %s', $extraKey));
+                    throw new AiProviderException(\sprintf('Unknown extra: %s', $extraKey));
                 }
                 $parts[] = $prompt;
             }
@@ -115,7 +115,7 @@ class PromptBuilder
      *
      * Convenience method for individual options usage.
      *
-     * @param string[] $extras
+     * @param string[]    $extras
      * @param string|null $customPrompt Free text to append at the end
      *
      * @throws AiProviderException If any option not found
@@ -157,7 +157,7 @@ class PromptBuilder
         $preset = $this->imageOptions->getPreset($presetKey);
 
         if ($preset === null) {
-            throw new AiProviderException(sprintf('Unknown preset: %s', $presetKey));
+            throw new AiProviderException(\sprintf('Unknown preset: %s', $presetKey));
         }
 
         return $this->buildStyleOnly([
@@ -202,7 +202,7 @@ class PromptBuilder
         }
 
         // Add extras
-        if (!empty($options['extras']) && is_array($options['extras'])) {
+        if (!empty($options['extras']) && \is_array($options['extras'])) {
             foreach ($options['extras'] as $extraKey) {
                 $prompt = $this->imageOptions->getExtraPrompt($extraKey);
                 if ($prompt !== null) {
@@ -245,16 +245,16 @@ class PromptBuilder
      *
      * @param array<string, mixed> $overrides Additional options that override preset
      *
-     * @return array{style?: string, composition?: string, palette?: string, extras?: string[]}
-     *
      * @throws AiProviderException If preset not found
+     *
+     * @return array{style?: string, composition?: string, palette?: string, extras?: string[]}
      */
     private function resolvePreset(string $presetKey, array $overrides = []): array
     {
         $preset = $this->imageOptions->getPreset($presetKey);
 
         if ($preset === null) {
-            throw new AiProviderException(sprintf('Unknown preset: %s', $presetKey));
+            throw new AiProviderException(\sprintf('Unknown preset: %s', $presetKey));
         }
 
         // Start with preset values

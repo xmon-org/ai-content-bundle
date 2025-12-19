@@ -33,7 +33,7 @@ interface AiImageHistoryInterface
 
     /**
      * Get the subject (WHAT to generate).
-     * Example: "A serene Japanese dojo with morning light"
+     * Example: "A serene Japanese dojo with morning light".
      */
     public function getSubject(): ?string;
 
@@ -44,7 +44,7 @@ interface AiImageHistoryInterface
 
     /**
      * Get the style (HOW to generate).
-     * Example: "sumi-e style, monochrome, atmospheric"
+     * Example: "sumi-e style, monochrome, atmospheric".
      */
     public function getStyle(): ?string;
 
@@ -55,7 +55,7 @@ interface AiImageHistoryInterface
 
     /**
      * Get the AI model used for generation.
-     * Example: "flux", "dall-e-3"
+     * Example: "flux", "dall-e-3".
      */
     public function getModel(): ?string;
 
