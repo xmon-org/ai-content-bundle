@@ -1,0 +1,223 @@
+{#
+ # Modal template for AI image regeneration.
+ # This is a full-featured modal with subject input, style selector, and history.
+ #}
+<div class="modal fade xmon-ai-image-modal" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="{{ modal_id }}Label">{{ modal_title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    {# Left column: Form #}
+                    <div class="col-lg-6">
+                        {# Subject input #}
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ field_id }}-subject">
+                                Image Description (Subject)
+                            </label>
+                            <div class="input-group">
+                                <textarea class="form-control xmon-ai-subject-input"
+                                          id="{{ field_id }}-subject"
+                                          rows="3"
+                                          placeholder="Describe what should appear in the image...">{{ subject }}</textarea>
+                            </div>
+                            {% if generate_subject_endpoint %}
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary mt-2 xmon-ai-generate-subject-btn"
+                                    data-endpoint="{{ generate_subject_endpoint }}">
+                                <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                <i class="fa fa-lightbulb me-1"></i>
+                                {{ generate_subject_button_label }}
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        {# Style selector #}
+                        {% if show_style_selector %}
+                        <div class="mb-3 xmon-ai-style-section">
+                            <label class="form-label">Style</label>
+
+                            {# Mode tabs #}
+                            <ul class="nav nav-tabs mb-2" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#{{ field_id }}-global" type="button" role="tab" data-style-mode="global">
+                                        Global
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#{{ field_id }}-preset" type="button" role="tab" data-style-mode="preset">
+                                        Preset
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#{{ field_id }}-custom" type="button" role="tab" data-style-mode="custom">
+                                        Custom
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <input type="hidden" class="xmon-ai-style-mode-input" value="global">
+
+                            {# Tab content #}
+                            <div class="tab-content">
+                                {# Global tab #}
+                                <div class="tab-pane fade show active" id="{{ field_id }}-global" role="tabpanel">
+                                    <p class="text-muted small">Uses the default style from configuration.</p>
+                                    <code class="xmon-ai-global-preview d-block p-2 bg-light rounded"></code>
+                                </div>
+
+                                {# Preset tab #}
+                                <div class="tab-pane fade" id="{{ field_id }}-preset" role="tabpanel">
+                                    <select class="form-select xmon-ai-preset-select">
+                                        <option value="">Select a preset...</option>
+                                    </select>
+                                    <code class="xmon-ai-preset-preview d-block p-2 bg-light rounded mt-2"></code>
+                                </div>
+
+                                {# Custom tab #}
+                                <div class="tab-pane fade" id="{{ field_id }}-custom" role="tabpanel">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <label class="form-label small">Style</label>
+                                            <select class="form-select form-select-sm xmon-ai-style-select"></select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Composition</label>
+                                            <select class="form-select form-select-sm xmon-ai-composition-select"></select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Palette</label>
+                                            <select class="form-select form-select-sm xmon-ai-palette-select"></select>
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label small">Extra</label>
+                                            <input type="text" class="form-control form-control-sm xmon-ai-extra-input" placeholder="Additional instructions...">
+                                        </div>
+                                    </div>
+                                    <code class="xmon-ai-custom-preview d-block p-2 bg-light rounded mt-2"></code>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {# Generate button #}
+                        <div class="mb-3">
+                            <button type="button"
+                                    class="btn btn-primary w-100 xmon-ai-regenerate-btn"
+                                    data-endpoint="{{ regenerate_endpoint }}">
+                                <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                <i class="fa fa-image me-1"></i>
+                                Generate Image
+                            </button>
+                            <div class="xmon-ai-generation-timer text-center text-muted small mt-1 d-none">
+                                Generating... <span class="xmon-ai-timer-value">0</span>s
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Right column: Preview and comparison #}
+                    <div class="col-lg-6">
+                        <div class="row">
+                            {# Current image #}
+                            <div class="col-6">
+                                <div class="card">
+                                    <div class="card-header py-2">
+                                        <small class="fw-bold">Current</small>
+                                    </div>
+                                    <div class="card-body p-2 text-center">
+                                        {% if current_image_url %}
+                                        <img src="{{ current_image_url }}"
+                                             class="img-fluid xmon-ai-current-preview"
+                                             alt="Current image"
+                                             style="max-height: 200px; object-fit: contain;">
+                                        {% else %}
+                                        <div class="text-muted py-5 xmon-ai-no-image">
+                                            <i class="fa fa-image fa-3x mb-2"></i>
+                                            <p class="mb-0 small">No image</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# New image preview #}
+                            <div class="col-6">
+                                <div class="card">
+                                    <div class="card-header py-2">
+                                        <small class="fw-bold">New</small>
+                                    </div>
+                                    <div class="card-body p-2 text-center">
+                                        <div class="xmon-ai-new-preview-container">
+                                            <div class="text-muted py-5 xmon-ai-new-placeholder">
+                                                <i class="fa fa-magic fa-3x mb-2"></i>
+                                                <p class="mb-0 small">Generate to preview</p>
+                                            </div>
+                                            <img class="img-fluid xmon-ai-new-preview d-none"
+                                                 alt="New image"
+                                                 style="max-height: 200px; object-fit: contain;">
+                                        </div>
+                                    </div>
+                                    <div class="card-footer py-2 xmon-ai-new-actions d-none">
+                                        <button type="button" class="btn btn-success btn-sm w-100 xmon-ai-use-new-btn">
+                                            <i class="fa fa-check me-1"></i> Use this image
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {# History #}
+                        {% if show_history and history|length > 0 %}
+                        <div class="mt-3">
+                            <label class="form-label">History</label>
+                            <div class="xmon-ai-history-grid row g-2" style="max-height: 250px; overflow-y: auto;">
+                                {% for item in history %}
+                                <div class="col-4 col-md-3 xmon-ai-history-item" data-history-id="{{ item.id }}">
+                                    <div class="card h-100 {% if item.isActual|default(false) %}border-success{% endif %}">
+                                        <img src="{{ item.imageUrl }}"
+                                             class="card-img-top"
+                                             alt="History {{ item.id }}"
+                                             style="height: 80px; object-fit: cover; cursor: pointer;"
+                                             data-media-id="{{ item.mediaId }}"
+                                             data-subject="{{ item.subject }}"
+                                             data-style="{{ item.style }}">
+                                        <div class="card-body p-1">
+                                            <div class="btn-group btn-group-sm w-100">
+                                                {% if use_history_endpoint %}
+                                                <button type="button"
+                                                        class="btn btn-outline-success xmon-ai-use-history-btn"
+                                                        data-endpoint="{{ use_history_endpoint|replace({'HISTORY_ID': item.id}) }}"
+                                                        title="Use this image"
+                                                        {% if item.isActual|default(false) %}disabled{% endif %}>
+                                                    <i class="fa fa-check"></i>
+                                                </button>
+                                                {% endif %}
+                                                {% if delete_history_endpoint %}
+                                                <button type="button"
+                                                        class="btn btn-outline-danger xmon-ai-delete-history-btn"
+                                                        data-endpoint="{{ delete_history_endpoint|replace({'HISTORY_ID': item.id}) }}"
+                                                        title="Delete"
+                                                        {% if item.isActual|default(false) %}disabled{% endif %}>
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

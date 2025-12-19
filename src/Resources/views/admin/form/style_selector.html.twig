@@ -1,0 +1,75 @@
+{#
+ # Template for StyleSelectorType
+ # Renders the style selector with tabs for Global/Preset/Custom modes.
+ #}
+{% block xmon_ai_style_widget %}
+<div class="xmon-ai-style-selector" data-ai-style-selector>
+    {# Hidden inputs for JavaScript data #}
+    <script type="application/json" class="xmon-ai-styles-data">{{ styles_data|json_encode|raw }}</script>
+    <script type="application/json" class="xmon-ai-compositions-data">{{ compositions_data|json_encode|raw }}</script>
+    <script type="application/json" class="xmon-ai-palettes-data">{{ palettes_data|json_encode|raw }}</script>
+    <script type="application/json" class="xmon-ai-presets-data">{{ presets_data|json_encode|raw }}</script>
+    <input type="hidden" class="xmon-ai-global-style" value="{{ global_style_preview }}">
+
+    {# Mode selector (radio buttons) #}
+    <div class="xmon-ai-mode-selector mb-3">
+        {{ form_widget(form.mode) }}
+    </div>
+
+    {# Preset selector (shown when mode = preset) #}
+    {% if form.preset is defined %}
+    <div class="xmon-ai-preset-panel xmon-ai-panel" data-panel="preset">
+        {{ form_row(form.preset) }}
+    </div>
+    {% endif %}
+
+    {# Custom style fields (shown when mode = custom) #}
+    <div class="xmon-ai-custom-panel xmon-ai-panel" data-panel="custom">
+        <div class="row">
+            {% if form.style is defined %}
+            <div class="col-md-6 col-lg-3">
+                {{ form_row(form.style) }}
+            </div>
+            {% endif %}
+
+            {% if form.composition is defined %}
+            <div class="col-md-6 col-lg-3">
+                {{ form_row(form.composition) }}
+            </div>
+            {% endif %}
+
+            {% if form.palette is defined %}
+            <div class="col-md-6 col-lg-3">
+                {{ form_row(form.palette) }}
+            </div>
+            {% endif %}
+
+            {% if form.extra is defined %}
+            <div class="col-md-6 col-lg-3">
+                {{ form_row(form.extra) }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Style preview #}
+    {% if show_preview %}
+    <div class="xmon-ai-style-preview mt-3">
+        <label class="form-label">Style Preview:</label>
+        <div class="xmon-ai-preview-text border rounded p-2 bg-light">
+            <code class="xmon-ai-preview-content">{{ global_style_preview }}</code>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block xmon_ai_style_row %}
+<div class="form-group">
+    {% if label is not same as(false) %}
+    {{ form_label(form) }}
+    {% endif %}
+    {{ form_widget(form) }}
+    {{ form_errors(form) }}
+</div>
+{% endblock %}

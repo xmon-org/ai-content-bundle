@@ -1,0 +1,19 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    # Form Types
+    Xmon\AiContentBundle\Form\AiTextFieldType:
+        tags: ['form.type']
+
+    Xmon\AiContentBundle\Form\AiImageFieldType:
+        tags: ['form.type']
+
+    Xmon\AiContentBundle\Form\StyleSelectorType:
+        tags: ['form.type']
+
+    # Admin Extension
+    Xmon\AiContentBundle\Admin\AiImageAdminExtension:
+        tags:
+            - { name: 'sonata.admin.extension' }

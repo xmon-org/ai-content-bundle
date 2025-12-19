@@ -10,6 +10,7 @@ Symfony 7 bundle for AI content generation (text and images) with automatic fall
 - **Style presets** for consistent image generation
 - **Configurable prompt templates** for text generation
 - **SonataMedia integration** (optional)
+- **Sonata Admin integration** with image regeneration UI (optional)
 
 ## Requirements
 
@@ -96,6 +97,7 @@ class MyService
 - [Styles & Presets](docs/guides/styles-presets.md) - Control image styles
 - [Prompt Templates](docs/guides/prompt-templates.md) - Configurable prompts
 - [Custom Providers](docs/guides/custom-providers.md) - Add your own providers
+- [Admin Integration](docs/guides/admin-integration.md) - Sonata Admin integration
 
 ### Reference
 - [Configuration](docs/reference/configuration.md) - Full YAML reference
@@ -137,7 +139,7 @@ Shows configured providers, styles, presets, and prompt templates.
 - [x] Phase 3: Text providers (Gemini, OpenRouter, Pollinations)
 - [x] Phase 4: Styles/presets system (ImageOptionsService, PromptBuilder)
 - [x] Phase 5: Configurable prompts (PromptTemplateService)
-- [ ] Phase 6: Admin regeneration UI
+- [x] Phase 6: Admin regeneration UI (Form Types, Controller, Templates)
 - [ ] Phase 7: Aikido project migration
 - [ ] Phase 8: Packagist publication
 

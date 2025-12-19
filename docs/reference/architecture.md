@@ -25,12 +25,26 @@ xmon/ai-content-bundle/
 ├── config/
 │   ├── services.yaml                # Core image services (always)
 │   ├── services_text.yaml           # Text providers (always)
-│   └── services_media.yaml          # SonataMedia (if installed)
+│   ├── services_media.yaml          # SonataMedia (if installed)
+│   └── services_admin.yaml          # Sonata Admin (if installed)
 └── src/
     ├── XmonAiContentBundle.php      # Bundle class
     ├── DependencyInjection/
     │   ├── Configuration.php        # Validated YAML configuration
     │   └── XmonAiContentExtension.php # Conditional service loading
+    ├── Admin/
+    │   └── AiImageAdminExtension.php # Sonata Admin extension
+    ├── Controller/
+    │   └── AbstractAiImageController.php # Base controller for regeneration
+    ├── Entity/
+    │   ├── AiImageAwareInterface.php     # Interface for entities with AI images
+    │   ├── AiImageAwareTrait.php         # Trait with common methods
+    │   ├── AiImageHistoryInterface.php   # Interface for image history
+    │   └── AiImageHistoryTrait.php       # Trait for history entities
+    ├── Form/
+    │   ├── AiTextFieldType.php      # Textarea with AI generation
+    │   ├── AiImageFieldType.php     # Image with regeneration modal
+    │   └── StyleSelectorType.php    # Style mode selector
     ├── Provider/
     │   ├── ImageProviderInterface.php
     │   ├── TextProviderInterface.php # With #[AutoconfigureTag]
@@ -52,6 +66,13 @@ xmon/ai-content-bundle/
     │   └── TextResult.php           # Immutable DTO
     ├── Command/
     │   └── DebugConfigCommand.php   # xmon:ai:debug
+    ├── Resources/
+    │   ├── public/
+    │   │   ├── css/ai-image.css     # Admin styles
+    │   │   └── js/ai-image-regenerator.js # Admin JavaScript
+    │   └── views/
+    │       ├── form/fields.html.twig # Form theme
+    │       └── admin/form/          # Admin templates
     └── Exception/
         ├── AiProviderException.php
         └── AllProvidersFailedException.php
@@ -69,6 +90,30 @@ xmon/ai-content-bundle/
 | `PromptBuilder` | Combines subject + options into prompts |
 | `PromptTemplateService` | Manages configurable prompt templates |
 | `MediaStorageService` | Saves images to SonataMedia (conditional) |
+
+### Form Types (Sonata Admin)
+
+| Form Type | Description |
+|-----------|-------------|
+| `AiTextFieldType` | Textarea with "Generate with AI" button |
+| `AiImageFieldType` | Image field with regeneration modal |
+| `StyleSelectorType` | Style mode selector (Global/Preset/Custom) |
+
+### Admin Components
+
+| Component | Description |
+|-----------|-------------|
+| `AiImageAdminExtension` | Extension that adds CSS/JS assets to Admin |
+| `AbstractAiImageController` | Base controller with regeneration logic |
+
+### Entity Interfaces
+
+| Interface | Description |
+|-----------|-------------|
+| `AiImageAwareInterface` | For entities that have AI-generated images |
+| `AiImageHistoryInterface` | For image history entities |
+| `AiImageAwareTrait` | Default implementation of AiImageAwareInterface |
+| `AiImageHistoryTrait` | Default implementation of AiImageHistoryInterface |
 
 ### Providers
 
@@ -126,8 +171,15 @@ Services are loaded conditionally based on dependencies:
 
 ```php
 // In XmonAiContentExtension.php
-if (interface_exists(MediaInterface::class)) {
+
+// SonataMedia integration
+if (interface_exists(MediaManagerInterface::class)) {
     $loader->load('services_media.yaml');
+}
+
+// Sonata Admin integration
+if (interface_exists(AdminInterface::class)) {
+    $loader->load('services_admin.yaml');
 }
 ```
 
@@ -138,8 +190,11 @@ if (interface_exists(MediaInterface::class)) {
 | `xmon_ai_content.text_provider` | Register text providers |
 | `xmon_ai_content.image_provider` | Register image providers |
 | `console.command` | Register console commands |
+| `form.type` | Register form types |
+| `sonata.admin.extension` | Register admin extensions |
 
 ## Related
 
 - [Configuration Reference](configuration.md) - Full YAML options
 - [Custom Providers](../guides/custom-providers.md) - Extend the bundle
+- [Admin Integration](../guides/admin-integration.md) - Sonata Admin integration

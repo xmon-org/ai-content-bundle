@@ -1,0 +1,94 @@
+{#
+ # Form theme for xmon/ai-content-bundle form types.
+ #
+ # Include this in your Twig configuration:
+ #
+ #     twig:
+ #         form_themes:
+ #             - '@XmonAiContent/form/fields.html.twig'
+ #}
+
+{# Include the specialized templates #}
+{% block xmon_ai_text_widget %}
+    {% include '@XmonAiContent/admin/form/ai_text_field.html.twig' with {
+        ai_endpoint: ai_endpoint,
+        ai_button_label: ai_button_label,
+        ai_method: ai_method,
+        ai_source_fields: ai_source_fields,
+        ai_extra_data: ai_extra_data,
+        ai_button_class: ai_button_class,
+        ai_show_spinner: ai_show_spinner,
+        ai_confirm_overwrite: ai_confirm_overwrite,
+        ai_confirm_message: ai_confirm_message,
+    } only %}
+{% endblock %}
+
+{% block xmon_ai_style_widget %}
+    {{ form_widget(form.mode) }}
+
+    {% if form.preset is defined %}
+    <div class="xmon-ai-preset-panel" style="display: none;">
+        {{ form_row(form.preset) }}
+    </div>
+    {% endif %}
+
+    <div class="xmon-ai-custom-panel" style="display: none;">
+        <div class="row">
+            {% if form.style is defined %}
+            <div class="col-md-6 col-lg-3">{{ form_row(form.style) }}</div>
+            {% endif %}
+            {% if form.composition is defined %}
+            <div class="col-md-6 col-lg-3">{{ form_row(form.composition) }}</div>
+            {% endif %}
+            {% if form.palette is defined %}
+            <div class="col-md-6 col-lg-3">{{ form_row(form.palette) }}</div>
+            {% endif %}
+            {% if form.extra is defined %}
+            <div class="col-md-6 col-lg-3">{{ form_row(form.extra) }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if show_preview %}
+    <div class="xmon-ai-style-preview mt-2">
+        <label class="form-label small">Style Preview:</label>
+        <div class="p-2 bg-light border rounded">
+            <code class="small">{{ global_style_preview }}</code>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block xmon_ai_image_widget %}
+    <div class="xmon-ai-image-field">
+        {% if ai_current_image_url %}
+        <div class="mb-2">
+            <img src="{{ ai_current_image_url }}" class="img-thumbnail" style="max-width: 150px; max-height: 100px;" alt="Current image">
+        </div>
+        {% endif %}
+
+        {% if ai_regenerate_endpoint %}
+        <button type="button" class="{{ ai_button_class }}" data-bs-toggle="modal" data-bs-target="#{{ id }}-modal">
+            {{ ai_regenerate_button_label }}
+        </button>
+
+        {% include ai_modal_template with {
+            modal_id: id ~ '-modal',
+            field_id: id,
+            modal_title: ai_modal_title,
+            regenerate_endpoint: ai_regenerate_endpoint,
+            generate_subject_endpoint: ai_generate_subject_endpoint,
+            use_history_endpoint: ai_use_history_endpoint,
+            delete_history_endpoint: ai_delete_history_endpoint,
+            current_image_url: ai_current_image_url,
+            current_image_id: ai_current_image_id,
+            subject: ai_subject,
+            style: ai_style,
+            history: ai_history,
+            show_style_selector: ai_show_style_selector,
+            show_history: ai_show_history,
+            generate_subject_button_label: ai_generate_subject_button_label,
+        } %}
+        {% endif %}
+    </div>
+{% endblock %}

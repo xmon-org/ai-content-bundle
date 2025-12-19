@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Xmon\AiContentBundle\DependencyInjection;
 
+use Sonata\AdminBundle\Admin\AdminInterface;
 use Sonata\MediaBundle\Model\MediaManagerInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -39,6 +40,11 @@ class XmonAiContentExtension extends Extension
             $this->configureMediaStorage($container, $config['media'] ?? []);
         }
 
+        // Load Sonata Admin integration only if available
+        if ($this->isSonataAdminAvailable()) {
+            $loader->load('services_admin.yaml');
+        }
+
         // Configure providers
         $this->configureImageProviders($container, $config['image'] ?? []);
         $this->configureTextProviders($container, $config['text'] ?? []);
@@ -56,11 +62,19 @@ class XmonAiContentExtension extends Extension
     }
 
     /**
-     * Check if SonataMediaBundle is installed and available
+     * Check if SonataMediaBundle is installed and available.
      */
     private function isSonataMediaAvailable(): bool
     {
         return interface_exists(MediaManagerInterface::class);
+    }
+
+    /**
+     * Check if SonataAdminBundle is installed and available.
+     */
+    private function isSonataAdminAvailable(): bool
+    {
+        return interface_exists(AdminInterface::class);
     }
 
     private function configureImageProviders(ContainerBuilder $container, array $imageConfig): void

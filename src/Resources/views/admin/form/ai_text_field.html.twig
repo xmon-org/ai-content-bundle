@@ -1,0 +1,42 @@
+{#
+ # Template for AiTextFieldType
+ # Renders a textarea with an AI generation button.
+ #}
+{% block xmon_ai_text_widget %}
+<div class="xmon-ai-text-field" data-ai-text-field>
+    {# Render the textarea #}
+    {{ block('textarea_widget') }}
+
+    {% if ai_endpoint %}
+    <div class="xmon-ai-text-actions mt-2">
+        <button type="button"
+                class="xmon-ai-generate-btn {{ ai_button_class }}"
+                data-endpoint="{{ ai_endpoint }}"
+                data-method="{{ ai_method }}"
+                data-target="{{ id }}"
+                data-source-fields="{{ ai_source_fields|json_encode }}"
+                data-extra-data="{{ ai_extra_data|json_encode }}"
+                data-confirm-overwrite="{{ ai_confirm_overwrite ? 'true' : 'false' }}"
+                data-confirm-message="{{ ai_confirm_message }}">
+            {% if ai_show_spinner %}
+            <span class="xmon-ai-spinner spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            {% endif %}
+            <span class="xmon-ai-btn-text">{{ ai_button_label }}</span>
+        </button>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block xmon_ai_text_row %}
+<div class="form-group row">
+    {{ form_label(form) }}
+    <div class="{{ block('form_group_class') }}">
+        {{ form_widget(form) }}
+        {{ form_errors(form) }}
+        {% if help is defined and help is not empty %}
+        <small class="form-text text-muted">{{ help }}</small>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
