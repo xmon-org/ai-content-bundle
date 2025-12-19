@@ -873,11 +873,14 @@ Presets
 - [x] Fase 2: Integración SonataMedia
 - [x] Fase 3: Proveedores de texto (Gemini, OpenRouter, Pollinations)
 - [x] Fase 4: Sistema de estilos/presets (ImageOptionsService, PromptBuilder)
-- [ ] Fase 5: Entidades editables en Admin
-- [ ] Fase 6: System prompts configurables
-- [ ] Fase 7: UI de regeneración en Admin
-- [ ] Fase 8: Migración proyecto Aikido
-- [ ] Fase 9: Publicación en Packagist
+- [ ] Fase 5: System prompts configurables
+- [ ] Fase 6: UI de regeneración en Admin
+- [ ] Fase 7: Migración proyecto Aikido
+- [ ] Fase 8: Publicación en Packagist
+
+### Futuras mejoras (opcional)
+
+- [ ] Entidades editables en Admin (para gestionar estilos/presets desde Sonata sin tocar YAML)
 
 ## Licencia
 
