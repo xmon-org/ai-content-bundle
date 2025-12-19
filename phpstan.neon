@@ -1,11 +1,9 @@
+includes:
+    - vendor/phpstan/phpstan-symfony/extension.neon
+
 parameters:
     level: 8
     paths:
         - src
     excludePaths:
         - src/DependencyInjection/Configuration.php
-    symfony:
-        containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
-    ignoreErrors:
-        # Ignorar errores de container XML no disponible en CI
-        - '#^Service .+ is not registered in the container#'
