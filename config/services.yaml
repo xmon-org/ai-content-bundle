@@ -1,0 +1,22 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    # Image Providers
+    Xmon\AiContentBundle\Provider\Image\PollinationsImageProvider:
+        arguments:
+            $apiKey: null
+            $model: 'flux'
+            $timeout: 120
+            $defaultWidth: 1280
+            $defaultHeight: 720
+        tags:
+            - { name: 'xmon_ai_content.image_provider', priority: 1 }
+
+    # Main Image Service
+    Xmon\AiContentBundle\Service\AiImageService:
+        arguments:
+            $providers: !tagged_iterator { tag: 'xmon_ai_content.image_provider', default_priority_method: 'getPriority' }
+            $retries: 3
+            $retryDelay: 5

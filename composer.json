@@ -1,0 +1,56 @@
+{
+    "name": "xmon/ai-content-bundle",
+    "description": "Symfony bundle for AI content generation (text and images) with provider fallback",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "keywords": [
+        "symfony",
+        "bundle",
+        "ai",
+        "image-generation",
+        "text-generation",
+        "pollinations",
+        "together-ai",
+        "sonata-admin",
+        "sonata-media"
+    ],
+    "authors": [
+        {
+            "name": "Xmon",
+            "email": "info@xmon.es"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "symfony/framework-bundle": "^7.0",
+        "symfony/http-client": "^7.0",
+        "psr/log": "^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0",
+        "symfony/phpunit-bridge": "^7.0"
+    },
+    "suggest": {
+        "sonata-project/media-bundle": "Required for image storage with SonataMedia (^4.0)",
+        "sonata-project/admin-bundle": "Required for admin UI features (^4.0)"
+    },
+    "autoload": {
+        "psr-4": {
+            "Xmon\\AiContentBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Xmon\\AiContentBundle\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.0.x-dev"
+        }
+    },
+    "minimum-stability": "stable"
+}
