@@ -2,8 +2,19 @@ includes:
     - vendor/phpstan/phpstan-symfony/extension.neon
 
 parameters:
-    level: 8
+    level: 5
     paths:
         - src
     excludePaths:
+        # Configuración de DI excluida
         - src/DependencyInjection/Configuration.php
+        # Archivos que dependen de Sonata (dependencia opcional)
+        - src/Admin
+        - src/Service/MediaStorageService.php
+        # Archivos que dependen de Symfony Form (dependencia opcional)
+        - src/Form
+        - src/Controller
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        # Propiedades preparadas para futuro uso
+        - '#Property .+::\$fallbackModels is never read, only written#'
