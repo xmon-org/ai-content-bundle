@@ -183,6 +183,46 @@ class ImageOptionsService
     // ==========================================
 
     /**
+     * Get all styles with full data (label + prompt).
+     *
+     * @return array<string, array{label: string, prompt: string}>
+     */
+    public function getAllStylesData(): array
+    {
+        return $this->styles;
+    }
+
+    /**
+     * Get all compositions with full data (label + prompt).
+     *
+     * @return array<string, array{label: string, prompt: string}>
+     */
+    public function getAllCompositionsData(): array
+    {
+        return $this->compositions;
+    }
+
+    /**
+     * Get all palettes with full data (label + prompt).
+     *
+     * @return array<string, array{label: string, prompt: string}>
+     */
+    public function getAllPalettesData(): array
+    {
+        return $this->palettes;
+    }
+
+    /**
+     * Get all extras with full data (label + prompt).
+     *
+     * @return array<string, array{label: string, prompt: string}>
+     */
+    public function getAllExtrasData(): array
+    {
+        return $this->extras;
+    }
+
+    /**
      * Get raw style data including prompt.
      *
      * @return array{label: string, prompt: string}|null

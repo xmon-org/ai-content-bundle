@@ -136,12 +136,17 @@ abstract class AbstractAiImageController extends AbstractController
             // History
             'history' => $historyData,
 
-            // Style options (for selects)
+            // Style options (for selects - labels only)
             'presets' => $this->getPresetsForTemplate(),
             'styles' => $this->imageOptionsService->getStyles(),
             'compositions' => $this->imageOptionsService->getCompositions(),
             'palettes' => $this->imageOptionsService->getPalettes(),
             'extras' => $this->imageOptionsService->getExtras(),
+
+            // Full style data (for JavaScript preview - includes prompts)
+            'stylesData' => $this->imageOptionsService->getAllStylesData(),
+            'compositionsData' => $this->imageOptionsService->getAllCompositionsData(),
+            'palettesData' => $this->imageOptionsService->getAllPalettesData(),
 
             // Preview data
             'globalStylePreview' => $globalStylePreview,

@@ -133,8 +133,10 @@
                             <label style="font-weight: normal; color: #555;">
                                 <input type="radio" name="styleMode" id="styleModeGlobal" value="global" checked>
                                 <strong>{{ 'Use current configuration'|trans }}</strong>
-                                <br><small class="text-muted" style="margin-left: 20px; font-size: 11px;">→ {{ 'Default style'|trans }}</small>
                             </label>
+                            <div id="globalStyleHint" style="margin-top: 5px; margin-left: 20px;">
+                                <small class="text-muted" style="font-size: 11px;">→ {{ 'Default style'|trans }}</small>
+                            </div>
                         </div>
 
                         {# Preset option #}
@@ -501,11 +503,21 @@
 
     /* Preview styling */
     #stylePreview {
-        display: flex;
-        align-items: center;
+        display: block;
     }
     #stylePreview strong {
         font-weight: 600;
+    }
+    #stylePreview .preview-subject {
+        display: block;
+        margin-bottom: 6px;
+        color: #333;
+    }
+    #stylePreview .preview-style {
+        display: block;
+        color: #666;
+        font-size: 11px;
+        line-height: 1.5;
     }
 </style>
 {% endblock %}
@@ -517,6 +529,9 @@ document.addEventListener('DOMContentLoaded', function() {
     var routes = {{ routes|json_encode|raw }};
     var globalStylePreview = {{ globalStylePreview|json_encode|raw }};
     var presetsData = {{ presets|json_encode|raw }};
+    var stylesData = {{ stylesData|default({})|json_encode|raw }};
+    var compositionsData = {{ compositionsData|default({})|json_encode|raw }};
+    var palettesData = {{ palettesData|default({})|json_encode|raw }};
 
     // DOM elements
     var subjectField = document.getElementById('subjectField');
@@ -755,7 +770,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateStyleVisibility() {
         var selectedMode = getSelectedStyleMode();
         var presetContainer = document.getElementById('presetSelectContainer');
+        var globalStyleHint = document.getElementById('globalStyleHint');
 
+        if (globalStyleHint) {
+            globalStyleHint.style.display = selectedMode === 'global' ? 'block' : 'none';
+        }
         if (presetContainer) {
             presetContainer.style.display = selectedMode === 'preset' ? 'block' : 'none';
         }
@@ -783,23 +802,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } else if (selectedMode === 'custom') {
             var parts = [];
-            // Note: Custom style preview would need additional data from the server
-            // For now, just show what's selected
-            if (customStyle && customStyle.value) parts.push(customStyle.options[customStyle.selectedIndex].text);
-            if (customComposition && customComposition.value) parts.push(customComposition.options[customComposition.selectedIndex].text);
-            if (customPalette && customPalette.value) parts.push(customPalette.options[customPalette.selectedIndex].text);
-            if (customExtra && customExtra.value) parts.push(customExtra.value);
-            styleText = parts.join(', ') || '{{ "Custom style"|trans }}';
+            // Use prompt data instead of labels
+            if (customStyle && customStyle.value && stylesData[customStyle.value]) {
+                parts.push(stylesData[customStyle.value].prompt);
+            }
+            if (customComposition && customComposition.value && compositionsData[customComposition.value]) {
+                parts.push(compositionsData[customComposition.value].prompt);
+            }
+            if (customPalette && customPalette.value && palettesData[customPalette.value]) {
+                parts.push(palettesData[customPalette.value].prompt);
+            }
+            if (customExtra && customExtra.value) {
+                parts.push(customExtra.value);
+            }
+            styleText = parts.join(', ') || '{{ "Select style options above"|trans }}';
         }
 
-        var previewContent = '';
-        if (!subject) {
-            previewContent = '<em style="color: #999;">[{{ "enter a description above"|trans }}]</em>' +
-                           '<span style="color: #777;">, ' + escapeHtml(styleText) + '</span>';
-        } else {
-            previewContent = '<strong style="color: #000; font-weight: 600;">' + escapeHtml(subject) + '</strong>' +
-                           '<span style="color: #777; font-weight: normal;">, ' + escapeHtml(styleText) + '</span>';
-        }
+        var subjectHtml = subject
+            ? '<strong>' + escapeHtml(subject) + '</strong>'
+            : '<em style="color: #999;">[{{ "enter a description above"|trans }}]</em>';
+
+        var previewContent =
+            '<span class="preview-subject">' + subjectHtml + '</span>' +
+            '<span class="preview-style">' + escapeHtml(styleText) + '</span>';
 
         stylePreview.innerHTML = previewContent;
     }
@@ -1138,7 +1163,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Initialize
-    updateStylePreview();
+    updateStyleVisibility();
 });
 </script>
 {% endblock %}
