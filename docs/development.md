@@ -62,35 +62,35 @@ Image Providers
 
 Styles
 ------
- sumi_e         Sumi-e (tinta japonesa)
+ sumi-e         Sumi-e (tinta japonesa)
  watercolor     Acuarela
  ...
 
 Compositions
 ------------
  centered       Centrada
- rule_of_thirds Regla de tercios
+ rule-of-thirds Regla de tercios
  ...
 
 Palettes
 --------
  monochrome     Monocromo
- earth_tones    Tonos tierra
+ earth-tones    Tonos tierra
  ...
 
 Extras
 ------
- no_text        Sin texto
+ no-text        Sin texto
  atmospheric    Atmosférico
  ...
 
 Presets
 -------
- sumi_e_clasico   Sumi-e Clásico   sumi_e   negative_space   monochrome   ...
+ sumi-e-clasico   Sumi-e Clásico   sumi-e   negative-space   monochrome   ...
 
 Prompt Templates
 ----------------
- image_subject    Image Subject Generator    Generates visual descriptions...
+ image-subject    Image Subject Generator    Generates visual descriptions...
  summarizer       Content Summarizer         Summarizes content...
  ...
 

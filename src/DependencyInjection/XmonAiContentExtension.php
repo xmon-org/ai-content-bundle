@@ -189,8 +189,9 @@ class XmonAiContentExtension extends Extension
         $disableExtras = $disableDefaults['extras'] ?? [];
 
         // Bundle defaults - user config is MERGED with these (user wins on conflict)
+        // Keys use kebab-case for consistency with YAML conventions
         $defaultStyles = [
-            'sumi_e' => [
+            'sumi-e' => [
                 'label' => 'Sumi-e (tinta japonesa)',
                 'prompt' => 'sumi-e Japanese ink wash painting, elegant brushstrokes, traditional',
             ],
@@ -198,11 +199,11 @@ class XmonAiContentExtension extends Extension
                 'label' => 'Acuarela',
                 'prompt' => 'delicate watercolor painting, soft edges, flowing pigments',
             ],
-            'oil_painting' => [
+            'oil-painting' => [
                 'label' => 'Óleo clásico',
                 'prompt' => 'classical oil painting style, rich textures, masterful brushwork',
             ],
-            'digital_art' => [
+            'digital-art' => [
                 'label' => 'Arte digital',
                 'prompt' => 'modern digital art, clean lines, vibrant rendering',
             ],
@@ -217,11 +218,11 @@ class XmonAiContentExtension extends Extension
                 'label' => 'Centrada',
                 'prompt' => 'centered subject, symmetrical balance, clear focal point',
             ],
-            'rule_of_thirds' => [
+            'rule-of-thirds' => [
                 'label' => 'Regla de tercios',
                 'prompt' => 'rule of thirds composition, dynamic placement, visual flow',
             ],
-            'negative_space' => [
+            'negative-space' => [
                 'label' => 'Espacio negativo',
                 'prompt' => 'generous negative space, minimalist, breathing room',
             ],
@@ -229,7 +230,7 @@ class XmonAiContentExtension extends Extension
                 'label' => 'Panorámica',
                 'prompt' => 'wide panoramic view, expansive scene, horizontal emphasis',
             ],
-            'close_up' => [
+            'close-up' => [
                 'label' => 'Primer plano',
                 'prompt' => 'intimate close-up, detail focus, cropped composition',
             ],
@@ -240,11 +241,11 @@ class XmonAiContentExtension extends Extension
                 'label' => 'Monocromo',
                 'prompt' => 'monochromatic color scheme, single hue variations, elegant simplicity',
             ],
-            'earth_tones' => [
+            'earth-tones' => [
                 'label' => 'Tonos tierra',
                 'prompt' => 'warm earth tones, browns, ochres, natural organic colors',
             ],
-            'japanese_traditional' => [
+            'japanese-traditional' => [
                 'label' => 'Tradicional japonés',
                 'prompt' => 'traditional Japanese palette, indigo, vermillion, gold leaf accents',
             ],
@@ -252,14 +253,14 @@ class XmonAiContentExtension extends Extension
                 'label' => 'Colores apagados',
                 'prompt' => 'muted desaturated colors, soft tones, subtle elegance',
             ],
-            'high_contrast' => [
+            'high-contrast' => [
                 'label' => 'Alto contraste',
                 'prompt' => 'high contrast, bold blacks and whites, dramatic tonal range',
             ],
         ];
 
         $defaultExtras = [
-            'no_text' => [
+            'no-text' => [
                 'label' => 'Sin texto',
                 'prompt' => 'no text, no letters, no words, no typography',
             ],
@@ -271,33 +272,33 @@ class XmonAiContentExtension extends Extension
                 'label' => 'Atmosférico',
                 'prompt' => 'atmospheric perspective, misty, ethereal quality',
             ],
-            'dramatic_light' => [
+            'dramatic-light' => [
                 'label' => 'Luz dramática',
                 'prompt' => 'dramatic lighting, chiaroscuro, strong shadows',
             ],
         ];
 
         $defaultPresets = [
-            'sumi_e_clasico' => [
+            'sumi-e-clasico' => [
                 'name' => 'Sumi-e Clásico',
-                'style' => 'sumi_e',
-                'composition' => 'negative_space',
+                'style' => 'sumi-e',
+                'composition' => 'negative-space',
                 'palette' => 'monochrome',
-                'extras' => ['no_text', 'silhouettes', 'atmospheric'],
+                'extras' => ['no-text', 'silhouettes', 'atmospheric'],
             ],
-            'zen_contemplativo' => [
+            'zen-contemplativo' => [
                 'name' => 'Zen Contemplativo',
-                'style' => 'sumi_e',
+                'style' => 'sumi-e',
                 'composition' => 'centered',
                 'palette' => 'muted',
-                'extras' => ['no_text', 'atmospheric'],
+                'extras' => ['no-text', 'atmospheric'],
             ],
-            'fotografia_aikido' => [
+            'fotografia-aikido' => [
                 'name' => 'Fotografía Aikido',
                 'style' => 'photography',
-                'composition' => 'rule_of_thirds',
+                'composition' => 'rule-of-thirds',
                 'palette' => 'muted',
-                'extras' => ['dramatic_light'],
+                'extras' => ['dramatic-light'],
             ],
         ];
 

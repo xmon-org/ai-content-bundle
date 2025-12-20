@@ -15,10 +15,10 @@ The bundle includes predefined options that you can override or extend:
 
 | Key | Label | Description |
 |-----|-------|-------------|
-| `sumi_e` | Sumi-e (tinta japonesa) | Traditional Japanese ink painting style |
+| `sumi-e` | Sumi-e (tinta japonesa) | Traditional Japanese ink painting style |
 | `watercolor` | Acuarela | Painting with soft edges |
-| `oil_painting` | Óleo clásico | Oil painting style |
-| `digital_art` | Arte digital | Modern digital style |
+| `oil-painting` | Óleo clásico | Oil painting style |
+| `digital-art` | Arte digital | Modern digital style |
 | `photography` | Fotografía artística | Professional photographic style |
 
 ### Compositions
@@ -26,29 +26,29 @@ The bundle includes predefined options that you can override or extend:
 | Key | Label |
 |-----|-------|
 | `centered` | Centrada |
-| `rule_of_thirds` | Regla de tercios |
-| `negative_space` | Espacio negativo |
+| `rule-of-thirds` | Regla de tercios |
+| `negative-space` | Espacio negativo |
 | `panoramic` | Panorámica |
-| `close_up` | Primer plano |
+| `close-up` | Primer plano |
 
 ### Color Palettes
 
 | Key | Label |
 |-----|-------|
 | `monochrome` | Monocromo |
-| `earth_tones` | Tonos tierra |
-| `japanese_traditional` | Tradicional japonés |
+| `earth-tones` | Tonos tierra |
+| `japanese-traditional` | Tradicional japonés |
 | `muted` | Colores apagados |
-| `high_contrast` | Alto contraste |
+| `high-contrast` | Alto contraste |
 
 ### Extras (modifiers)
 
 | Key | Label |
 |-----|-------|
-| `no_text` | Sin texto |
+| `no-text` | Sin texto |
 | `silhouettes` | Siluetas |
 | `atmospheric` | Atmosférico |
-| `dramatic_light` | Luz dramática |
+| `dramatic-light` | Luz dramática |
 
 ## Predefined Presets
 
@@ -56,9 +56,9 @@ Presets combine options into ready-to-use configurations:
 
 | Key | Name | Style | Composition | Palette | Extras |
 |-----|------|-------|-------------|---------|--------|
-| `sumi_e_clasico` | Sumi-e Clásico | sumi_e | negative_space | monochrome | no_text, silhouettes, atmospheric |
-| `zen_contemplativo` | Zen Contemplativo | sumi_e | centered | muted | no_text, atmospheric |
-| `fotografia_aikido` | Fotografía Aikido | photography | rule_of_thirds | muted | dramatic_light |
+| `sumi-e-clasico` | Sumi-e Clásico | sumi-e | negative-space | monochrome | no-text, silhouettes, atmospheric |
+| `zen-contemplativo` | Zen Contemplativo | sumi-e | centered | muted | no-text, atmospheric |
+| `fotografia-aikido` | Fotografía Aikido | photography | rule-of-thirds | muted | dramatic-light |
 
 ## Using PromptBuilder
 
@@ -80,7 +80,7 @@ class MyService
         // Build prompt with preset
         $prompt = $this->promptBuilder->build(
             subject: 'aikidoka meditating in a traditional dojo',
-            options: ['preset' => 'sumi_e_clasico']
+            options: ['preset' => 'sumi-e-clasico']
         );
 
         // Result:
@@ -101,8 +101,8 @@ $prompt = $this->promptBuilder->build(
     options: [
         'style' => 'watercolor',
         'composition' => 'panoramic',
-        'palette' => 'earth_tones',
-        'extras' => ['atmospheric', 'no_text'],
+        'palette' => 'earth-tones',
+        'extras' => ['atmospheric', 'no-text'],
     ]
 );
 ```
@@ -115,8 +115,8 @@ You can use a preset as a base and override specific options:
 $prompt = $this->promptBuilder->build(
     subject: 'aikido seminar group photo',
     options: [
-        'preset' => 'zen_contemplativo',
-        'composition' => 'rule_of_thirds', // Override from preset
+        'preset' => 'zen-contemplativo',
+        'composition' => 'rule-of-thirds', // Override from preset
     ]
 );
 ```
@@ -129,8 +129,8 @@ In addition to predefined extras (multiselect), you can add free text at the end
 $prompt = $this->promptBuilder->build(
     subject: 'aikidoka meditating in dojo',
     options: [
-        'preset' => 'sumi_e_clasico',
-        'extras' => ['no_text', 'atmospheric'],       // Predefined extras
+        'preset' => 'sumi-e-clasico',
+        'extras' => ['no-text', 'atmospheric'],       // Predefined extras
         'custom_prompt' => 'cinematic 16:9 ratio, 4k resolution',  // Free text
     ]
 );
@@ -162,7 +162,7 @@ class MyAdmin
     {
         return [
             'styles' => $this->imageOptions->getStyles(),
-            // ['sumi_e' => 'Sumi-e (tinta japonesa)', 'watercolor' => 'Acuarela', ...]
+            // ['sumi-e' => 'Sumi-e (tinta japonesa)', 'watercolor' => 'Acuarela', ...]
 
             'compositions' => $this->imageOptions->getCompositions(),
             'palettes' => $this->imageOptions->getPalettes(),
@@ -185,7 +185,7 @@ xmon_ai_content:
     image_options:
         # Add artistic styles
         styles:
-            ukiyo_e:
+            ukiyo-e:
                 label: 'Ukiyo-e'
                 prompt: 'ukiyo-e Japanese woodblock print style, bold outlines, flat colors'
             manga:
@@ -221,18 +221,18 @@ xmon_ai_content:
 
     # Add presets (predefined combinations)
     presets:
-        dojo_moderno:
+        dojo-moderno:
             name: 'Dojo Moderno'
             style: 'photography'
             composition: 'diagonal'
-            palette: 'high_contrast'
-            extras: ['cinematic', 'no_text']
-        manga_action:
+            palette: 'high-contrast'
+            extras: ['cinematic', 'no-text']
+        manga-action:
             name: 'Manga Acción'
             style: 'manga'
             composition: 'diagonal'
             palette: 'neon'
-            extras: ['dramatic_light']
+            extras: ['dramatic-light']
 ```
 
 **Result**: All options are merged with the bundle defaults.
@@ -259,18 +259,18 @@ If you don't want to use some bundle defaults, you can disable them:
 xmon_ai_content:
     image_options:
         disable_defaults:
-            styles: ['oil_painting', 'digital_art']
+            styles: ['oil-painting', 'digital-art']
             compositions: ['panoramic']
-            palettes: ['high_contrast']
+            palettes: ['high-contrast']
             extras: ['silhouettes']
 
     # For presets, use this option at root level
-    disable_preset_defaults: ['zen_contemplativo']
+    disable_preset_defaults: ['zen-contemplativo']
 ```
 
 **Result**: The listed styles, compositions, etc. are removed from available options.
 
-> **Important**: If you disable an option that is being used by a preset, that preset is automatically disabled. For example, if you disable `sumi_e`, the presets `sumi_e_clasico` and `zen_contemplativo` are also deactivated.
+> **Important**: If you disable an option that is being used by a preset, that preset is automatically disabled. For example, if you disable `sumi-e`, the presets `sumi-e-clasico` and `zen-contemplativo` are also deactivated.
 
 > **Tip**: Use `bin/console xmon:ai:debug` to see all currently configured options.
 
@@ -281,10 +281,10 @@ The `PromptBuilder` validates that options exist and throws `AiProviderException
 ```php
 try {
     $prompt = $this->promptBuilder->build('subject', [
-        'preset' => 'invalid_preset'
+        'preset' => 'invalid-preset'
     ]);
 } catch (AiProviderException $e) {
-    // "Unknown preset: invalid_preset"
+    // "Unknown preset: invalid-preset"
 }
 ```
 

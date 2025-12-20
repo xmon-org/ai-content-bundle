@@ -156,7 +156,7 @@ class MyService
     {
         $prompt = $this->promptBuilder->build(
             subject: 'aikidoka meditating in a traditional dojo',
-            options: ['preset' => 'sumi_e_clasico']
+            options: ['preset' => 'sumi-e-clasico']
         );
 
         return $this->aiImageService->generate($prompt);

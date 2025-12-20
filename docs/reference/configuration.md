@@ -71,55 +71,55 @@ xmon_ai_content:
     image_options:
         # Custom styles (merged with defaults)
         styles:
-            custom_style:
+            custom-style:
                 label: 'My Custom Style'
                 prompt: 'custom style description for AI'
 
         # Custom compositions
         compositions:
-            custom_comp:
+            custom-comp:
                 label: 'Custom Composition'
                 prompt: 'composition description'
 
         # Custom palettes
         palettes:
-            custom_palette:
+            custom-palette:
                 label: 'Custom Palette'
                 prompt: 'color palette description'
 
         # Custom extras
         extras:
-            custom_extra:
+            custom-extra:
                 label: 'Custom Extra'
                 prompt: 'extra modifier description'
 
         # Disable specific defaults
         disable_defaults:
-            styles: []           # ['oil_painting', 'digital_art']
+            styles: []           # ['oil-painting', 'digital-art']
             compositions: []     # ['panoramic']
-            palettes: []         # ['high_contrast']
+            palettes: []         # ['high-contrast']
             extras: []           # ['silhouettes']
 
     # ============================================
     # PRESETS (Predefined option combinations)
     # ============================================
     presets:
-        custom_preset:
+        custom-preset:
             name: 'My Custom Preset'
-            style: 'sumi_e'
+            style: 'sumi-e'
             composition: 'centered'
             palette: 'monochrome'
-            extras: ['no_text', 'atmospheric']
+            extras: ['no-text', 'atmospheric']
 
     # Disable specific default presets
-    disable_preset_defaults: []  # ['zen_contemplativo']
+    disable_preset_defaults: []  # ['zen-contemplativo']
 
     # ============================================
     # PROMPT TEMPLATES
     # ============================================
     prompts:
         templates:
-            custom_template:
+            custom-template:
                 name: 'My Custom Template'
                 description: 'What this template does'
                 system: |
@@ -131,7 +131,7 @@ xmon_ai_content:
                     Content: {content}
 
         # Disable specific default templates
-        disable_defaults: []  # ['title_generator', 'summarizer']
+        disable_defaults: []  # ['title-generator', 'summarizer']
 ```
 
 ## Provider Configuration
@@ -167,7 +167,7 @@ xmon_ai_content:
 
 ```yaml
 styles:
-    key_name:
+    key-name:
         label: 'Human-readable label'
         prompt: 'Text added to the prompt for this style'
 ```
@@ -176,11 +176,11 @@ styles:
 
 ```yaml
 presets:
-    key_name:
+    key-name:
         name: 'Human-readable name'
-        style: 'style_key'        # Optional
-        composition: 'comp_key'   # Optional
-        palette: 'palette_key'    # Optional
+        style: 'style-key'        # Optional
+        composition: 'comp-key'   # Optional
+        palette: 'palette-key'    # Optional
         extras: ['extra1', 'extra2']  # Optional
 ```
 
@@ -189,7 +189,7 @@ presets:
 ```yaml
 prompts:
     templates:
-        key_name:
+        key-name:
             name: 'Human-readable name'
             description: 'Optional description'
             system: 'System prompt for AI'
