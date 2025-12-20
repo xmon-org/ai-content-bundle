@@ -43,6 +43,7 @@ class XmonAiContentExtension extends Extension
         // Load Sonata Admin integration only if available
         if ($this->isSonataAdminAvailable()) {
             $loader->load('services_admin.yaml');
+            $this->configureAdmin($container, $config['admin'] ?? []);
         }
 
         // Configure providers
@@ -154,6 +155,12 @@ class XmonAiContentExtension extends Extension
         // Store config
         $container->setParameter('xmon_ai_content.text.providers', $providers);
         $container->setParameter('xmon_ai_content.text.defaults', $defaults);
+    }
+
+    private function configureAdmin(ContainerBuilder $container, array $adminConfig): void
+    {
+        $baseTemplate = $adminConfig['base_template'] ?? '@SonataAdmin/standard_layout.html.twig';
+        $container->setParameter('xmon_ai_content.admin.base_template', $baseTemplate);
     }
 
     private function configureMediaStorage(ContainerBuilder $container, array $mediaConfig): void

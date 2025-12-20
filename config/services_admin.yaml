@@ -17,3 +17,9 @@ services:
     Xmon\AiContentBundle\Admin\AiImageAdminExtension:
         tags:
             - { name: 'sonata.admin.extension' }
+
+    # Twig Extension (exposes config as global variables)
+    Xmon\AiContentBundle\Twig\AiContentExtension:
+        arguments:
+            $adminBaseTemplate: '%xmon_ai_content.admin.base_template%'
+        tags: ['twig.extension']

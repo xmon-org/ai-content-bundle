@@ -81,6 +81,16 @@ class Configuration implements ConfigurationInterface
                         ->scalarNode('provider')->defaultValue('sonata.media.provider.image')->end()
                     ->end()
                 ->end()
+                // Sonata Admin integration
+                ->arrayNode('admin')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->scalarNode('base_template')
+                            ->defaultValue('@SonataAdmin/standard_layout.html.twig')
+                            ->info('Base template to extend for admin pages. Override to use your project\'s custom admin layout.')
+                        ->end()
+                    ->end()
+                ->end()
                 // Image options: styles, compositions, palettes, extras
                 ->arrayNode('image_options')
                     ->addDefaultsIfNotSet()
