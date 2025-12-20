@@ -644,7 +644,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
             item.onclick = function() {
                 subjectField.value = prompt;
-                updateCharCount();
+                // Update character count
+                if (charCount) {
+                    charCount.textContent = '(' + subjectField.value.length + ' {{ "characters"|trans }})';
+                }
                 updateStylePreview();
                 if (promptHistoryPanel) {
                     $(promptHistoryPanel).collapse('hide');
@@ -875,6 +878,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnGeneratePrompt) {
         btnGeneratePrompt.addEventListener('click', function() {
             var btn = this;
+
+            // Save current subject to history BEFORE replacing it
+            var currentSubject = subjectField ? subjectField.value.trim() : '';
+            if (currentSubject) {
+                addToPromptHistory(currentSubject);
+            }
+
             btn.disabled = true;
             btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> {{ "Generating..."|trans }}';
 
@@ -888,6 +898,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     subjectField.value = data.prompt || '';
                     showStatus('{{ "Description generated successfully"|trans }}', 'success');
                     updateStylePreview();
+                    // Note: New prompt is NOT added to history until it's actually used
+                    // (either by generating another prompt or by generating an image)
                 } else {
                     showStatus(data.error || '{{ "Error generating description"|trans }}', 'danger');
                 }
