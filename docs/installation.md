@@ -194,8 +194,46 @@ xmon_ai_content:
                     - 'mistralai/mistral-small-3.1-24b-instruct:free'
 ```
 
+## Sonata Admin Integration (Optional)
+
+If you're using Sonata Admin, additional setup is required:
+
+### 1. Install Assets
+
+```bash
+# Standard
+bin/console assets:install --symlink
+
+# Docker
+docker compose exec php bin/console assets:install --symlink
+```
+
+### 2. Configure Assets in Sonata Admin
+
+```yaml
+# config/packages/sonata_admin.yaml
+sonata_admin:
+    assets:
+        extra_javascripts:
+            - bundles/xmonaicontent/js/ai-image-regenerator.js
+        extra_stylesheets:
+            - bundles/xmonaicontent/css/ai-image.css
+```
+
+### 3. Add Form Theme
+
+```yaml
+# config/packages/twig.yaml
+twig:
+    form_themes:
+        - '@XmonAiContent/form/fields.html.twig'
+```
+
+For complete Sonata Admin integration, see [Admin Integration Guide](guides/admin-integration.md).
+
 ## Next Steps
 
 - [Text Generation Guide](guides/text-generation.md)
 - [Image Generation Guide](guides/image-generation.md)
+- [Admin Integration Guide](guides/admin-integration.md)
 - [Configuration Reference](reference/configuration.md)

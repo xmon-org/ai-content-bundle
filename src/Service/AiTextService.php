@@ -86,6 +86,20 @@ class AiTextService
     }
 
     /**
+     * Check if at least one text provider is configured and available.
+     */
+    public function isConfigured(): bool
+    {
+        foreach ($this->providers as $provider) {
+            if ($provider->isAvailable()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Get list of available provider names.
      *
      * @return array<string>

@@ -20,11 +20,20 @@ use Xmon\AiContentBundle\Service\PromptTemplateService;
 /**
  * Abstract controller for AI image regeneration.
  *
+ * Provides two usage modes:
+ *
+ * 1. **Dedicated Page Mode**: Full-featured page with subject input, style selector,
+ *    preview comparison, and image history. Use `doRenderPage()` for rendering.
+ *
+ * 2. **API Mode**: JSON endpoints for AJAX operations. Use `doGenerateSubject()`,
+ *    `doRegenerateImage()`, `doUseHistoryImage()`, and `doDeleteHistoryImage()`.
+ *
  * Extend this controller in your project and implement the abstract methods
  * to integrate AI image generation with your entities.
  *
  * Example implementation:
  *
+ *     #[Route('/admin/article/{id}/ai-image', name: 'admin_article_ai_image')]
  *     class ArticleImageController extends AbstractAiImageController
  *     {
  *         public function __construct(
@@ -39,6 +48,18 @@ use Xmon\AiContentBundle\Service\PromptTemplateService;
  *         ) {
  *             parent::__construct(...);
  *         }
+ *
+ *         #[Route('', name: '_page', methods: ['GET'])]
+ *         public function page(int $id): Response {
+ *             return $this->doRenderPage($id);
+ *         }
+ *
+ *         #[Route('/generate-subject', name: '_generate_subject', methods: ['POST'])]
+ *         public function generateSubject(int $id): JsonResponse {
+ *             return $this->doGenerateSubject($id);
+ *         }
+ *
+ *         // ... define routes for other endpoints
  *
  *         protected function findEntity(int $id): ?AiImageAwareInterface {
  *             return $this->articleRepository->find($id);
@@ -58,6 +79,150 @@ abstract class AbstractAiImageController extends AbstractController
         protected readonly ?MediaStorageService $mediaStorage = null,
     ) {
     }
+
+    // ==========================================
+    // PAGE RENDERING
+    // ==========================================
+
+    /**
+     * Render the dedicated AI image generation page.
+     *
+     * This is the main entry point for the full-featured page mode.
+     * Override `getTemplate()` to use a custom template.
+     *
+     * @param int    $id      Entity ID
+     * @param string $subject Optional pre-filled subject (from query string)
+     */
+    protected function doRenderPage(int $id, string $subject = ''): Response
+    {
+        $entity = $this->findEntity($id);
+        if (!$entity) {
+            throw $this->createNotFoundException('Entity not found');
+        }
+
+        // Get current image info
+        $currentImageUrl = null;
+        $currentImageId = null;
+        $currentImage = $entity->getFeaturedImage();
+        if ($currentImage) {
+            $currentImageId = $this->getMediaId($currentImage);
+            $currentImageUrl = $this->getMediaUrl($currentImage);
+        }
+
+        // Use provided subject or get from entity
+        if (empty($subject)) {
+            $subject = $entity->getImageSubject() ?? '';
+        }
+
+        // Get history with formatted data for template
+        $historyData = $this->getFormattedHistory($entity, $currentImageId);
+
+        // Prepare style options for the template
+        $globalStylePreview = $this->promptBuilder->buildGlobalStyle();
+
+        return $this->render($this->getTemplate(), [
+            // Entity data
+            'entity' => $entity,
+            'entityTitle' => $this->getEntityTitle($entity),
+
+            // Current image
+            'currentImageUrl' => $currentImageUrl,
+            'currentImageId' => $currentImageId,
+
+            // Subject
+            'subject' => $subject,
+            'currentStyle' => $entity->getImageStyle(),
+
+            // History
+            'history' => $historyData,
+
+            // Style options (for selects)
+            'presets' => $this->getPresetsForTemplate(),
+            'styles' => $this->imageOptionsService->getStyles(),
+            'compositions' => $this->imageOptionsService->getCompositions(),
+            'palettes' => $this->imageOptionsService->getPalettes(),
+            'extras' => $this->imageOptionsService->getExtras(),
+
+            // Preview data
+            'globalStylePreview' => $globalStylePreview,
+
+            // Service availability flags
+            'textServiceConfigured' => $this->textService->isConfigured(),
+            'imageServiceConfigured' => $this->imageService->isConfigured(),
+
+            // Routes for AJAX calls (to be implemented by child)
+            'routes' => $this->getRoutes($id),
+
+            // Navigation
+            'backUrl' => $this->getBackUrl($entity),
+            'listUrl' => $this->getListUrl($entity),
+        ]);
+    }
+
+    /**
+     * Get presets formatted for the template (with preview).
+     *
+     * @return array<string, array{name: string, preview: string}>
+     */
+    protected function getPresetsForTemplate(): array
+    {
+        $presets = [];
+        foreach ($this->imageOptionsService->getPresets() as $key => $name) {
+            $presets[$key] = [
+                'name' => $name,
+                'preview' => $this->promptBuilder->buildFromPreset($key),
+            ];
+        }
+
+        return $presets;
+    }
+
+    /**
+     * Get formatted history data for the template.
+     *
+     * @return array<int, array{id: int, imageUrl: string, mediaId: int|string, subject: string, style: string, model: string, createdAt: string, isActual: bool}>
+     */
+    protected function getFormattedHistory(AiImageAwareInterface $entity, int|string|null $currentImageId): array
+    {
+        $history = $this->getEntityHistory($entity);
+        $formatted = [];
+
+        foreach ($history as $item) {
+            $mediaId = $this->getMediaId($item->getImage());
+            $formatted[] = [
+                'id' => $item->getId(),
+                'imageUrl' => $this->getMediaUrl($item->getImage()),
+                'mediaId' => $mediaId,
+                'subject' => $item->getSubject(),
+                'style' => $item->getStyle(),
+                'model' => $item->getModel(),
+                'createdAt' => $item->getCreatedAt()->format('d/m/Y H:i'),
+                'isActual' => $currentImageId !== null && $mediaId === $currentImageId,
+            ];
+        }
+
+        return $formatted;
+    }
+
+    /**
+     * Check if text service is available (for "Generate subject" button).
+     */
+    public function isTextServiceConfigured(): bool
+    {
+        return $this->textService->isConfigured();
+    }
+
+    /**
+     * Check if image service is available.
+     */
+    public function isImageServiceConfigured(): bool
+    {
+        return $this->imageService->isConfigured();
+    }
+
+    // ==========================================
+    // API ENDPOINTS
+    // ==========================================
 
     /**
      * Generate a subject (image description) for an entity.
@@ -80,7 +245,7 @@ abstract class AbstractAiImageController extends AbstractController
 
         try {
             // Get the template for image subject generation
-            $template = $this->promptTemplateService->get('image_subject');
+            $template = $this->promptTemplateService->getTemplate('image_subject');
 
             // Generate the subject using the template
             $result = $this->textService->generate(
@@ -144,10 +309,10 @@ abstract class AbstractAiImageController extends AbstractController
             // Store the image (if MediaStorageService is available)
             $media = null;
             if ($this->mediaStorage) {
-                $media = $this->mediaStorage->store(
+                $media = $this->mediaStorage->save(
                     $imageResult,
-                    $this->getMediaContext(),
-                    $this->generateFilename($entity)
+                    $this->generateFilename($entity),
+                    $this->getMediaContext()
                 );
             }
 
@@ -360,4 +525,65 @@ abstract class AbstractAiImageController extends AbstractController
      * Get the media context for storage.
      */
     abstract protected function getMediaContext(): string;
+
+    /**
+     * Get the image history for an entity.
+     *
+     * @return AiImageHistoryInterface[]
+     */
+    abstract protected function getEntityHistory(AiImageAwareInterface $entity): array;
+
+    /**
+     * Get a display title for the entity.
+     *
+     * Used in the page header and breadcrumbs.
+     * Example: return $entity->getTitle();
+     */
+    abstract protected function getEntityTitle(AiImageAwareInterface $entity): string;
+
+    /**
+     * Get the URL to go back to the entity edit page.
+     *
+     * Example: return $this->generateUrl('admin_app_article_edit', ['id' => $entity->getId()]);
+     */
+    abstract protected function getBackUrl(AiImageAwareInterface $entity): string;
+
+    /**
+     * Get the URL to go to the entity list page.
+     *
+     * Example: return $this->generateUrl('admin_app_article_list');
+     */
+    abstract protected function getListUrl(AiImageAwareInterface $entity): string;
+
+    /**
+     * Get the routes for AJAX operations.
+     *
+     * Must return an associative array with keys:
+     * - generateSubject: Route for generating subject via AI
+     * - regenerateImage: Route for generating/regenerating image
+     * - useHistory: Route template for using a history item (use HISTORY_ID as placeholder)
+     * - deleteHistory: Route template for deleting a history item (use HISTORY_ID as placeholder)
+     *
+     * Example:
+     *     return [
+     *         'generateSubject' => $this->generateUrl('admin_article_ai_image_generate_subject', ['id' => $entityId]),
+     *         'regenerateImage' => $this->generateUrl('admin_article_ai_image_regenerate', ['id' => $entityId]),
+     *         'useHistory' => $this->generateUrl('admin_article_ai_image_use_history', ['id' => $entityId, 'historyId' => 'HISTORY_ID']),
+     *         'deleteHistory' => $this->generateUrl('admin_article_ai_image_delete_history', ['id' => $entityId, 'historyId' => 'HISTORY_ID']),
+     *     ];
+     *
+     * @return array{generateSubject: string, regenerateImage: string, useHistory: string, deleteHistory: string}
+     */
+    abstract protected function getRoutes(int $entityId): array;
+
+    /**
+     * Get the Twig template to use for the page.
+     *
+     * Override this method to use a custom template.
+     * The default template is provided by the bundle.
+     */
+    protected function getTemplate(): string
+    {
+        return '@XmonAiContent/admin/ai_image_page.html.twig';
+    }
 }

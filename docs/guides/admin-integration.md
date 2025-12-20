@@ -8,12 +8,41 @@ This bundle provides Form Types and an Admin Extension to add AI image regenerat
 
 ## Requirements
 
-- Sonata Admin Bundle 5.x
+- Sonata Admin Bundle 4.x
 - Sonata Media Bundle (optional, for image storage)
 
 ## Setup
 
-### 1. Add Form Theme
+### 1. Install Assets
+
+The bundle includes CSS and JavaScript files that must be published to your `public/bundles/` directory.
+
+```bash
+# Standard installation
+bin/console assets:install --symlink
+```
+
+This creates a symlink at `public/bundles/xmonaicontent/` pointing to the bundle's assets.
+
+### 2. Configure Sonata Admin Assets
+
+Sonata Admin 4.x requires manual asset registration via YAML configuration:
+
+```yaml
+# config/packages/sonata_admin.yaml
+sonata_admin:
+    # ... other config
+
+    assets:
+        extra_javascripts:
+            - bundles/xmonaicontent/js/ai-image-regenerator.js
+        extra_stylesheets:
+            - bundles/xmonaicontent/css/ai-image.css
+```
+
+> **Note:** There is no automatic asset loading via Admin Extensions in Sonata Admin 4.x. Assets must be configured in YAML.
+
+### 3. Add Form Theme
 
 ```yaml
 # config/packages/twig.yaml
@@ -22,7 +51,7 @@ twig:
         - '@XmonAiContent/form/fields.html.twig'
 ```
 
-### 2. Implement Interfaces (Optional)
+### 4. Implement Interfaces (Optional)
 
 For full history support, implement these interfaces:
 
@@ -103,14 +132,58 @@ class ArticleImageHistory implements AiImageHistoryInterface
 }
 ```
 
-### 3. Create Controller
+### 5. Create Database Migration
 
-Extend the abstract controller:
+After implementing the interfaces, create a migration for the new fields:
+
+```bash
+bin/console doctrine:migrations:diff
+bin/console doctrine:migrations:migrate
+```
+
+## Dedicated Image Generation Page (Recommended)
+
+The most powerful feature of this bundle is the **dedicated image generation page**. It provides a full-featured interface for AI image generation with:
+
+- Subject input with AI-powered description generation
+- Style selector (global/preset/custom)
+- Side-by-side image comparison (current vs new)
+- Complete image history with reuse and delete actions
+- Real-time generation timer
+
+### Controller Implementation
+
+Create a controller that extends `AbstractAiImageController`:
 
 ```php
-use Xmon\AiContentBundle\Controller\AbstractAiImageController;
+<?php
 
-class ArticleImageController extends AbstractAiImageController
+namespace App\Controller\Admin;
+
+use App\Entity\Article;
+use App\Entity\ArticleImageHistory;
+use App\Repository\ArticleRepository;
+use App\Repository\ArticleImageHistoryRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Sonata\MediaBundle\Provider\Pool;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Xmon\AiContentBundle\Controller\AbstractAiImageController;
+use Xmon\AiContentBundle\Entity\AiImageAwareInterface;
+use Xmon\AiContentBundle\Entity\AiImageHistoryInterface;
+use Xmon\AiContentBundle\Service\AiImageService;
+use Xmon\AiContentBundle\Service\AiTextService;
+use Xmon\AiContentBundle\Service\ImageOptionsService;
+use Xmon\AiContentBundle\Service\MediaStorageService;
+use Xmon\AiContentBundle\Service\PromptBuilder;
+use Xmon\AiContentBundle\Service\PromptTemplateService;
+
+#[IsGranted('ROLE_ADMIN')]
+#[Route('/admin/article/{id}/ai-image', name: 'admin_article_ai_image')]
+class ArticleAiImageController extends AbstractAiImageController
 {
     public function __construct(
         AiTextService $textService,
@@ -119,29 +192,166 @@ class ArticleImageController extends AbstractAiImageController
         PromptBuilder $promptBuilder,
         PromptTemplateService $promptTemplateService,
         ?MediaStorageService $mediaStorage,
-        private ArticleRepository $articleRepository,
-        private ArticleImageHistoryRepository $historyRepository,
-        private EntityManagerInterface $entityManager,
+        private readonly ArticleRepository $articleRepository,
+        private readonly ArticleImageHistoryRepository $historyRepository,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly Pool $mediaPool,
     ) {
-        parent::__construct($textService, $imageService, $imageOptionsService, $promptBuilder, $promptTemplateService, $mediaStorage);
+        parent::__construct(
+            $textService,
+            $imageService,
+            $imageOptionsService,
+            $promptBuilder,
+            $promptTemplateService,
+            $mediaStorage
+        );
     }
 
-    #[Route('/admin/article/{id}/generate-subject', name: 'admin_article_generate_subject', methods: ['POST'])]
+    // ==========================================
+    // PAGE AND ENDPOINTS
+    // ==========================================
+
+    #[Route('', name: '_page', methods: ['GET'])]
+    public function page(int $id, Request $request): Response
+    {
+        $subject = $request->query->get('subject', '');
+        return $this->doRenderPage($id, $subject);
+    }
+
+    #[Route('/generate-subject', name: '_generate_subject', methods: ['POST'])]
     public function generateSubject(int $id): JsonResponse
     {
         return $this->doGenerateSubject($id);
     }
 
-    #[Route('/admin/article/{id}/regenerate-image', name: 'admin_article_regenerate_image', methods: ['POST'])]
-    public function regenerateImage(int $id, Request $request): JsonResponse
+    #[Route('/regenerate', name: '_regenerate', methods: ['POST'])]
+    public function regenerate(int $id, Request $request): JsonResponse
     {
         return $this->doRegenerateImage($id, $request);
     }
 
-    // Implement abstract methods...
+    #[Route('/history/{historyId}/use', name: '_use_history', methods: ['POST'])]
+    public function useHistory(int $id, int $historyId): JsonResponse
+    {
+        return $this->doUseHistoryImage($id, $historyId);
+    }
+
+    #[Route('/history/{historyId}/delete', name: '_delete_history', methods: ['DELETE'])]
+    public function deleteHistory(int $id, int $historyId): JsonResponse
+    {
+        return $this->doDeleteHistoryImage($id, $historyId);
+    }
+
+    // ==========================================
+    // ABSTRACT METHOD IMPLEMENTATIONS
+    // ==========================================
+
     protected function findEntity(int $id): ?AiImageAwareInterface
     {
         return $this->articleRepository->find($id);
+    }
+
+    protected function getEntityHistory(AiImageAwareInterface $entity): array
+    {
+        return $this->historyRepository->findBy(
+            ['article' => $entity],
+            ['createdAt' => 'DESC']
+        );
+    }
+
+    protected function getEntityTitle(AiImageAwareInterface $entity): string
+    {
+        return $entity->getTitle();
+    }
+
+    protected function getBackUrl(AiImageAwareInterface $entity): string
+    {
+        return $this->generateUrl('admin_app_article_edit', ['id' => $entity->getId()]);
+    }
+
+    protected function getListUrl(AiImageAwareInterface $entity): string
+    {
+        return $this->generateUrl('admin_app_article_list');
+    }
+
+    protected function getRoutes(int $entityId): array
+    {
+        return [
+            'generateSubject' => $this->generateUrl('admin_article_ai_image_generate_subject', ['id' => $entityId]),
+            'regenerateImage' => $this->generateUrl('admin_article_ai_image_regenerate', ['id' => $entityId]),
+            'useHistory' => $this->generateUrl('admin_article_ai_image_use_history', [
+                'id' => $entityId,
+                'historyId' => 'HISTORY_ID'
+            ]),
+            'deleteHistory' => $this->generateUrl('admin_article_ai_image_delete_history', [
+                'id' => $entityId,
+                'historyId' => 'HISTORY_ID'
+            ]),
+        ];
+    }
+
+    protected function createHistoryItem(
+        AiImageAwareInterface $entity,
+        ?object $media,
+        string $subject,
+        string $style,
+        string $model,
+    ): ?AiImageHistoryInterface {
+        $historyItem = new ArticleImageHistory();
+        $historyItem->setArticle($entity);
+        $historyItem->setImage($media);
+        $historyItem->setSubject($subject);
+        $historyItem->setStyle($style);
+        $historyItem->setModel($model);
+
+        $this->entityManager->persist($historyItem);
+        $this->entityManager->flush();
+
+        return $historyItem;
+    }
+
+    protected function findHistoryItem(int $id): ?AiImageHistoryInterface
+    {
+        return $this->historyRepository->find($id);
+    }
+
+    protected function historyBelongsToEntity(AiImageHistoryInterface $history, AiImageAwareInterface $entity): bool
+    {
+        return $history->getArticle()->getId() === $entity->getId();
+    }
+
+    protected function applyHistoryToEntity(AiImageAwareInterface $entity, AiImageHistoryInterface $history): void
+    {
+        $entity->setFeaturedImage($history->getImage());
+        $entity->setImageSubject($history->getSubject());
+        $entity->setImageStyle($history->getStyle());
+        $entity->setImageModel($history->getModel());
+
+        $this->entityManager->flush();
+    }
+
+    protected function deleteHistoryItem(AiImageHistoryInterface $history): void
+    {
+        $media = $history->getImage();
+
+        $this->entityManager->remove($history);
+        $this->entityManager->flush();
+
+        if ($media) {
+            $this->entityManager->remove($media);
+            $this->entityManager->flush();
+        }
+    }
+
+    protected function getMediaUrl(object $media): string
+    {
+        $provider = $this->mediaPool->getProvider($media->getProviderName());
+        return $provider->generatePublicUrl($media, 'default_medium');
+    }
+
+    protected function getMediaId(object $media): int|string
+    {
+        return $media->getId();
     }
 
     protected function getMediaContext(): string
@@ -149,11 +359,90 @@ class ArticleImageController extends AbstractAiImageController
         return 'articles';
     }
 
-    // ... other abstract methods
+    // Optional: Override template if needed
+    // protected function getTemplate(): string
+    // {
+    //     return 'admin/article_ai_image.html.twig';
+    // }
 }
 ```
 
-### 4. Configure Admin
+### Adding Link from Sonata Admin
+
+Add a button in your Admin class to access the dedicated page:
+
+```php
+// In your ArticleAdmin.php
+
+protected function configureRoutes(RouteCollectionInterface $collection): void
+{
+    $collection->add('ai_image', $this->getRouterIdParameter() . '/ai-image');
+}
+
+protected function configureActionButtons(array $buttonList, string $action, ?object $object = null): array
+{
+    $buttonList = parent::configureActionButtons($buttonList, $action, $object);
+
+    if ($action === 'edit' && $object !== null) {
+        $buttonList['ai_image'] = [
+            'template' => 'admin/button_ai_image.html.twig',
+        ];
+    }
+
+    return $buttonList;
+}
+```
+
+Create the button template:
+
+```twig
+{# templates/admin/button_ai_image.html.twig #}
+<a class="btn btn-info" href="{{ path('admin_article_ai_image_page', {id: object.id}) }}">
+    <i class="fa fa-magic"></i> AI Image
+</a>
+```
+
+### Custom Template
+
+You can override the default template by extending `getTemplate()` in your controller:
+
+```php
+protected function getTemplate(): string
+{
+    return 'admin/my_custom_ai_image_page.html.twig';
+}
+```
+
+Your custom template can extend the bundle's template and override blocks:
+
+```twig
+{# templates/admin/my_custom_ai_image_page.html.twig #}
+{% extends '@XmonAiContent/admin/ai_image_page.html.twig' %}
+
+{% block header_title %}Generate Image for Article{% endblock %}
+{% block entity_label %}Article{% endblock %}
+{% block generate_subject_label %}Generate description from article content{% endblock %}
+```
+
+Available blocks to override:
+- `page_title` - Browser tab title
+- `header_title` - Main heading
+- `entity_label` - Label before entity title
+- `controls_title` - Controls panel title
+- `subject_label` - Subject field label
+- `subject_placeholder` - Subject textarea placeholder
+- `subject_help` - Help text below subject
+- `style_label` - Style section label
+- `generate_subject_label` - AI subject generation button
+- `generate_image_label` - Main action button
+- `xmon_ai_image_styles` - CSS block
+- `xmon_ai_image_scripts` - JavaScript block
+
+## Form Types (For In-Form Integration)
+
+For simpler use cases, you can use Form Types directly in Sonata Admin forms instead of the dedicated page.
+
+### 6. Configure Admin
 
 ```php
 use Xmon\AiContentBundle\Form\AiTextFieldType;
@@ -248,35 +537,53 @@ A compound field for selecting image style.
 
 ## Admin Extension
 
-Apply the extension to auto-include CSS/JS:
+The Admin Extension provides helper methods for accessing style configuration. Apply it via YAML:
 
 ```yaml
-# config/services.yaml
-services:
-    App\Admin\ArticleAdmin:
-        calls:
-            - [addExtension, ['@Xmon\AiContentBundle\Admin\AiImageAdminExtension']]
+# config/packages/sonata_admin.yaml
+sonata_admin:
+    extensions:
+        Xmon\AiContentBundle\Admin\AiImageAdminExtension:
+            admins:
+                - admin.article  # Your admin service ID
 ```
 
-The extension provides helper methods:
+The extension provides helper methods in your Admin class:
 
 ```php
-$this->getExtension(AiImageAdminExtension::class)->getPresetChoices();
-$this->getExtension(AiImageAdminExtension::class)->getStyleChoices();
-$this->getExtension(AiImageAdminExtension::class)->getGlobalStylePreview();
+// Get available presets for dropdown
+$presets = $this->getExtension(AiImageAdminExtension::class)->getPresetChoices();
+
+// Get style choices
+$styles = $this->getExtension(AiImageAdminExtension::class)->getStyleChoices();
+
+// Get global style preview text
+$preview = $this->getExtension(AiImageAdminExtension::class)->getGlobalStylePreview();
 ```
 
-## CSS/JS Assets
+## Troubleshooting
 
-The bundle includes CSS and JS assets in `Resources/public/`.
+### Assets not loading
 
-After installation, run:
+1. **Check symlink exists:**
+   ```bash
+   ls -la public/bundles/xmonaicontent/
+   ```
 
-```bash
-bin/console assets:install
-```
+2. **If symlink points to wrong path** (e.g., host path instead of container path):
+   ```bash
+   # Run inside Docker container
+   docker compose exec php bin/console assets:install --symlink
+   ```
 
-The extension auto-includes these assets when applied to an admin.
+3. **Verify YAML configuration:**
+   ```bash
+   bin/console debug:config sonata_admin assets
+   ```
+
+### Form theme not applied
+
+Check that `@XmonAiContent/form/fields.html.twig` is in your `twig.form_themes` configuration.
 
 ## Related
 
