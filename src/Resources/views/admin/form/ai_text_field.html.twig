@@ -4,8 +4,8 @@
  #}
 {% block xmon_ai_text_widget %}
 <div class="xmon-ai-text-field" data-ai-text-field>
-    {# Render the textarea #}
-    {{ block('textarea_widget') }}
+    {# Render the textarea directly #}
+    <textarea id="{{ id }}" name="{{ full_name }}" class="form-control{% if errors|length > 0 %} is-invalid{% endif %}"{% if disabled %} disabled="disabled"{% endif %}{% if required %} required="required"{% endif %}{% for attrname, attrvalue in attr %} {{ attrname }}="{{ attrvalue }}"{% endfor %}>{{ value }}</textarea>
 
     {% if ai_endpoint %}
     <div class="xmon-ai-text-actions mt-2">
@@ -25,18 +25,5 @@
         </button>
     </div>
     {% endif %}
-</div>
-{% endblock %}
-
-{% block xmon_ai_text_row %}
-<div class="form-group row">
-    {{ form_label(form) }}
-    <div class="{{ block('form_group_class') }}">
-        {{ form_widget(form) }}
-        {{ form_errors(form) }}
-        {% if help is defined and help is not empty %}
-        <small class="form-text text-muted">{{ help }}</small>
-        {% endif %}
-    </div>
 </div>
 {% endblock %}

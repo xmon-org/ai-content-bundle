@@ -9,18 +9,9 @@
  #}
 
 {# Include the specialized templates #}
+{# Note: Do NOT use 'only' to preserve standard form variables (id, full_name, value, etc.) #}
 {% block xmon_ai_text_widget %}
-    {% include '@XmonAiContent/admin/form/ai_text_field.html.twig' with {
-        ai_endpoint: ai_endpoint,
-        ai_button_label: ai_button_label,
-        ai_method: ai_method,
-        ai_source_fields: ai_source_fields,
-        ai_extra_data: ai_extra_data,
-        ai_button_class: ai_button_class,
-        ai_show_spinner: ai_show_spinner,
-        ai_confirm_overwrite: ai_confirm_overwrite,
-        ai_confirm_message: ai_confirm_message,
-    } only %}
+    {% include '@XmonAiContent/admin/form/ai_text_field.html.twig' %}
 {% endblock %}
 
 {% block xmon_ai_style_widget %}

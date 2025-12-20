@@ -5,29 +5,25 @@ declare(strict_types=1);
 namespace Xmon\AiContentBundle\Admin;
 
 use Sonata\AdminBundle\Admin\AbstractAdminExtension;
-use Sonata\AdminBundle\Admin\AdminInterface;
 use Xmon\AiContentBundle\Service\ImageOptionsService;
 use Xmon\AiContentBundle\Service\PromptBuilder;
 
 /**
  * Sonata Admin Extension for AI image generation.
  *
- * This extension adds the necessary JavaScript and CSS assets for AI
- * image fields to work in Sonata Admin forms.
- *
- * To use this extension, configure it in your services.yaml:
- *
- *     App\Admin\ArticleAdmin:
- *         calls:
- *             - [addExtension, ['@Xmon\AiContentBundle\Admin\AiImageAdminExtension']]
- *
- * Or apply it globally to all admins via Sonata configuration:
+ * This extension provides helper methods for AI image generation in Sonata Admin.
+ * JavaScript and CSS assets must be configured separately in sonata_admin.yaml:
  *
  *     sonata_admin:
+ *         assets:
+ *             extra_javascripts:
+ *                 - bundles/xmonaicontent/js/ai-image-regenerator.js
+ *             extra_stylesheets:
+ *                 - bundles/xmonaicontent/css/ai-image.css
  *         extensions:
- *             xmon.ai_content.admin.extension:
+ *             Xmon\AiContentBundle\Admin\AiImageAdminExtension:
  *                 admins:
- *                     - App\Admin\ArticleAdmin
+ *                     - admin.noticia
  */
 class AiImageAdminExtension extends AbstractAdminExtension
 {
@@ -35,36 +31,6 @@ class AiImageAdminExtension extends AbstractAdminExtension
         private readonly ImageOptionsService $imageOptionsService,
         private readonly PromptBuilder $promptBuilder,
     ) {
-    }
-
-    /**
-     * Configure extra JavaScript files for the admin.
-     *
-     * @param array<string> $javascripts
-     *
-     * @return array<string>
-     */
-    public function configureExtraJavascripts(AdminInterface $admin, array $javascripts): array
-    {
-        // Add the AI image regenerator JavaScript
-        $javascripts[] = 'bundles/xmonaicontent/js/ai-image-regenerator.js';
-
-        return $javascripts;
-    }
-
-    /**
-     * Configure extra CSS files for the admin.
-     *
-     * @param array<string> $stylesheets
-     *
-     * @return array<string>
-     */
-    public function configureExtraStylesheets(AdminInterface $admin, array $stylesheets): array
-    {
-        // Add the AI image styles
-        $stylesheets[] = 'bundles/xmonaicontent/css/ai-image.css';
-
-        return $stylesheets;
     }
 
     /**
