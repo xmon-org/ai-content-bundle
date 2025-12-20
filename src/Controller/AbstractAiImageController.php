@@ -77,7 +77,28 @@ abstract class AbstractAiImageController extends AbstractController
         protected readonly PromptBuilder $promptBuilder,
         protected readonly PromptTemplateService $promptTemplateService,
         protected readonly ?MediaStorageService $mediaStorage = null,
+        protected readonly int $maxHistoryImages = 5,
     ) {
+    }
+
+    /**
+     * Get the maximum number of images to keep in history.
+     *
+     * Override this method to get the value dynamically (e.g., from a database entity).
+     *
+     * By default, uses the value from bundle configuration (xmon_ai_content.history.max_images)
+     * or the fallback value of 5.
+     *
+     * Example override:
+     *     protected function getMaxHistoryImages(): int
+     *     {
+     *         $config = $this->configRepository->getConfiguration();
+     *         return $config?->getMaxHistoryImages() ?? parent::getMaxHistoryImages();
+     *     }
+     */
+    protected function getMaxHistoryImages(): int
+    {
+        return $this->maxHistoryImages;
     }
 
     // ==========================================

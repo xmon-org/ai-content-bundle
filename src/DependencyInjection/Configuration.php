@@ -209,6 +209,18 @@ class Configuration implements ConfigurationInterface
                         ->end()
                     ->end()
                 ->end()
+                // History settings
+                ->arrayNode('history')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->integerNode('max_images')
+                            ->defaultValue(5)
+                            ->min(1)
+                            ->max(50)
+                            ->info('Maximum images to keep in history per entity')
+                        ->end()
+                    ->end()
+                ->end()
             ->end();
 
         return $treeBuilder;

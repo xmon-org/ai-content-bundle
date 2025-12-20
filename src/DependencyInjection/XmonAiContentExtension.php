@@ -60,6 +60,9 @@ class XmonAiContentExtension extends Extension
 
         // Configure prompt templates
         $this->configurePromptTemplates($container, $config['prompts'] ?? []);
+
+        // Configure history settings
+        $this->configureHistory($container, $config['history'] ?? []);
     }
 
     /**
@@ -460,6 +463,12 @@ PROMPT,
 
         // Store parameters for external access
         $container->setParameter('xmon_ai_content.prompts.templates', $templates);
+    }
+
+    private function configureHistory(ContainerBuilder $container, array $historyConfig): void
+    {
+        $maxImages = $historyConfig['max_images'] ?? 5;
+        $container->setParameter('xmon_ai_content.history.max_images', $maxImages);
     }
 
     public function getAlias(): string

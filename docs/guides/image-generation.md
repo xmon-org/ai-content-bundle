@@ -180,8 +180,45 @@ try {
 }
 ```
 
+## Image History
+
+When generating images via the [Admin Integration](admin-integration.md), the bundle automatically maintains a history of generated images per entity.
+
+### Configuration
+
+The maximum number of images to keep in history can be configured:
+
+```yaml
+# config/packages/xmon_ai_content.yaml
+xmon_ai_content:
+    history:
+        max_images: 10  # Default: 5, Range: 1-50
+```
+
+### Automatic Cleanup
+
+When the limit is exceeded, the oldest images are automatically deleted (both the history record and the media file). The current featured image is never deleted, even if it's the oldest.
+
+### Dynamic Limit from Database
+
+To configure the limit dynamically (e.g., from a Sonata Admin entity), override the `getMaxHistoryImages()` method in your controller:
+
+```php
+protected function getMaxHistoryImages(): int
+{
+    $config = $this->configRepository->getConfiguration();
+    return $config?->getMaxHistoryImages() ?? parent::getMaxHistoryImages();
+}
+```
+
+This allows you to:
+- Read the limit from a database entity
+- Set different limits per entity type
+- Allow admin users to configure the limit dynamically
+
 ## Related
 
 - [Styles & Presets](styles-presets.md) - Control image styles with presets
 - [Providers Reference](../reference/providers.md) - Available image providers
 - [Fallback System](../reference/fallback-system.md) - How automatic fallback works
+- [Admin Integration](admin-integration.md) - Sonata Admin integration with history

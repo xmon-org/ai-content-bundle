@@ -132,6 +132,12 @@ xmon_ai_content:
 
         # Disable specific default templates
         disable_defaults: []  # ['title-generator', 'summarizer']
+
+    # ============================================
+    # HISTORY (Image history settings)
+    # ============================================
+    history:
+        max_images: 5    # Maximum images per entity (1-50)
 ```
 
 ## Provider Configuration

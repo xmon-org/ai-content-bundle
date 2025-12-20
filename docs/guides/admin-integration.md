@@ -561,6 +561,51 @@ $styles = $this->getExtension(AiImageAdminExtension::class)->getStyleChoices();
 $preview = $this->getExtension(AiImageAdminExtension::class)->getGlobalStylePreview();
 ```
 
+## Customizing History Behavior
+
+### Override Maximum Images
+
+The `AbstractAiImageController` provides a method to customize the maximum number of images in history:
+
+```php
+class MyEntityAiImageController extends AbstractAiImageController
+{
+    public function __construct(
+        // ... other dependencies
+        private readonly ConfigurationRepository $configRepository,
+    ) {
+        parent::__construct(/* ... */);
+    }
+
+    protected function getMaxHistoryImages(): int
+    {
+        // Read from database, session, or any source
+        $config = $this->configRepository->getConfiguration();
+        return $config?->getMaxHistoryImages() ?? parent::getMaxHistoryImages();
+    }
+}
+```
+
+This allows you to:
+- Read the limit from a database entity (e.g., Configuracion)
+- Set different limits per entity type
+- Allow admin users to configure the limit dynamically
+
+### Configuration Priority
+
+The history limit follows this priority (highest to lowest):
+
+1. **Controller override** - `getMaxHistoryImages()` method
+2. **YAML configuration** - `xmon_ai_content.history.max_images`
+3. **Bundle default** - 5 images
+
+```yaml
+# config/packages/xmon_ai_content.yaml
+xmon_ai_content:
+    history:
+        max_images: 10  # Override bundle default
+```
+
 ## Troubleshooting
 
 ### Assets not loading
