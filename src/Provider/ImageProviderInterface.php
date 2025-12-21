@@ -10,17 +10,17 @@ use Xmon\AiContentBundle\Model\ImageResult;
 interface ImageProviderInterface
 {
     /**
-     * Get the provider name (e.g., 'pollinations', 'together')
+     * Get the provider name (e.g., 'pollinations', 'together').
      */
     public function getName(): string;
 
     /**
-     * Check if the provider is available (has required credentials, etc.)
+     * Check if the provider is available (has required credentials, etc.).
      */
     public function isAvailable(): bool;
 
     /**
-     * Generate an image from a prompt
+     * Generate an image from a prompt.
      *
      * @param string $prompt The text prompt describing the image
      * @param array{

@@ -1,0 +1,59 @@
+{#
+ # Template for AiImageFieldType
+ # Renders a button to open the AI image regeneration modal.
+ #}
+{% block xmon_ai_image_widget %}
+<div class="xmon-ai-image-field" data-ai-image-field>
+    {# Current image preview (if available) #}
+    {% if ai_current_image_url %}
+    <div class="xmon-ai-current-image mb-3">
+        <img src="{{ ai_current_image_url }}"
+             alt="Current image"
+             class="img-thumbnail"
+             style="max-width: 200px; max-height: 150px; object-fit: cover;">
+    </div>
+    {% endif %}
+
+    {# Regenerate button #}
+    {% if ai_regenerate_endpoint %}
+    <button type="button"
+            class="xmon-ai-regenerate-btn {{ ai_button_class }}"
+            data-bs-toggle="modal"
+            data-bs-target="#xmonAiImageModal-{{ id }}">
+        <i class="fa fa-magic me-1"></i>
+        {{ ai_regenerate_button_label }}
+    </button>
+    {% endif %}
+
+    {# Include the modal #}
+    {% if ai_regenerate_endpoint %}
+    {% include ai_modal_template with {
+        modal_id: 'xmonAiImageModal-' ~ id,
+        field_id: id,
+        modal_title: ai_modal_title,
+        regenerate_endpoint: ai_regenerate_endpoint,
+        generate_subject_endpoint: ai_generate_subject_endpoint,
+        use_history_endpoint: ai_use_history_endpoint,
+        delete_history_endpoint: ai_delete_history_endpoint,
+        current_image_url: ai_current_image_url,
+        current_image_id: ai_current_image_id,
+        subject: ai_subject,
+        style: ai_style,
+        history: ai_history,
+        show_style_selector: ai_show_style_selector,
+        show_history: ai_show_history,
+        generate_subject_button_label: ai_generate_subject_button_label,
+    } %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block xmon_ai_image_row %}
+<div class="form-group">
+    {% if label is not same as(false) %}
+    {{ form_label(form) }}
+    {% endif %}
+    {{ form_widget(form) }}
+    {{ form_errors(form) }}
+</div>
+{% endblock %}

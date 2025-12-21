@@ -1,0 +1,12 @@
+# SonataMedia integration services
+# This file is only loaded when sonata-project/media-bundle is installed
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    Xmon\AiContentBundle\Service\MediaStorageService:
+        arguments:
+            $defaultContext: 'default'
+            $providerName: 'sonata.media.provider.image'

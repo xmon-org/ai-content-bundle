@@ -1,0 +1,29 @@
+{#
+ # Template for AiTextFieldType
+ # Renders a textarea with an AI generation button.
+ #}
+{% block xmon_ai_text_widget %}
+<div class="xmon-ai-text-field" data-ai-text-field>
+    {# Render the textarea directly #}
+    <textarea id="{{ id }}" name="{{ full_name }}" class="form-control{% if errors|length > 0 %} is-invalid{% endif %}"{% if disabled %} disabled="disabled"{% endif %}{% if required %} required="required"{% endif %}{% for attrname, attrvalue in attr %} {{ attrname }}="{{ attrvalue }}"{% endfor %}>{{ value }}</textarea>
+
+    {% if ai_endpoint %}
+    <div class="xmon-ai-text-actions mt-2">
+        <button type="button"
+                class="xmon-ai-generate-btn {{ ai_button_class }}"
+                data-endpoint="{{ ai_endpoint }}"
+                data-method="{{ ai_method }}"
+                data-target="{{ id }}"
+                data-source-fields="{{ ai_source_fields|json_encode }}"
+                data-extra-data="{{ ai_extra_data|json_encode }}"
+                data-confirm-overwrite="{{ ai_confirm_overwrite ? 'true' : 'false' }}"
+                data-confirm-message="{{ ai_confirm_message }}">
+            {% if ai_show_spinner %}
+            <span class="xmon-ai-spinner spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            {% endif %}
+            <span class="xmon-ai-btn-text">{{ ai_button_label }}</span>
+        </button>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

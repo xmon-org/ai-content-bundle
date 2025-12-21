@@ -1,151 +1,158 @@
 # xmon/ai-content-bundle
 
-Symfony 7 bundle para generación de contenido con IA (texto e imágenes) con sistema de fallback entre proveedores.
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/xmon/ai-content-bundle.svg?style=flat-square)](https://packagist.org/packages/xmon/ai-content-bundle)
+[![PHP Version](https://img.shields.io/packagist/php-v/xmon/ai-content-bundle.svg?style=flat-square)](https://packagist.org/packages/xmon/ai-content-bundle)
+[![Symfony](https://img.shields.io/badge/Symfony-7.x-purple.svg?style=flat-square&logo=symfony)](https://symfony.com)
+[![Total Downloads](https://img.shields.io/packagist/dt/xmon/ai-content-bundle.svg?style=flat-square)](https://packagist.org/packages/xmon/ai-content-bundle)
+[![License](https://img.shields.io/packagist/l/xmon/ai-content-bundle.svg?style=flat-square)](LICENSE)
 
-## Requisitos
+[![CI](https://github.com/xmon-org/ai-content-bundle/actions/workflows/ci.yml/badge.svg)](https://github.com/xmon-org/ai-content-bundle/actions/workflows/ci.yml)
+[![semantic-release](https://img.shields.io/badge/semantic--release-conventionalcommits-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
+
+Symfony 7 bundle for AI content generation (text and images) with automatic fallback between providers.
+
+## Features
+
+- **Text generation** with Gemini, OpenRouter, Pollinations
+- **Image generation** with Pollinations (Flux model)
+- **Automatic fallback** between providers
+- **Style presets** for consistent image generation
+- **Configurable prompt templates** for text generation
+- **Prompt variants** with intelligent content-based selection
+- **SonataMedia integration** (optional)
+- **Sonata Admin integration** with image regeneration UI (optional)
+
+## Requirements
 
 - PHP >= 8.2
 - Symfony >= 7.0
 - symfony/http-client
 
-## Instalación
+## Quick Start
+
+### 1. Installation
 
 ```bash
 composer require xmon/ai-content-bundle
 ```
 
-## Configuración
-
-### 1. Variables de entorno
-
-```bash
-# .env
-POLLINATIONS_API_KEY=tu_secret_key  # Opcional, sin key hay rate limits
-```
-
-### 2. Configuración del bundle
+### 2. Configuration
 
 ```yaml
 # config/packages/xmon_ai_content.yaml
 xmon_ai_content:
+    text:
+        providers:
+            pollinations:
+                enabled: true
     image:
         providers:
             pollinations:
                 enabled: true
-                priority: 1
-                api_key: '%env(POLLINATIONS_API_KEY)%'
-                model: 'flux'
-                timeout: 120
-        defaults:
-            width: 1280
-            height: 720
-            retries: 3
-            retry_delay: 5
 ```
 
-## Uso
+### 3. Generate Text
 
-### Generar una imagen
+```php
+use Xmon\AiContentBundle\Service\AiTextService;
+
+class MyService
+{
+    public function __construct(
+        private readonly AiTextService $aiTextService,
+    ) {}
+
+    public function summarize(string $content): string
+    {
+        $result = $this->aiTextService->generate(
+            systemPrompt: 'You are a helpful assistant.',
+            userMessage: "Summarize: {$content}",
+        );
+
+        return $result->getText();
+    }
+}
+```
+
+### 4. Generate Image
 
 ```php
 use Xmon\AiContentBundle\Service\AiImageService;
 
-class MyController
+class MyService
 {
     public function __construct(
         private readonly AiImageService $aiImageService,
     ) {}
 
-    public function generateImage(): Response
+    public function generateImage(): void
     {
         $result = $this->aiImageService->generate(
             prompt: 'A serene Japanese dojo with morning light',
-            options: [
-                'width' => 1280,
-                'height' => 720,
-            ]
         );
 
-        // $result es un ImageResult con:
-        // - getBytes(): raw image data
-        // - getMimeType(): 'image/png', 'image/jpeg', etc.
-        // - getProvider(): 'pollinations'
-        // - getWidth(), getHeight()
-        // - toBase64(), toDataUri()
-
-        return new Response($result->getBytes(), 200, [
-            'Content-Type' => $result->getMimeType(),
-        ]);
+        file_put_contents('image.png', $result->getBytes());
     }
 }
 ```
 
-### Opciones de generación
+## Documentation
 
-```php
-$result = $this->aiImageService->generate('prompt here', [
-    'width' => 1280,           // Ancho en píxeles
-    'height' => 720,           // Alto en píxeles
-    'model' => 'flux',         // Modelo de IA
-    'seed' => 12345,           // Seed para reproducibilidad
-    'nologo' => true,          // Sin marca de agua (requiere API key)
-    'enhance' => false,        // IA mejora el prompt automáticamente
-    'provider' => 'pollinations', // Forzar proveedor específico
-]);
+### Installation & Setup
+- [Installation Guide](docs/installation.md) - Full setup instructions
+
+### Guides
+- [Text Generation](docs/guides/text-generation.md) - Generate text with AI
+- [Image Generation](docs/guides/image-generation.md) - Generate images with AI
+- [Styles & Presets](docs/guides/styles-presets.md) - Control image styles
+- [Prompt Templates](docs/guides/prompt-templates.md) - Configurable prompts with variants
+- [Custom Providers](docs/guides/custom-providers.md) - Add your own providers
+- [Admin Integration](docs/guides/admin-integration.md) - Sonata Admin integration
+
+### Reference
+- [Configuration](docs/reference/configuration.md) - Full YAML reference
+- [Providers](docs/reference/providers.md) - Available AI providers
+- [Fallback System](docs/reference/fallback-system.md) - How automatic fallback works
+- [Architecture](docs/reference/architecture.md) - Bundle structure
+
+### Development
+- [Development Guide](docs/development.md) - Local setup and commands
+
+## Available Providers
+
+### Text
+
+| Provider | Requires API Key | Notes |
+|----------|------------------|-------|
+| Gemini | Yes | Recommended, fast |
+| OpenRouter | Yes | Multiple models |
+| Pollinations | Optional | Always available, higher rate limits with key |
+
+### Image
+
+| Provider | Requires API Key | Notes |
+|----------|------------------|-------|
+| Pollinations | Optional | Flux model |
+
+## Debug Command
+
+```bash
+bin/console xmon:ai:debug
 ```
 
-## Proveedores disponibles
-
-| Proveedor | Estado | Requiere API Key |
-|-----------|--------|------------------|
-| Pollinations | ✅ Implementado | Opcional (sin key = rate limits) |
-| Together.ai | 🚧 Próximamente | Sí |
-
-## Arquitectura
-
-```
-src/
-├── Provider/
-│   ├── ImageProviderInterface.php    # Contrato para proveedores
-│   └── Image/
-│       └── PollinationsImageProvider.php
-├── Service/
-│   └── AiImageService.php            # Orquestador con fallback
-├── Model/
-│   └── ImageResult.php               # DTO inmutable
-└── Exception/
-    └── AiProviderException.php       # Excepciones tipadas
-```
-
-## Desarrollo
-
-Este bundle usa path repository durante desarrollo:
-
-```json
-// composer.json del proyecto
-{
-    "repositories": [
-        { "type": "path", "url": "/packages/ai-content-bundle" }
-    ],
-    "require": {
-        "xmon/ai-content-bundle": "@dev"
-    }
-}
-```
+Shows configured providers, styles, presets, and prompt templates.
 
 ## Roadmap
 
-- [x] Fase 1: Estructura base + Pollinations
-- [ ] Fase 2: Fallback con Together.ai
-- [ ] Fase 3: Integración SonataMedia
-- [ ] Fase 4: Proveedores de texto (Gemini, OpenRouter)
-- [ ] Fase 5: Sistema de estilos/presets
-- [ ] Fase 6: Entidades editables en Admin
-- [ ] Fase 7: System prompts configurables
-- [ ] Fase 8: UI de regeneración en Admin
-- [ ] Fase 9: Migración proyecto Aikido
-- [ ] Fase 10: Publicación en Packagist
+- [x] Phase 1: Base structure + Pollinations
+- [x] Phase 2: SonataMedia integration
+- [x] Phase 3: Text providers (Gemini, OpenRouter, Pollinations)
+- [x] Phase 4: Styles/presets system (ImageOptionsService, PromptBuilder)
+- [x] Phase 5: Configurable prompts (PromptTemplateService)
+- [x] Phase 6: Admin regeneration UI (Form Types, Controller, Templates)
+- [ ] Phase 7: Aikido project migration
+- [ ] Phase 8: Packagist publication
 
-## Licencia
+## License
 
 MIT

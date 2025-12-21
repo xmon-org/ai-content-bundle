@@ -16,8 +16,8 @@
     ],
     "authors": [
         {
-            "name": "Xmon",
-            "email": "info@xmon.es"
+            "name": "Juanjo García",
+            "email": "juanjogarciae@gmail.com"
         }
     ],
     "require": {
@@ -27,8 +27,12 @@
         "psr/log": "^3.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^10.0",
-        "symfony/phpunit-bridge": "^7.0"
+        "friendsofphp/php-cs-fixer": "^3.50",
+        "phpstan/phpstan": "^1.10",
+        "phpstan/phpstan-symfony": "^1.3",
+        "phpunit/phpunit": "^10.0|^11.0",
+        "symfony/phpunit-bridge": "^7.0",
+        "twig/twig": "^3.0"
     },
     "suggest": {
         "sonata-project/media-bundle": "Required for image storage with SonataMedia (^4.0)",
@@ -44,8 +48,25 @@
             "Xmon\\AiContentBundle\\Tests\\": "tests/"
         }
     },
+    "scripts": {
+        "test": "phpunit",
+        "phpstan": "phpstan analyse",
+        "cs-check": "php-cs-fixer fix --dry-run --diff",
+        "cs-fix": "php-cs-fixer fix",
+        "check": [
+            "@cs-check",
+            "@phpstan",
+            "@test"
+        ],
+        "setup-hooks": "git config core.hooksPath .githooks",
+        "post-install-cmd": "@setup-hooks",
+        "post-update-cmd": "@setup-hooks"
+    },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
     },
     "extra": {
         "branch-alias": {

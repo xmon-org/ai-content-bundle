@@ -51,7 +51,7 @@ class PollinationsImageProvider implements ImageProviderInterface
 
         // Build URL with encoded prompt
         $encodedPrompt = $this->encodePrompt($prompt);
-        $url = self::BASE_URL . $encodedPrompt;
+        $url = self::BASE_URL.$encodedPrompt;
 
         // Build query parameters
         $params = [
@@ -72,14 +72,14 @@ class PollinationsImageProvider implements ImageProviderInterface
             $params['token'] = $this->apiKey;
         }
 
-        $url .= '?' . http_build_query($params);
+        $url .= '?'.http_build_query($params);
 
         $this->logger?->info('[Pollinations] Generating image', [
             'model' => $model,
             'width' => $width,
             'height' => $height,
             'seed' => $seed,
-            'prompt_length' => strlen($prompt),
+            'prompt_length' => \strlen($prompt),
         ]);
 
         try {
@@ -90,11 +90,7 @@ class PollinationsImageProvider implements ImageProviderInterface
             $statusCode = $response->getStatusCode();
 
             if ($statusCode !== 200) {
-                throw AiProviderException::httpError(
-                    self::PROVIDER_NAME,
-                    $statusCode,
-                    $response->getContent(false)
-                );
+                throw AiProviderException::httpError(self::PROVIDER_NAME, $statusCode, $response->getContent(false));
             }
 
             $content = $response->getContent();
@@ -104,7 +100,7 @@ class PollinationsImageProvider implements ImageProviderInterface
             $mimeType = $this->normalizeMimeType($contentType);
 
             $this->logger?->info('[Pollinations] Image generated successfully', [
-                'size' => strlen($content),
+                'size' => \strlen($content),
                 'mime_type' => $mimeType,
             ]);
 
@@ -132,7 +128,7 @@ class PollinationsImageProvider implements ImageProviderInterface
     }
 
     /**
-     * Encode prompt for URL (spaces as %20, handle special characters)
+     * Encode prompt for URL (spaces as %20, handle special characters).
      */
     private function encodePrompt(string $prompt): string
     {
@@ -144,7 +140,7 @@ class PollinationsImageProvider implements ImageProviderInterface
     }
 
     /**
-     * Normalize MIME type from response header
+     * Normalize MIME type from response header.
      */
     private function normalizeMimeType(string $contentType): string
     {

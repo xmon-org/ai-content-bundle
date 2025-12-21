@@ -13,6 +13,7 @@ services:
             $defaultHeight: 720
         tags:
             - { name: 'xmon_ai_content.image_provider', priority: 1 }
+            - { name: 'monolog.logger', channel: 'ai' }
 
     # Main Image Service
     Xmon\AiContentBundle\Service\AiImageService:
@@ -20,3 +21,34 @@ services:
             $providers: !tagged_iterator { tag: 'xmon_ai_content.image_provider', default_priority_method: 'getPriority' }
             $retries: 3
             $retryDelay: 5
+        tags:
+            - { name: 'monolog.logger', channel: 'ai' }
+
+    # Image Options Service (styles, compositions, palettes, extras, presets)
+    Xmon\AiContentBundle\Service\ImageOptionsService:
+        arguments:
+            $styles: []
+            $compositions: []
+            $palettes: []
+            $extras: []
+            $presets: []
+
+    # Variant Selector (selects variants based on content)
+    Xmon\AiContentBundle\Service\VariantSelector:
+        tags:
+            - { name: 'monolog.logger', channel: 'ai' }
+
+    # Prompt Template Service (configurable system/user prompts)
+    Xmon\AiContentBundle\Service\PromptTemplateService:
+        arguments:
+            $templates: []
+            $variantSelector: '@Xmon\AiContentBundle\Service\VariantSelector'
+        tags:
+            - { name: 'monolog.logger', channel: 'ai' }
+
+    # Prompt Builder (combines subject with style options)
+    Xmon\AiContentBundle\Service\PromptBuilder: ~
+
+    # Console Commands
+    Xmon\AiContentBundle\Command\DebugConfigCommand:
+        tags: ['console.command']

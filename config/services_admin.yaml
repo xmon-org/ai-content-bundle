@@ -1,0 +1,27 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    # Form Types
+    Xmon\AiContentBundle\Form\AiTextFieldType:
+        tags: ['form.type']
+
+    Xmon\AiContentBundle\Form\AiImageFieldType:
+        tags: ['form.type']
+
+    Xmon\AiContentBundle\Form\StyleSelectorType:
+        tags: ['form.type']
+
+    # Admin Extension
+    Xmon\AiContentBundle\Admin\AiImageAdminExtension:
+        tags:
+            - { name: 'sonata.admin.extension' }
+
+    # Twig Extension (exposes config as global variables)
+    Xmon\AiContentBundle\Twig\AiContentExtension:
+        autowire: false
+        arguments:
+            - '%xmon_ai_content.admin.base_template%'
+            - '%xmon_ai_content.admin.show_bundle_credit%'
+        tags: ['twig.extension']

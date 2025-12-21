@@ -1,0 +1,208 @@
+/**
+ * AI Image Regeneration Styles
+ *
+ * Styles for the AI image generation components in Sonata Admin.
+ */
+
+/* Text field with AI button */
+.xmon-ai-text-field {
+    position: relative;
+}
+
+.xmon-ai-text-field textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.xmon-ai-text-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.xmon-ai-generate-btn {
+    white-space: nowrap;
+}
+
+.xmon-ai-spinner {
+    margin-right: 0.25rem;
+}
+
+/* Style selector */
+.xmon-ai-style-selector {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    background: #f8f9fa;
+}
+
+.xmon-ai-style-selector .nav-tabs {
+    border-bottom-color: #dee2e6;
+}
+
+.xmon-ai-style-selector .nav-link {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.xmon-ai-style-preview {
+    margin-top: 1rem;
+}
+
+.xmon-ai-preview-text {
+    font-size: 0.8125rem;
+    word-break: break-word;
+}
+
+.xmon-ai-preview-content {
+    color: #6c757d;
+}
+
+/* Image field */
+.xmon-ai-image-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.xmon-ai-current-image img {
+    border-radius: 0.375rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.xmon-ai-regenerate-btn {
+    align-self: flex-start;
+}
+
+/* Modal */
+.xmon-ai-image-modal .modal-body {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.xmon-ai-image-modal .card {
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.xmon-ai-image-modal .card-header {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.xmon-ai-image-modal .card-footer {
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+.xmon-ai-no-image,
+.xmon-ai-new-placeholder {
+    color: #adb5bd;
+}
+
+.xmon-ai-new-preview-container {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Style tabs in modal */
+.xmon-ai-style-section .nav-tabs .nav-link {
+    font-size: 0.8125rem;
+    padding: 0.25rem 0.75rem;
+}
+
+.xmon-ai-style-section .tab-content {
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 0.375rem 0.375rem;
+    background: #fff;
+}
+
+.xmon-ai-global-preview,
+.xmon-ai-preset-preview,
+.xmon-ai-custom-preview {
+    font-size: 0.75rem;
+    color: #6c757d;
+    min-height: 2rem;
+}
+
+/* History grid */
+.xmon-ai-history-grid {
+    scrollbar-width: thin;
+    scrollbar-color: #dee2e6 #f8f9fa;
+}
+
+.xmon-ai-history-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.xmon-ai-history-grid::-webkit-scrollbar-track {
+    background: #f8f9fa;
+}
+
+.xmon-ai-history-grid::-webkit-scrollbar-thumb {
+    background: #dee2e6;
+    border-radius: 3px;
+}
+
+.xmon-ai-history-item .card {
+    transition: box-shadow 0.15s ease;
+}
+
+.xmon-ai-history-item .card:hover {
+    box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+.xmon-ai-history-item img {
+    transition: opacity 0.15s ease;
+}
+
+.xmon-ai-history-item img:hover {
+    opacity: 0.8;
+}
+
+.xmon-ai-history-item .btn-group {
+    gap: 1px;
+}
+
+.xmon-ai-history-item .btn {
+    flex: 1;
+    padding: 0.125rem 0.25rem;
+    font-size: 0.75rem;
+}
+
+/* Timer */
+.xmon-ai-generation-timer {
+    font-size: 0.8125rem;
+}
+
+/* Responsive */
+@media (max-width: 991.98px) {
+    .xmon-ai-image-modal .modal-dialog {
+        max-width: 100%;
+        margin: 1rem;
+    }
+}
+
+/* Dark mode support (if using Bootstrap dark mode) */
+@media (prefers-color-scheme: dark) {
+    .xmon-ai-style-selector {
+        background: #212529;
+        border-color: #495057;
+    }
+
+    .xmon-ai-style-section .tab-content {
+        background: #212529;
+        border-color: #495057;
+    }
+
+    .xmon-ai-preview-content,
+    .xmon-ai-global-preview,
+    .xmon-ai-preset-preview,
+    .xmon-ai-custom-preview {
+        color: #adb5bd;
+    }
+}
