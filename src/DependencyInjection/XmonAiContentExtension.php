@@ -139,6 +139,8 @@ class XmonAiContentExtension extends Extension
             $providerDefault = $providerDefaults[$name];
             $definition = $container->getDefinition($class);
 
+            $priority = $config['priority'] ?? $providerDefault['priority'];
+
             // Common fields for all providers (unified schema)
             if (isset($config['api_key'])) {
                 $definition->setArgument('$apiKey', $config['api_key']);
@@ -146,7 +148,11 @@ class XmonAiContentExtension extends Extension
             $definition->setArgument('$model', $config['model'] ?? $providerDefault['model']);
             $definition->setArgument('$fallbackModels', $config['fallback_models'] ?? []);
             $definition->setArgument('$timeout', $config['timeout'] ?? $providerDefault['timeout']);
-            $definition->setArgument('$priority', $config['priority'] ?? $providerDefault['priority']);
+            $definition->setArgument('$priority', $priority);
+
+            // Update the tag priority for proper ordering in tagged_iterator
+            $definition->clearTag('xmon_ai_content.text_provider');
+            $definition->addTag('xmon_ai_content.text_provider', ['priority' => $priority]);
         }
 
         // Configure AiTextService with defaults

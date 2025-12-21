@@ -54,10 +54,12 @@ class GeminiTextProvider implements TextProviderInterface
 
         $url = self::API_BASE."/models/{$model}:generateContent";
 
-        $this->logger?->debug('Gemini: Generating text', [
+        $this->logger?->debug('Gemini: Request', [
             'model' => $model,
-            'system_length' => \strlen($systemPrompt),
-            'user_length' => \strlen($userMessage),
+            'temperature' => $temperature,
+            'max_tokens' => $maxTokens,
+            'system_prompt' => mb_substr($systemPrompt, 0, 500).(mb_strlen($systemPrompt) > 500 ? '...' : ''),
+            'user_message' => mb_substr($userMessage, 0, 300).(mb_strlen($userMessage) > 300 ? '...' : ''),
         ]);
 
         try {
@@ -100,9 +102,10 @@ class GeminiTextProvider implements TextProviderInterface
             $promptTokens = $data['usageMetadata']['promptTokenCount'] ?? null;
             $completionTokens = $data['usageMetadata']['candidatesTokenCount'] ?? null;
 
-            $this->logger?->info('Gemini: Text generated successfully', [
+            $this->logger?->info('Gemini: Response OK', [
                 'model' => $model,
-                'response_length' => \strlen($text),
+                'tokens' => ($promptTokens ?? '?').'+'.($completionTokens ?? '?'),
+                'response' => mb_substr($text, 0, 200).(mb_strlen($text) > 200 ? '...' : ''),
             ]);
 
             return new TextResult(

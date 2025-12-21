@@ -105,7 +105,13 @@ class OpenRouterTextProvider implements TextProviderInterface
         int $maxTokens,
         float $temperature,
     ): ?TextResult {
-        $this->logger?->debug('OpenRouter: Trying model', ['model' => $model]);
+        $this->logger?->debug('OpenRouter: Request', [
+            'model' => $model,
+            'temperature' => $temperature,
+            'max_tokens' => $maxTokens,
+            'system_prompt' => mb_substr($systemPrompt, 0, 500).(mb_strlen($systemPrompt) > 500 ? '...' : ''),
+            'user_message' => mb_substr($userMessage, 0, 300).(mb_strlen($userMessage) > 300 ? '...' : ''),
+        ]);
 
         $messages = [];
         if (!empty($systemPrompt)) {
@@ -155,13 +161,14 @@ class OpenRouterTextProvider implements TextProviderInterface
             return null;
         }
 
-        $this->logger?->info('OpenRouter: Text generated successfully', [
-            'model' => $model,
-            'response_length' => \strlen($text),
-        ]);
-
         // OpenRouter provides token usage in the response
         $usage = $data['usage'] ?? [];
+
+        $this->logger?->info('OpenRouter: Response OK', [
+            'model' => $model,
+            'tokens' => ($usage['prompt_tokens'] ?? '?').'+'.($usage['completion_tokens'] ?? '?'),
+            'response' => mb_substr($text, 0, 200).(mb_strlen($text) > 200 ? '...' : ''),
+        ]);
 
         return new TextResult(
             text: $text,

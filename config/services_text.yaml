@@ -18,6 +18,7 @@ services:
             $priority: 100
         tags:
             - { name: 'xmon_ai_content.text_provider', priority: 100 }
+            - { name: 'monolog.logger', channel: 'ai' }
 
     Xmon\AiContentBundle\Provider\Text\OpenRouterTextProvider:
         arguments:
@@ -28,6 +29,7 @@ services:
             $priority: 50
         tags:
             - { name: 'xmon_ai_content.text_provider', priority: 50 }
+            - { name: 'monolog.logger', channel: 'ai' }
 
     Xmon\AiContentBundle\Provider\Text\PollinationsTextProvider:
         arguments:
@@ -37,10 +39,13 @@ services:
             $priority: 10
         tags:
             - { name: 'xmon_ai_content.text_provider', priority: 10 }
+            - { name: 'monolog.logger', channel: 'ai' }
 
     # Main Text Service
     Xmon\AiContentBundle\Service\AiTextService:
         arguments:
-            $providers: !tagged_iterator { tag: 'xmon_ai_content.text_provider' }
+            $providers: !tagged_iterator { tag: 'xmon_ai_content.text_provider', default_priority_method: 'getPriority' }
             $retries: 2
             $retryDelay: 3
+        tags:
+            - { name: 'monolog.logger', channel: 'ai' }
