@@ -33,10 +33,18 @@ services:
             $extras: []
             $presets: []
 
+    # Variant Selector (selects variants based on content)
+    Xmon\AiContentBundle\Service\VariantSelector:
+        tags:
+            - { name: 'monolog.logger', channel: 'ai' }
+
     # Prompt Template Service (configurable system/user prompts)
     Xmon\AiContentBundle\Service\PromptTemplateService:
         arguments:
             $templates: []
+            $variantSelector: '@Xmon\AiContentBundle\Service\VariantSelector'
+        tags:
+            - { name: 'monolog.logger', channel: 'ai' }
 
     # Prompt Builder (combines subject with style options)
     Xmon\AiContentBundle\Service\PromptBuilder: ~

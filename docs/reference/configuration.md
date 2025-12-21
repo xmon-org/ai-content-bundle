@@ -128,6 +128,7 @@ xmon_ai_content:
     # ============================================
     prompts:
         templates:
+            # Simple template (no variants)
             custom-template:
                 name: 'My Custom Template'
                 description: 'What this template does'
@@ -138,6 +139,34 @@ xmon_ai_content:
                     User message with {variable} placeholders.
                     Title: {title}
                     Content: {content}
+
+            # Template with variants (advanced)
+            # Use same language for content, variants and keywords
+            scene-generator:
+                name: 'Scene Generator'
+                description: 'Generates scenes with pre-selected elements'
+                system: |
+                    Genera una escena usando EXACTAMENTE:
+                    - UBICACIÓN: {variant_location}
+                    - AMBIENTE: {variant_mood}
+
+                    IMPORTANTE: Responde EN INGLÉS.
+                user: "Título: {title}\nResumen: {summary}"
+
+                # Pre-defined options (same language as content)
+                variants:
+                    location:
+                        - "patio de museo con fuente"
+                        - "terraza en azotea con vistas"
+                        - "sendero de jardín botánico"
+                    mood:
+                        - "contemplación tranquila"
+                        - "después de celebración"
+
+                # Keywords for intelligent matching (same language)
+                variant_keywords:
+                    location: ["museo", "jardín", "terraza"]
+                    mood: ["celebración", "memorial", "mañana"]
 
         # Disable specific default templates
         disable_defaults: []  # ['title-generator', 'summarizer']
@@ -201,6 +230,8 @@ presets:
 
 ## Prompt Template Structure
 
+### Basic Template
+
 ```yaml
 prompts:
     templates:
@@ -212,6 +243,84 @@ prompts:
 ```
 
 Variables use `{variable_name}` syntax and are replaced at runtime.
+
+### Template with Variants
+
+For best results, keep variants and keywords in the **same language** as your content.
+If you need output in a different language, add an explicit instruction in the system prompt.
+
+```yaml
+prompts:
+    templates:
+        key-name:
+            name: 'Scene Generator'
+            description: 'Generates scenes with pre-selected elements'
+            system: |
+                Genera contenido usando:
+                - UBICACIÓN: {variant_location}
+                - AMBIENTE: {variant_mood}
+
+                IMPORTANTE: Tu respuesta debe estar EN INGLÉS.
+            user: 'Título: {title}\nResumen: {summary}'
+
+            # Pre-defined options (same language as content)
+            variants:
+                location:
+                    - "patio de museo con fuente"
+                    - "terraza en azotea con vistas a la ciudad"
+                    - "sendero de jardín botánico"
+                mood:
+                    - "contemplación tranquila"
+                    - "después de celebración"
+                    - "anticipación matutina"
+
+            # Keywords for intelligent selection (same language as content)
+            variant_keywords:
+                location:
+                    - "museo"
+                    - "terraza"
+                    - "jardín"
+                mood:
+                    - "celebración"
+                    - "memorial"
+                    - "mañana"
+```
+
+### Prompt Template Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Human-readable name for UI display |
+| `description` | string | No | Explanation of what the template does |
+| `system` | string | Yes | System prompt (instructions for the AI) |
+| `user` | string | Yes | User message template with `{variable}` placeholders |
+| `variants` | map | No | Category => list of options for dynamic injection |
+| `variant_keywords` | map | No | Category => keywords for intelligent selection |
+
+### Variant Placeholders
+
+In the `system` prompt, use `{variant_CATEGORY}` placeholders that match keys in `variants`:
+
+```yaml
+system: |
+    Use LOCATION: {variant_location}    # Matches variants.location
+    Use PRESENCE: {variant_presence}    # Matches variants.presence
+variants:
+    location: [...]
+    presence: [...]
+```
+
+### Variant Selection Algorithm
+
+1. If `variant_keywords` is defined for the category:
+   - Score each option by keywords found in **both** content AND option
+   - Select highest-scoring option
+2. If no keywords (or no matches): extract words from options, match against content
+3. If still no matches: random selection
+
+**Important**: The matching is literal string comparison. Keep content, variants, and keywords in the same language for accurate matching. Use system prompt instructions to request output in a different language if needed.
+
+See [Prompt Templates Guide](../guides/prompt-templates.md#prompt-variants) for detailed examples.
 
 ## Admin UI Settings
 

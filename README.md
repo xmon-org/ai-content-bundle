@@ -18,6 +18,7 @@ Symfony 7 bundle for AI content generation (text and images) with automatic fall
 - **Automatic fallback** between providers
 - **Style presets** for consistent image generation
 - **Configurable prompt templates** for text generation
+- **Prompt variants** with intelligent content-based selection
 - **SonataMedia integration** (optional)
 - **Sonata Admin integration** with image regeneration UI (optional)
 
@@ -104,7 +105,7 @@ class MyService
 - [Text Generation](docs/guides/text-generation.md) - Generate text with AI
 - [Image Generation](docs/guides/image-generation.md) - Generate images with AI
 - [Styles & Presets](docs/guides/styles-presets.md) - Control image styles
-- [Prompt Templates](docs/guides/prompt-templates.md) - Configurable prompts
+- [Prompt Templates](docs/guides/prompt-templates.md) - Configurable prompts with variants
 - [Custom Providers](docs/guides/custom-providers.md) - Add your own providers
 - [Admin Integration](docs/guides/admin-integration.md) - Sonata Admin integration
 
