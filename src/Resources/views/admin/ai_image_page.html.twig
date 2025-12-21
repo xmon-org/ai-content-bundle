@@ -12,6 +12,7 @@
  # Variables required:
  # - entity: The entity implementing AiImageAwareInterface
  # - entityTitle: Display title for the entity
+ # - entityContext: Array of key-value pairs for context display (optional, from AiImageContextInterface)
  # - currentImageUrl: URL of current featured image (or null)
  # - currentImageId: ID of current featured image (or null)
  # - subject: Current subject text
@@ -25,6 +26,10 @@
  # - routes: Array with generateSubject, regenerateImage, useHistory, deleteHistory
  # - backUrl: URL to go back
  # - listUrl: URL to list
+ #
+ # Global variables (from Twig extension):
+ # - xmon_ai_base_template: Base Sonata Admin template
+ # - xmon_ai_show_bundle_credit: Show bundle credit footer (from YAML config)
  #}
 
 {% extends xmon_ai_base_template %}
@@ -33,36 +38,54 @@
 
 {% block sonata_admin_content %}
 <div class="container-fluid xmon-ai-image-page">
-    {# Header with navigation #}
-    <div class="row" style="margin-bottom: 20px;">
-        <div class="col-md-8">
-            <h3 style="margin-top: 0;">
-                <i class="fa fa-image"></i> {% block header_title %}{{ 'AI Image Generation'|trans }}{% endblock %}
-            </h3>
-            <p class="text-muted" style="margin-bottom: 0;">
-                <strong>{% block entity_label %}{{ 'Entity'|trans }}{% endblock %}:</strong> {{ entityTitle }}
-            </p>
-        </div>
-        <div class="col-md-4 text-right">
-            <div class="btn-group">
-                <a href="{{ backUrl }}" class="btn btn-default">
+    {# Header with Context Banner #}
+    <div class="context-banner" style="margin-bottom: 20px;">
+        <div class="context-banner-header">
+            <div class="context-banner-title">
+                <span class="context-page-badge">
+                    <i class="fa fa-magic"></i> XMON AI IMAGE GENERATOR
+                </span>
+                <span class="context-entity-title">{{ entityTitle }}</span>
+            </div>
+            <div class="context-banner-actions">
+                <a href="{{ backUrl }}" class="btn btn-default btn-sm">
                     <i class="fa fa-arrow-left"></i> {{ 'Back'|trans }}
                 </a>
-                <a href="{{ listUrl }}" class="btn btn-default">
+                <a href="{{ listUrl }}" class="btn btn-default btn-sm">
                     <i class="fa fa-list"></i> {{ 'List'|trans }}
                 </a>
             </div>
         </div>
+        {% if entityContext is defined and entityContext|length > 0 %}
+        <div class="context-banner-content">
+            {% for label, value in entityContext %}
+            <div class="context-item">
+                <span class="context-label">{{ label }}</span>
+                <span class="context-value">{{ value }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
     </div>
 
-    <div class="row">
-        {# Controls Panel (sticky on desktop) #}
-        <div class="col-md-4">
+    <div class="row" id="mainRow">
+        {# Controls Panel (sticky on desktop, collapsible) #}
+        <div class="col-md-4" id="controlsColumn">
             <div class="box box-info" id="controlsBox">
                 <div class="box-header with-border">
                     <h4 class="box-title">
                         <i class="fa fa-cog"></i> {% block controls_title %}{{ 'Configuration'|trans }}{% endblock %}
                     </h4>
+                    <div class="box-tools pull-right">
+                        <button type="button" class="btn btn-box-tool" id="btnCollapseControls"
+                                title="{{ 'Collapse panel'|trans }}"
+                                aria-label="{{ 'Toggle configuration panel'|trans }}"
+                                aria-expanded="true"
+                                aria-controls="controlsBox">
+                            <i class="fa fa-chevron-left"></i>
+                        </button>
+                    </div>
+                    <span class="collapsed-label">Config</span>
                 </div>
                 <div class="box-body">
                     {# 1. Subject (WHAT you want to see) #}
@@ -231,11 +254,19 @@
                         {% endif %}
                     </div>
                 </div>
+                {% if xmon_ai_show_bundle_credit %}
+                <div class="box-footer bundle-credit">
+                    <span class="bundle-claim">Powered by XMON AI magic</span>
+                    <a href="https://github.com/xmon-org/ai-content-bundle" target="_blank" rel="noopener">
+                        <i class="fa fa-github"></i> XmonAiContentBundle
+                    </a>
+                </div>
+                {% endif %}
             </div>
         </div>
 
         {# Image comparison panel #}
-        <div class="col-md-8">
+        <div class="col-md-8" id="contentColumn">
             <div class="row">
                 {# Current image #}
                 <div class="col-sm-6">
@@ -443,11 +474,282 @@
 
 {% block xmon_ai_image_styles %}
 <style>
+    /* Context Banner - Unified header with entity information */
+    .context-banner {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 1px solid #dee2e6;
+        border-left: 4px solid #3c8dbc;
+        border-radius: 4px;
+        padding: 12px 16px;
+    }
+    .context-banner-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+    }
+    .context-banner-title {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+    }
+    .context-page-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #3c8dbc;
+    }
+    .context-page-badge i {
+        font-size: 12px;
+    }
+    .context-entity-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .context-banner-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+    .context-banner-content {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 20px;
+        align-items: center;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #dee2e6;
+    }
+    .context-item {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+    .context-label {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+        margin-bottom: 2px;
+    }
+    .context-value {
+        font-size: 13px;
+        color: #333;
+        line-height: 1.4;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 300px;
+    }
+    @media (max-width: 767px) {
+        .context-banner-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .context-entity-title {
+            font-size: 16px;
+        }
+        .context-banner-content {
+            gap: 10px 16px;
+        }
+        .context-value {
+            max-width: 200px;
+        }
+    }
+
+    /* Bundle credit footer */
+    .bundle-credit {
+        text-align: center;
+        padding: 8px 15px;
+        background: #f5f5f5;
+        border-top: 1px dashed #ddd;
+    }
+    .bundle-claim {
+        font-size: 10px;
+        color: #999;
+        margin-right: 6px;
+    }
+    .bundle-credit a {
+        color: #666;
+        font-size: 11px;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+    .bundle-credit a:hover {
+        color: #3c8dbc;
+    }
+    .bundle-credit i {
+        margin-right: 4px;
+    }
+    /* Hide credit when collapsed */
+    #controlsColumn.collapsed .bundle-credit {
+        display: none;
+    }
+
     /* Sticky controls on desktop */
     @media (min-width: 992px) {
         #controlsBox {
             position: sticky;
-            top: 20px;
+            top: 0;
+        }
+    }
+
+    /* Collapsible controls panel - KISS approach */
+    @media (min-width: 992px) {
+        #mainRow {
+            display: flex;
+            flex-wrap: nowrap;
+        }
+        #controlsColumn {
+            transition: width 0.3s ease;
+            width: 33.333%;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        #contentColumn {
+            transition: width 0.3s ease;
+            flex: 1;
+        }
+        /* Equal height cards for Current Image and Preview */
+        #contentColumn > .row:first-child {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        #contentColumn > .row:first-child > .col-sm-6 {
+            display: flex;
+        }
+        #contentColumn > .row:first-child > .col-sm-6 > .box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        #contentColumn > .row:first-child > .col-sm-6 > .box > .box-body {
+            flex: 1;
+        }
+        #controlsBox {
+            transition: width 0.3s ease, background 0.3s ease, height 0.3s ease;
+            width: 100%;
+            overflow: hidden;
+        }
+        /* Collapsed state */
+        #controlsColumn.collapsed {
+            width: 60px !important;
+            overflow: visible;
+            padding-right: 15px;
+        }
+        #controlsColumn.collapsed #controlsBox {
+            width: 44px;
+            height: fit-content;
+            overflow: visible;
+            position: static;
+            background: linear-gradient(180deg, #3c8dbc 0%, #367fa9 100%);
+            border: none;
+            border-radius: 4px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+        #controlsColumn.collapsed #controlsBox:hover {
+            box-shadow: 2px 0 12px rgba(0,0,0,0.2);
+        }
+        /* Content: hide completely when collapsed */
+        #controlsColumn.collapsed #controlsBox .box-body {
+            display: none;
+        }
+        #controlsColumn.collapsed #controlsBox .box-title {
+            display: none;
+        }
+        /* Header becomes vertical rail */
+        #controlsColumn.collapsed #controlsBox .box-header {
+            border-bottom: none;
+            border-radius: 4px;
+            padding: 12px 6px;
+        }
+        #controlsColumn.collapsed #controlsBox .box-tools {
+            float: none;
+            text-align: center;
+        }
+        /* Button: circular white, centered */
+        #controlsColumn.collapsed #btnCollapseControls {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        #controlsColumn.collapsed #btnCollapseControls:hover {
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+            transform: scale(1.05);
+        }
+        #controlsColumn.collapsed #btnCollapseControls i {
+            color: #3c8dbc;
+            transform: rotate(180deg);
+        }
+        /* Vertical label */
+        .collapsed-label {
+            display: none;
+        }
+        #controlsColumn.collapsed .collapsed-label {
+            display: block;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            color: #1f2937;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 40px;
+            margin-left: 6px;
+            opacity: 0.9;
+            text-align: center;
+        }
+    }
+    /* Button always circular with shadow */
+    @media (min-width: 992px) {
+        #btnCollapseControls {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        #btnCollapseControls:hover {
+            background: #eee;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+    }
+    #btnCollapseControls i {
+        font-size: 14px;
+        transition: transform 0.3s ease;
+    }
+    @media (max-width: 991px) {
+        #btnCollapseControls {
+            display: none;
+        }
+        .collapsed-label {
+            display: none !important;
         }
     }
 
@@ -488,11 +790,56 @@
         border-color: #3c8dbc;
     }
 
+    /* Image history grid - CSS Grid for equal heights */
+    #historialGrid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        transition: grid-template-columns 0.3s ease;
+        /* Reset Bootstrap .row margins since we use CSS Grid */
+        margin-left: 0;
+        margin-right: 0;
+    }
+    #historialGrid::before,
+    #historialGrid::after {
+        display: none !important;
+    }
+    /* Adaptive grid when controls are collapsed */
+    @media (min-width: 992px) {
+        #mainRow.controls-collapsed #historialGrid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+    @media (min-width: 1400px) {
+        #mainRow.controls-collapsed #historialGrid {
+            grid-template-columns: repeat(5, 1fr);
+        }
+    }
+    @media (max-width: 991px) {
+        #historialGrid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    @media (max-width: 575px) {
+        #historialGrid {
+            grid-template-columns: 1fr;
+        }
+    }
+    .historial-item {
+        /* Reset Bootstrap column styles */
+        width: auto !important;
+        padding: 0 !important;
+        float: none !important;
+    }
+
     /* Image history cards */
     .historial-card {
-        margin-bottom: 15px;
+        margin-bottom: 0;
         border: 2px solid #ddd;
         transition: all 0.2s;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
     }
     .historial-card:hover {
         border-color: #3c8dbc;
@@ -502,17 +849,25 @@
         border-color: #00a65a;
         background: #f0fff0;
     }
+    .historial-card .caption {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .historial-card .historial-actions {
+        margin-top: auto;
+    }
     .historial-image-wrapper {
         position: relative;
         background: #f9f9f9;
-        min-height: 150px;
+        /*min-height: 150px;*/
         display: flex;
         align-items: center;
         justify-content: center;
     }
     .historial-image-wrapper img {
         max-width: 100%;
-        max-height: 200px;
+        /*max-height: 200px;*/
     }
     .historial-badge-actual {
         position: absolute;
@@ -619,6 +974,66 @@ document.addEventListener('DOMContentLoaded', function() {
     var promptHistoryPanel = document.getElementById('promptHistoryPanel');
     var promptHistoryList = document.getElementById('promptHistoryList');
     var historyCountSpan = document.getElementById('historyCount');
+
+    // Collapsible controls panel
+    var mainRow = document.getElementById('mainRow');
+    var controlsColumn = document.getElementById('controlsColumn');
+    var btnCollapseControls = document.getElementById('btnCollapseControls');
+    var STORAGE_KEY = 'xmon_ai_image_controls_collapsed';
+
+    // Initialize collapsed state from localStorage
+    function initControlsCollapsed() {
+        var isCollapsed = localStorage.getItem(STORAGE_KEY) === 'true';
+        if (isCollapsed) {
+            controlsColumn.classList.add('collapsed');
+            mainRow.classList.add('controls-collapsed');
+        }
+    }
+
+    // Toggle controls panel
+    function toggleControls() {
+        var isCollapsed = controlsColumn.classList.toggle('collapsed');
+        mainRow.classList.toggle('controls-collapsed', isCollapsed);
+        localStorage.setItem(STORAGE_KEY, isCollapsed ? 'true' : 'false');
+
+        // Update tooltip and ARIA
+        if (btnCollapseControls) {
+            btnCollapseControls.title = isCollapsed
+                ? '{{ "Expand panel"|trans }}'
+                : '{{ "Collapse panel"|trans }}';
+            btnCollapseControls.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+        }
+    }
+
+    if (btnCollapseControls) {
+        btnCollapseControls.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleControls();
+        });
+    }
+
+    // Click on collapsed rail to expand
+    var controlsBox = document.getElementById('controlsBox');
+    if (controlsBox) {
+        controlsBox.addEventListener('click', function(e) {
+            if (controlsColumn.classList.contains('collapsed')) {
+                // Only toggle if clicking on the rail itself, not on buttons
+                if (e.target === this || e.target.classList.contains('collapsed-label') ||
+                    e.target.closest('.box-header')) {
+                    toggleControls();
+                }
+            }
+        });
+    }
+
+    // Initialize on load
+    initControlsCollapsed();
+
+    // Set initial tooltip and ARIA
+    if (btnCollapseControls && controlsColumn.classList.contains('collapsed')) {
+        btnCollapseControls.title = '{{ "Expand panel"|trans }}';
+        btnCollapseControls.setAttribute('aria-expanded', 'false');
+    }
 
     // === Utility functions ===
 

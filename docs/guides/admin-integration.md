@@ -94,6 +94,46 @@ class Article implements AiImageAwareInterface
 }
 ```
 
+**Entity with Context Banner (Optional):**
+
+Implement `AiImageContextInterface` to display additional entity information in the AI image generation page header:
+
+```php
+use Xmon\AiContentBundle\Entity\AiImageAwareInterface;
+use Xmon\AiContentBundle\Entity\AiImageContextInterface;
+
+#[ORM\Entity]
+class Article implements AiImageAwareInterface, AiImageContextInterface
+{
+    // ... AiImageAwareInterface implementation ...
+
+    /**
+     * Provide context info for the AI image page header.
+     */
+    public function getAiImageContext(): array
+    {
+        return [
+            'Summary' => $this->summary ? mb_substr($this->summary, 0, 100) . '...' : null,
+            'Author' => $this->author,
+            'Date' => $this->publishedAt?->format('d/m/Y'),
+            'Status' => match($this->status) {
+                'published' => '✅ Published',
+                'draft' => '📝 Draft',
+                default => $this->status,
+            },
+        ];
+    }
+}
+```
+
+The Context Banner displays below the page title, showing key entity information at a glance. Null or empty values are automatically filtered out.
+
+**Tips for Context:**
+- Keep labels short (1-2 words)
+- Truncate long text values
+- Use emoji for status indicators
+- Return only the most relevant fields (3-5 max)
+
 **Image History Entity:**
 
 ```php

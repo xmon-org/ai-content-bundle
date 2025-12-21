@@ -20,6 +20,8 @@ services:
 
     # Twig Extension (exposes config as global variables)
     Xmon\AiContentBundle\Twig\AiContentExtension:
+        autowire: false
         arguments:
-            $adminBaseTemplate: '%xmon_ai_content.admin.base_template%'
+            - '%xmon_ai_content.admin.base_template%'
+            - '%xmon_ai_content.admin.show_bundle_credit%'
         tags: ['twig.extension']

@@ -18,6 +18,7 @@ use Xmon\AiContentBundle\Service\AiTextService;
 use Xmon\AiContentBundle\Service\ImageOptionsService;
 use Xmon\AiContentBundle\Service\MediaStorageService;
 use Xmon\AiContentBundle\Service\PromptTemplateService;
+use Xmon\AiContentBundle\Twig\AiContentExtension;
 
 class XmonAiContentExtension extends Extension
 {
@@ -163,7 +164,19 @@ class XmonAiContentExtension extends Extension
     private function configureAdmin(ContainerBuilder $container, array $adminConfig): void
     {
         $baseTemplate = $adminConfig['base_template'] ?? '@SonataAdmin/standard_layout.html.twig';
+        $showBundleCredit = $adminConfig['show_bundle_credit'] ?? true;
+
         $container->setParameter('xmon_ai_content.admin.base_template', $baseTemplate);
+        $container->setParameter('xmon_ai_content.admin.show_bundle_credit', $showBundleCredit);
+
+        // Configure Twig extension arguments directly (YAML loads before parameters are set)
+        if ($container->hasDefinition(AiContentExtension::class)) {
+            $container->getDefinition(AiContentExtension::class)
+                ->setArguments([
+                    $baseTemplate,
+                    $showBundleCredit,
+                ]);
+        }
     }
 
     private function configureMediaStorage(ContainerBuilder $container, array $mediaConfig): void

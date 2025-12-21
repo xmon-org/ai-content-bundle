@@ -14,6 +14,7 @@ class AiContentExtension extends AbstractExtension implements GlobalsInterface
 {
     public function __construct(
         private readonly string $adminBaseTemplate,
+        private readonly bool $showBundleCredit,
     ) {
     }
 
@@ -21,6 +22,7 @@ class AiContentExtension extends AbstractExtension implements GlobalsInterface
     {
         return [
             'xmon_ai_base_template' => $this->adminBaseTemplate,
+            'xmon_ai_show_bundle_credit' => $this->showBundleCredit,
         ];
     }
 }

@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Xmon\AiContentBundle\Entity\AiImageAwareInterface;
+use Xmon\AiContentBundle\Entity\AiImageContextInterface;
 use Xmon\AiContentBundle\Entity\AiImageHistoryInterface;
 use Xmon\AiContentBundle\Service\AiImageService;
 use Xmon\AiContentBundle\Service\AiTextService;
@@ -153,6 +154,7 @@ abstract class AbstractAiImageController extends AbstractController
             // Entity data
             'entity' => $entity,
             'entityTitle' => $this->getEntityTitle($entity),
+            'entityContext' => $this->getEntityContext($entity),
 
             // Current image
             'currentImageUrl' => $currentImageUrl,
@@ -677,6 +679,29 @@ abstract class AbstractAiImageController extends AbstractController
      * Example: return $entity->getTitle();
      */
     abstract protected function getEntityTitle(AiImageAwareInterface $entity): string;
+
+    /**
+     * Get context information for the entity.
+     *
+     * If the entity implements AiImageContextInterface, returns its context.
+     * Otherwise, returns an empty array.
+     *
+     * This is used to display additional information in the Context Banner
+     * on the AI image generation page.
+     *
+     * @return array<string, string|int|null>
+     */
+    protected function getEntityContext(AiImageAwareInterface $entity): array
+    {
+        if ($entity instanceof AiImageContextInterface) {
+            return array_filter(
+                $entity->getAiImageContext(),
+                static fn ($value) => $value !== null && $value !== ''
+            );
+        }
+
+        return [];
+    }
 
     /**
      * Get the URL to go back to the entity edit page.

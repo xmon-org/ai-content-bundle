@@ -59,6 +59,13 @@ xmon_ai_content:
             retry_delay: 5
 
     # ============================================
+    # ADMIN UI SETTINGS
+    # ============================================
+    admin:
+        base_template: '@SonataAdmin/standard_layout.html.twig'  # Custom layout
+        show_bundle_credit: true   # Show "Powered by XmonAiContentBundle" footer
+
+    # ============================================
     # SONATA MEDIA INTEGRATION
     # ============================================
     media:
@@ -203,6 +210,20 @@ prompts:
 ```
 
 Variables use `{variable_name}` syntax and are replaced at runtime.
+
+## Admin UI Settings
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `base_template` | string | `@SonataAdmin/standard_layout.html.twig` | Base template for AI image pages. Override to use your project's custom admin layout. |
+| `show_bundle_credit` | bool | `true` | Show "Powered by XmonAiContentBundle" footer in the AI image generation page. Set to `false` to hide. |
+
+```yaml
+xmon_ai_content:
+    admin:
+        base_template: '@App/admin/layout.html.twig'  # Custom project layout
+        show_bundle_credit: false  # Hide bundle credit
+```
 
 ## Environment Variables
 

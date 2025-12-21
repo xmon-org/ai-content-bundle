@@ -89,6 +89,10 @@ class Configuration implements ConfigurationInterface
                             ->defaultValue('@SonataAdmin/standard_layout.html.twig')
                             ->info('Base template to extend for admin pages. Override to use your project\'s custom admin layout.')
                         ->end()
+                        ->booleanNode('show_bundle_credit')
+                            ->defaultTrue()
+                            ->info('Show "Powered by XmonAiContentBundle" footer in the AI image generation page.')
+                        ->end()
                     ->end()
                 ->end()
                 // Image options: styles, compositions, palettes, extras
