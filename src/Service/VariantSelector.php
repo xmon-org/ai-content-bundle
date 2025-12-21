@@ -85,12 +85,13 @@ class VariantSelector
     /**
      * Finds the best matching option using explicit keywords.
      *
-     * A keyword must appear in BOTH the content AND the option to score.
-     * This requires content and options to be in the same language.
+     * Keywords can be:
+     * - Simple strings: Must appear in BOTH content AND option to score
+     * - Regex patterns (containing |): Must match in BOTH content AND option to score
      *
      * @param string[] $options  Available options
      * @param string   $content  Lowercased content to search in
-     * @param string[] $keywords Keywords to match
+     * @param string[] $keywords Keywords to match (simple or regex with |)
      */
     private function findBestMatchWithKeywords(
         array $options,
@@ -106,9 +107,18 @@ class VariantSelector
             foreach ($keywords as $keyword) {
                 $keywordLower = mb_strtolower($keyword);
 
-                // Keyword must be in content AND in option to score
-                if (str_contains($content, $keywordLower) && str_contains($optionLower, $keywordLower)) {
-                    ++$score;
+                // Detect if keyword is a regex pattern (contains |)
+                if (str_contains($keyword, '|')) {
+                    // Regex pattern: must match in BOTH content AND option
+                    $pattern = '/('.$keywordLower.')/u';
+                    if (preg_match($pattern, $content) && preg_match($pattern, $optionLower)) {
+                        ++$score;
+                    }
+                } else {
+                    // Simple keyword: must be in content AND in option to score
+                    if (str_contains($content, $keywordLower) && str_contains($optionLower, $keywordLower)) {
+                        ++$score;
+                    }
                 }
             }
 

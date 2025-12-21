@@ -204,8 +204,9 @@ class PromptTemplateService
             ]);
         }
 
+        // Replace user variables in both system and user prompts
         $result = [
-            'system' => $system,
+            'system' => $this->replaceVariables($system, $variables),
             'user' => $this->renderUserMessage($key, $variables),
         ];
 
