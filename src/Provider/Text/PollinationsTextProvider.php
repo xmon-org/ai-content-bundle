@@ -95,8 +95,8 @@ class PollinationsTextProvider implements TextProviderInterface
             'model' => $model,
             'has_api_key' => !empty($this->apiKey),
             'api_key_prefix' => $this->apiKey ? substr($this->apiKey, 0, 8).'...' : 'null',
-            'system_prompt' => mb_substr($systemPrompt, 0, 500).(mb_strlen($systemPrompt) > 500 ? '...' : ''),
-            'user_message' => mb_substr($userMessage, 0, 300).(mb_strlen($userMessage) > 300 ? '...' : ''),
+            'system_prompt' => $systemPrompt,
+            'user_message' => $userMessage,
         ]);
 
         $headers = [
@@ -111,13 +111,20 @@ class PollinationsTextProvider implements TextProviderInterface
         // Add random seed to avoid cached responses
         $seed = random_int(1, 1000000);
 
+        $payload = [
+            'model' => $model,
+            'messages' => $messages,
+            'seed' => $seed,
+        ];
+
+        $this->logger?->debug('Pollinations: Full Request Payload', [
+            'url' => self::API_URL,
+            'payload' => json_encode($payload, \JSON_UNESCAPED_UNICODE | \JSON_PRETTY_PRINT),
+        ]);
+
         $response = $this->httpClient->request('POST', self::API_URL, [
             'headers' => $headers,
-            'json' => [
-                'model' => $model,
-                'messages' => $messages,
-                'seed' => $seed,
-            ],
+            'json' => $payload,
             'timeout' => $this->timeout,
         ]);
 
