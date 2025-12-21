@@ -12,6 +12,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Xmon\AiContentBundle\Entity\AiImageAwareInterface;
 use Xmon\AiContentBundle\Entity\AiImageContextInterface;
 use Xmon\AiContentBundle\Entity\AiImageHistoryInterface;
+use Xmon\AiContentBundle\Entity\AiPromptVariablesInterface;
 use Xmon\AiContentBundle\Service\AiImageService;
 use Xmon\AiContentBundle\Service\AiTextService;
 use Xmon\AiContentBundle\Service\ImageOptionsService;
@@ -283,16 +284,22 @@ abstract class AbstractAiImageController extends AbstractController
         }
 
         try {
-            // Get the template for image subject generation
-            $template = $this->promptTemplateService->getTemplate('image_subject');
+            // Build variables for the template
+            // If entity implements AiPromptVariablesInterface, use its variables
+            // Otherwise, fall back to just {content}
+            if ($entity instanceof AiPromptVariablesInterface) {
+                $variables = $entity->getPromptVariables();
+            } else {
+                $variables = ['content' => $entity->getContentForImageGeneration()];
+            }
 
-            // Generate the subject using the template
+            // Render the template with variables (replaces {placeholder} syntax)
+            $prompts = $this->promptTemplateService->render('image_subject', $variables);
+
+            // Generate the subject using the rendered template
             $result = $this->textService->generate(
-                systemPrompt: $template['system'] ?? 'You are a helpful assistant that creates image descriptions.',
-                userMessage: \sprintf(
-                    $template['user'] ?? 'Create a visual description for: %s',
-                    $entity->getContentForImageGeneration()
-                ),
+                systemPrompt: $prompts['system'],
+                userMessage: $prompts['user'],
             );
 
             return new JsonResponse([
