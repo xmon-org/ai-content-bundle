@@ -402,6 +402,45 @@
     </div>
 </div>
 
+{# History limit modal - shown when limit is reached #}
+<div class="modal fade" id="historyLimitModal" tabindex="-1" role="dialog" data-backdrop="static">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #f39c12; color: white;">
+                <button type="button" class="close" data-dismiss="modal" style="color: white; opacity: 0.8;"><span>&times;</span></button>
+                <h4 class="modal-title">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    {{ 'History limit reached'|trans }}
+                </h4>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted" style="margin-bottom: 15px;">
+                    {{ 'You have reached the limit of'|trans }} <strong id="limitValue">{{ historyLimit }}</strong> {{ 'images in history.'|trans }}
+                    <br>
+                    {{ 'Select at least 1 image to delete before generating a new one.'|trans }}
+                </p>
+
+                <div id="historyLimitList" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; background: #fafafa;">
+                    {# Filled dynamically by JavaScript #}
+                </div>
+
+                <div class="text-muted" style="margin-top: 15px; font-size: 13px;">
+                    <i class="fa fa-info-circle"></i>
+                    {{ 'Selected'|trans }}: <strong id="selectedCount">0</strong> {{ 'of'|trans }} <span id="totalCount">{{ historyCount }}</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">
+                    {{ 'Cancel'|trans }}
+                </button>
+                <button type="button" class="btn btn-danger" id="btnDeleteAndGenerate" disabled>
+                    <i class="fa fa-trash"></i> {{ 'Delete and Generate'|trans }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% block xmon_ai_image_styles %}
 <style>
     /* Sticky controls on desktop */
@@ -533,6 +572,9 @@ document.addEventListener('DOMContentLoaded', function() {
     var compositionsData = {{ compositionsData|default({})|json_encode|raw }};
     var palettesData = {{ palettesData|default({})|json_encode|raw }};
 
+    // History limit configuration
+    var historyLimit = {{ historyLimit|default(5) }};
+
     // DOM elements
     var subjectField = document.getElementById('subjectField');
     var btnGeneratePrompt = document.getElementById('btnGeneratePrompt');
@@ -549,6 +591,14 @@ document.addEventListener('DOMContentLoaded', function() {
     var confirmModal = $('#confirmModal');
     var confirmModalBody = document.getElementById('confirmModalBody');
     var confirmModalBtn = document.getElementById('confirmModalBtn');
+
+    // History limit modal elements
+    var historyLimitModal = $('#historyLimitModal');
+    var historyLimitList = document.getElementById('historyLimitList');
+    var selectedCountSpan = document.getElementById('selectedCount');
+    var totalCountSpan = document.getElementById('totalCount');
+    var btnDeleteAndGenerate = document.getElementById('btnDeleteAndGenerate');
+    var selectedHistoryIds = new Set();
 
     // Style elements
     var styleModeRadios = document.querySelectorAll('input[name="styleMode"]');
@@ -592,6 +642,111 @@ document.addEventListener('DOMContentLoaded', function() {
         statusAlert.className = 'alert alert-' + type;
         statusText.textContent = message;
         statusMessage.style.display = 'block';
+    }
+
+    // === History limit modal functions ===
+
+    function getCurrentHistoryCount() {
+        return document.querySelectorAll('.historial-item').length;
+    }
+
+    function isAtHistoryLimit() {
+        return getCurrentHistoryCount() >= historyLimit;
+    }
+
+    function buildHistoryLimitList() {
+        var items = document.querySelectorAll('.historial-item');
+        var html = '';
+
+        items.forEach(function(item) {
+            var id = item.dataset.id;
+            var isActual = item.querySelector('.historial-actual') !== null;
+            var img = item.querySelector('.historial-image-wrapper img');
+            var subjectEl = item.querySelector('.historial-subject');
+            var styleEl = item.querySelector('.historial-style');
+            var dateEl = item.querySelector('.historial-meta small');
+
+            var subject = subjectEl ? subjectEl.textContent.trim() : '';
+            var style = styleEl ? styleEl.textContent.trim() : '';
+            var date = dateEl ? dateEl.textContent.trim() : '';
+            var imgSrc = img ? img.src : '';
+
+            html += '<div class="history-limit-item" style="display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #eee; background: ' + (isActual ? '#fff9e6' : 'white') + ';">';
+
+            if (isActual) {
+                html += '<span style="width: 30px; text-align: center; color: #999;" title="{{ "Current image - cannot delete"|trans }}"><i class="fa fa-lock"></i></span>';
+            } else {
+                html += '<input type="checkbox" class="history-limit-checkbox" data-id="' + id + '" style="width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">';
+            }
+
+            html += '<div style="width: 80px; height: 60px; margin-right: 15px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; border-radius: 4px; overflow: hidden; flex-shrink: 0;">';
+            if (imgSrc) {
+                html += '<img src="' + imgSrc + '" style="max-width: 100%; max-height: 100%; object-fit: cover;">';
+            }
+            html += '</div>';
+
+            html += '<div style="flex: 1; min-width: 0;">';
+            html += '<div style="font-weight: 600; font-size: 13px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + escapeHtml(subject || '{{ "No description"|trans }}') + '</div>';
+            if (style) {
+                html += '<div style="font-size: 11px; color: #888; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + escapeHtml(style) + '</div>';
+            }
+            html += '<div style="font-size: 11px; color: #777;">' + date + '</div>';
+            html += '</div>';
+
+            if (isActual) {
+                html += '<span class="label label-warning" style="margin-left: 10px; white-space: nowrap;"><i class="fa fa-star"></i> {{ "Current"|trans }}</span>';
+            }
+
+            html += '</div>';
+        });
+
+        historyLimitList.innerHTML = html;
+
+        // Bind checkbox events
+        document.querySelectorAll('.history-limit-checkbox').forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                var id = this.dataset.id;
+                if (this.checked) {
+                    selectedHistoryIds.add(id);
+                } else {
+                    selectedHistoryIds.delete(id);
+                }
+                updateSelectedCount();
+            });
+        });
+
+        // Update total count
+        if (totalCountSpan) {
+            totalCountSpan.textContent = items.length;
+        }
+    }
+
+    function updateSelectedCount() {
+        var count = selectedHistoryIds.size;
+        if (selectedCountSpan) {
+            selectedCountSpan.textContent = count;
+        }
+        if (btnDeleteAndGenerate) {
+            btnDeleteAndGenerate.disabled = count === 0;
+        }
+    }
+
+    function resetHistoryModal() {
+        selectedHistoryIds.clear();
+        updateSelectedCount();
+        document.querySelectorAll('.history-limit-checkbox').forEach(function(cb) {
+            cb.checked = false;
+        });
+        if (btnDeleteAndGenerate) {
+            btnDeleteAndGenerate.disabled = true;
+            btnDeleteAndGenerate.innerHTML = '<i class="fa fa-trash"></i> {{ "Delete and Generate"|trans }}';
+        }
+    }
+
+    function showHistoryLimitModal() {
+        buildHistoryLimitList();
+        resetHistoryModal();
+        historyLimitModal.modal('show');
     }
 
     function hideStatus() {
@@ -939,7 +1094,80 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Regenerate image button
+    // === Image generation function (extracted for reuse) ===
+
+    function doGenerateImage() {
+        var subject = subjectField ? subjectField.value.trim() : '';
+        if (!subject) {
+            showStatus('{{ "Please enter a description first"|trans }}', 'warning');
+            return;
+        }
+
+        btnRegenerateImage.disabled = true;
+        btnRegenerateImage.innerHTML = '<i class="fa fa-spinner fa-spin"></i> {{ "Generating..."|trans }}';
+
+        newImagePlaceholder.style.display = 'none';
+        newImageLoading.style.display = 'block';
+        newImage.style.display = 'none';
+        newImageFooter.style.display = 'none';
+        hideStatus();
+        startTimer();
+
+        var formData = new FormData();
+        formData.append('prompt', subject);
+
+        var styleConfig = getStyleConfig();
+        Object.keys(styleConfig).forEach(function(key) {
+            formData.append(key, styleConfig[key]);
+        });
+
+        fetch(routes.regenerateImage, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData
+        })
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            if (data.success) {
+                // Add timestamp to avoid cache
+                var timestamp = new Date().getTime();
+                newImage.src = data.imageUrl + '?' + timestamp;
+                newImage.style.display = 'block';
+                newImageLoading.style.display = 'none';
+                newImageFooter.style.display = 'block';
+                showStatus('{{ "Image generated successfully. Click Use to apply it."|trans }}', 'success');
+
+                // Add to prompt history
+                addToPromptHistory(subject);
+
+                // Add to image history grid dynamically
+                addToHistorialGrid({
+                    id: data.historialId,
+                    mediaId: data.mediaId,
+                    imageUrl: data.imageUrl + '?' + timestamp,
+                    subject: data.subject || subject,
+                    style: data.style || '',
+                    createdAt: '{{ "Now"|trans }}'
+                });
+            } else {
+                newImagePlaceholder.style.display = 'block';
+                newImageLoading.style.display = 'none';
+                showStatus(data.error || '{{ "Error generating image"|trans }}', 'danger');
+            }
+        })
+        .catch(function(error) {
+            newImagePlaceholder.style.display = 'block';
+            newImageLoading.style.display = 'none';
+            showStatus('{{ "Network error"|trans }}: ' + error.message, 'danger');
+        })
+        .finally(function() {
+            stopTimer();
+            btnRegenerateImage.disabled = false;
+            btnRegenerateImage.innerHTML = '<i class="fa fa-refresh"></i> {{ "Generate image"|trans }}';
+        });
+    }
+
+    // Regenerate image button - checks limit first
     if (btnRegenerateImage) {
         btnRegenerateImage.addEventListener('click', function() {
             var subject = subjectField ? subjectField.value.trim() : '';
@@ -948,68 +1176,63 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            // Check if at history limit
+            if (isAtHistoryLimit()) {
+                showHistoryLimitModal();
+                return;
+            }
+
+            // Proceed with generation
+            doGenerateImage();
+        });
+    }
+
+    // Delete and Generate button handler (in limit modal)
+    if (btnDeleteAndGenerate) {
+        btnDeleteAndGenerate.addEventListener('click', function() {
+            if (selectedHistoryIds.size === 0) return;
+
             var btn = this;
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> {{ "Generating..."|trans }}';
-
-            newImagePlaceholder.style.display = 'none';
-            newImageLoading.style.display = 'block';
-            newImage.style.display = 'none';
-            newImageFooter.style.display = 'none';
-            hideStatus();
-            startTimer();
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> {{ "Deleting..."|trans }}';
 
             var formData = new FormData();
-            formData.append('prompt', subject);
-
-            var styleConfig = getStyleConfig();
-            Object.keys(styleConfig).forEach(function(key) {
-                formData.append(key, styleConfig[key]);
+            selectedHistoryIds.forEach(function(id) {
+                formData.append('ids[]', id);
             });
 
-            fetch(routes.regenerateImage, {
+            fetch(routes.batchDeleteHistory, {
                 method: 'POST',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 body: formData
             })
             .then(function(response) { return response.json(); })
             .then(function(data) {
-                if (data.success) {
-                    // Add timestamp to avoid cache
-                    var timestamp = new Date().getTime();
-                    newImage.src = data.imageUrl + '?' + timestamp;
-                    newImage.style.display = 'block';
-                    newImageLoading.style.display = 'none';
-                    newImageFooter.style.display = 'block';
-                    showStatus('{{ "Image generated successfully. Click Use to apply it."|trans }}', 'success');
-
-                    // Add to prompt history
-                    addToPromptHistory(subject);
-
-                    // Add to image history grid dynamically
-                    addToHistorialGrid({
-                        id: data.historialId,
-                        mediaId: data.mediaId,
-                        imageUrl: data.imageUrl + '?' + timestamp,
-                        subject: data.subject || subject,
-                        style: data.style || '',
-                        createdAt: '{{ "Now"|trans }}'
+                if (data.success || data.deletedCount > 0) {
+                    // Remove deleted items from DOM
+                    selectedHistoryIds.forEach(function(id) {
+                        var item = document.querySelector('.historial-item[data-id="' + id + '"]');
+                        if (item) item.remove();
                     });
+                    updateHistorialCount();
+
+                    // Close modal and generate
+                    historyLimitModal.modal('hide');
+
+                    // Small delay to let modal close smoothly
+                    setTimeout(function() {
+                        doGenerateImage();
+                    }, 300);
                 } else {
-                    newImagePlaceholder.style.display = 'block';
-                    newImageLoading.style.display = 'none';
-                    showStatus(data.error || '{{ "Error generating image"|trans }}', 'danger');
+                    showStatus(data.error || '{{ "Error deleting images"|trans }}', 'danger');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa fa-trash"></i> {{ "Delete and Generate"|trans }}';
                 }
             })
             .catch(function(error) {
-                newImagePlaceholder.style.display = 'block';
-                newImageLoading.style.display = 'none';
                 showStatus('{{ "Network error"|trans }}: ' + error.message, 'danger');
-            })
-            .finally(function() {
-                stopTimer();
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa fa-refresh"></i> {{ "Generate image"|trans }}';
+                btn.innerHTML = '<i class="fa fa-trash"></i> {{ "Delete and Generate"|trans }}';
             });
         });
     }

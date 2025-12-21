@@ -8,6 +8,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
 use Xmon\AiContentBundle\Entity\AiImageAwareInterface;
 use Xmon\AiContentBundle\Entity\AiImageHistoryInterface;
 use Xmon\AiContentBundle\Service\AiImageService;
@@ -31,24 +32,35 @@ use Xmon\AiContentBundle\Service\PromptTemplateService;
  * Extend this controller in your project and implement the abstract methods
  * to integrate AI image generation with your entities.
  *
- * Example implementation:
+ * **Recommended**: Use the `AiImageRoutesTrait` to automatically get all routes.
+ * This eliminates boilerplate and ensures new endpoints are available immediately.
+ *
+ * Example implementation (with trait - recommended):
  *
  *     #[Route('/admin/article/{id}/ai-image', name: 'admin_article_ai_image')]
  *     class ArticleImageController extends AbstractAiImageController
  *     {
+ *         use AiImageRoutesTrait; // All routes defined automatically!
+ *
  *         public function __construct(
  *             AiTextService $textService,
- *             AiImageService $imageService,
- *             ImageOptionsService $imageOptionsService,
- *             PromptBuilder $promptBuilder,
- *             PromptTemplateService $promptTemplateService,
- *             ?MediaStorageService $mediaStorage,
- *             private ArticleRepository $articleRepository,
- *             private ArticleImageHistoryRepository $historyRepository,
+ *             // ... other dependencies
  *         ) {
  *             parent::__construct(...);
  *         }
  *
+ *         protected function findEntity(int $id): ?AiImageAwareInterface {
+ *             return $this->articleRepository->find($id);
+ *         }
+ *
+ *         // ... implement other abstract methods
+ *     }
+ *
+ * Example implementation (manual routes):
+ *
+ *     #[Route('/admin/article/{id}/ai-image', name: 'admin_article_ai_image')]
+ *     class ArticleImageController extends AbstractAiImageController
+ *     {
  *         #[Route('', name: '_page', methods: ['GET'])]
  *         public function page(int $id): Response {
  *             return $this->doRenderPage($id);
@@ -60,12 +72,6 @@ use Xmon\AiContentBundle\Service\PromptTemplateService;
  *         }
  *
  *         // ... define routes for other endpoints
- *
- *         protected function findEntity(int $id): ?AiImageAwareInterface {
- *             return $this->articleRepository->find($id);
- *         }
- *
- *         // ... implement other abstract methods
  *     }
  */
 abstract class AbstractAiImageController extends AbstractController
@@ -137,6 +143,8 @@ abstract class AbstractAiImageController extends AbstractController
 
         // Get history with formatted data for template
         $historyData = $this->getFormattedHistory($entity, $currentImageId);
+        $historyCount = \count($historyData);
+        $historyLimit = $this->getMaxHistoryImages();
 
         // Prepare style options for the template
         $globalStylePreview = $this->promptBuilder->buildGlobalStyle();
@@ -156,6 +164,9 @@ abstract class AbstractAiImageController extends AbstractController
 
             // History
             'history' => $historyData,
+            'historyCount' => $historyCount,
+            'historyLimit' => $historyLimit,
+            'isAtLimit' => $historyCount >= $historyLimit,
 
             // Style options (for selects - labels only)
             'presets' => $this->getPresetsForTemplate(),
@@ -431,6 +442,106 @@ abstract class AbstractAiImageController extends AbstractController
     }
 
     /**
+     * Batch delete multiple history images.
+     *
+     * Expects POST with form data: ids[] = [1, 2, 3]
+     *
+     * Returns JSON with:
+     * - success: bool
+     * - deletedCount: int
+     * - errors: array of error messages
+     * - remainingCount: int (current history count after deletion)
+     */
+    protected function doBatchDeleteHistoryImages(int $entityId, Request $request): JsonResponse
+    {
+        $entity = $this->findEntity($entityId);
+        if (!$entity) {
+            return $this->errorResponse('Entity not found', Response::HTTP_NOT_FOUND);
+        }
+
+        $ids = $request->request->all('ids');
+        if (empty($ids) || !\is_array($ids)) {
+            return $this->errorResponse('Invalid request: ids array required', Response::HTTP_BAD_REQUEST);
+        }
+
+        $currentImage = $entity->getFeaturedImage();
+        $currentImageId = $currentImage ? $this->getMediaId($currentImage) : null;
+
+        $deletedCount = 0;
+        $errors = [];
+
+        foreach ($ids as $historyId) {
+            $historyItem = $this->findHistoryItem((int) $historyId);
+
+            if (!$historyItem || !$this->historyBelongsToEntity($historyItem, $entity)) {
+                $errors[] = "History item {$historyId} not found";
+                continue;
+            }
+
+            // Cannot delete current image
+            if ($currentImageId !== null && $this->getMediaId($historyItem->getImage()) === $currentImageId) {
+                $errors[] = 'Cannot delete current image';
+                continue;
+            }
+
+            try {
+                $this->deleteHistoryItem($historyItem);
+                ++$deletedCount;
+            } catch (\Exception $e) {
+                $errors[] = "Error deleting {$historyId}: ".$e->getMessage();
+            }
+        }
+
+        return new JsonResponse([
+            'success' => $deletedCount > 0,
+            'message' => "Deleted {$deletedCount} image(s)",
+            'deletedCount' => $deletedCount,
+            'errors' => $errors,
+            'remainingCount' => \count($this->getEntityHistory($entity)),
+        ]);
+    }
+
+    /**
+     * Get current history status.
+     *
+     * Returns JSON with:
+     * - count: Current number of images in history
+     * - limit: Maximum allowed images
+     * - isAtLimit: Boolean
+     * - canDeleteCount: Number of images that can be deleted (excluding current)
+     */
+    protected function doGetHistoryStatus(int $entityId): JsonResponse
+    {
+        $entity = $this->findEntity($entityId);
+        if (!$entity) {
+            return $this->errorResponse('Entity not found', Response::HTTP_NOT_FOUND);
+        }
+
+        $history = $this->getEntityHistory($entity);
+        $count = \count($history);
+        $limit = $this->getMaxHistoryImages();
+
+        $currentImage = $entity->getFeaturedImage();
+        $currentImageId = $currentImage ? $this->getMediaId($currentImage) : null;
+
+        // Count images that can be deleted (not current)
+        $canDeleteCount = 0;
+        foreach ($history as $item) {
+            if ($currentImageId === null || $this->getMediaId($item->getImage()) !== $currentImageId) {
+                ++$canDeleteCount;
+            }
+        }
+
+        return new JsonResponse([
+            'success' => true,
+            'count' => $count,
+            'limit' => $limit,
+            'isAtLimit' => $count >= $limit,
+            'canDeleteCount' => $canDeleteCount,
+        ]);
+    }
+
+    /**
      * Resolve the style string based on the mode selected.
      */
     protected function resolveStyle(string $styleMode, Request $request): string
@@ -584,23 +695,69 @@ abstract class AbstractAiImageController extends AbstractController
     /**
      * Get the routes for AJAX operations.
      *
-     * Must return an associative array with keys:
+     * By default, auto-detects routes from the controller's #[Route] attribute.
+     * This works automatically when using AiImageRoutesTrait.
+     *
+     * Override this method if you need custom route names or parameters.
+     *
+     * Returns an associative array with keys:
      * - generateSubject: Route for generating subject via AI
      * - regenerateImage: Route for generating/regenerating image
      * - useHistory: Route template for using a history item (use HISTORY_ID as placeholder)
      * - deleteHistory: Route template for deleting a history item (use HISTORY_ID as placeholder)
+     * - batchDeleteHistory: Route for batch deletion of history images
+     * - historyStatus: Route to get current history status
      *
-     * Example:
-     *     return [
-     *         'generateSubject' => $this->generateUrl('admin_article_ai_image_generate_subject', ['id' => $entityId]),
-     *         'regenerateImage' => $this->generateUrl('admin_article_ai_image_regenerate', ['id' => $entityId]),
-     *         'useHistory' => $this->generateUrl('admin_article_ai_image_use_history', ['id' => $entityId, 'historyId' => 'HISTORY_ID']),
-     *         'deleteHistory' => $this->generateUrl('admin_article_ai_image_delete_history', ['id' => $entityId, 'historyId' => 'HISTORY_ID']),
-     *     ];
-     *
-     * @return array{generateSubject: string, regenerateImage: string, useHistory: string, deleteHistory: string}
+     * @return array{generateSubject: string, regenerateImage: string, useHistory: string, deleteHistory: string, batchDeleteHistory: string, historyStatus: string}
      */
-    abstract protected function getRoutes(int $entityId): array;
+    protected function getRoutes(int $entityId): array
+    {
+        $baseName = $this->getRouteBaseName();
+
+        return [
+            'generateSubject' => $this->generateUrl("{$baseName}_generate_subject", ['id' => $entityId]),
+            'regenerateImage' => $this->generateUrl("{$baseName}_regenerate", ['id' => $entityId]),
+            'useHistory' => $this->generateUrl("{$baseName}_use_history", [
+                'id' => $entityId,
+                'historyId' => 'HISTORY_ID',
+            ]),
+            'deleteHistory' => $this->generateUrl("{$baseName}_delete_history", [
+                'id' => $entityId,
+                'historyId' => 'HISTORY_ID',
+            ]),
+            'batchDeleteHistory' => $this->generateUrl("{$baseName}_batch_delete", ['id' => $entityId]),
+            'historyStatus' => $this->generateUrl("{$baseName}_history_status", ['id' => $entityId]),
+        ];
+    }
+
+    /**
+     * Get the base route name from the controller's #[Route] attribute.
+     *
+     * This extracts the 'name' parameter from the class-level Route attribute.
+     * For example, if the controller has:
+     *     #[Route('/admin/article/{id}/ai-image', name: 'admin_article_ai_image')]
+     *
+     * This method returns: 'admin_article_ai_image'
+     *
+     * @throws \LogicException If the controller doesn't have a Route attribute with a name
+     */
+    protected function getRouteBaseName(): string
+    {
+        $reflection = new \ReflectionClass($this);
+        $attributes = $reflection->getAttributes(Route::class);
+
+        if (empty($attributes)) {
+            throw new \LogicException(\sprintf('Controller %s must have a #[Route] attribute with a name parameter, or override getRoutes() method.', static::class));
+        }
+
+        $routeAttribute = $attributes[0]->newInstance();
+
+        if (empty($routeAttribute->getName())) {
+            throw new \LogicException(\sprintf('The #[Route] attribute on controller %s must have a name parameter, or override getRoutes() method.', static::class));
+        }
+
+        return $routeAttribute->getName();
+    }
 
     /**
      * Get the Twig template to use for the page.

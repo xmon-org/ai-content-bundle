@@ -195,9 +195,18 @@ xmon_ai_content:
         max_images: 10  # Default: 5, Range: 1-50
 ```
 
-### Automatic Cleanup
+### History Limit Management
 
-When the limit is exceeded, the oldest images are automatically deleted (both the history record and the media file). The current featured image is never deleted, even if it's the oldest.
+When the history limit is reached, the bundle shows a **management modal** before allowing new image generation:
+
+1. User attempts to generate a new image
+2. Modal appears listing all history images with checkboxes
+3. User selects which images to delete
+4. "Delete and Generate" removes selected images and proceeds with generation
+
+This approach gives users full control over which images to keep, rather than automatic deletion.
+
+> **Note:** The current featured image is always locked and cannot be deleted from the modal.
 
 ### Dynamic Limit from Database
 

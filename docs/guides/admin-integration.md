@@ -153,7 +153,7 @@ The most powerful feature of this bundle is the **dedicated image generation pag
 
 ### Controller Implementation
 
-Create a controller that extends `AbstractAiImageController`:
+Create a controller that extends `AbstractAiImageController` and uses `AiImageRoutesTrait`:
 
 ```php
 <?php
@@ -166,12 +166,10 @@ use App\Repository\ArticleRepository;
 use App\Repository\ArticleImageHistoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Sonata\MediaBundle\Provider\Pool;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Xmon\AiContentBundle\Controller\AbstractAiImageController;
+use Xmon\AiContentBundle\Controller\AiImageRoutesTrait;
 use Xmon\AiContentBundle\Entity\AiImageAwareInterface;
 use Xmon\AiContentBundle\Entity\AiImageHistoryInterface;
 use Xmon\AiContentBundle\Service\AiImageService;
@@ -181,10 +179,22 @@ use Xmon\AiContentBundle\Service\MediaStorageService;
 use Xmon\AiContentBundle\Service\PromptBuilder;
 use Xmon\AiContentBundle\Service\PromptTemplateService;
 
+/**
+ * All routes are provided automatically by AiImageRoutesTrait:
+ * - GET  /admin/article/{id}/ai-image              -> page
+ * - POST /admin/article/{id}/ai-image/generate-subject
+ * - POST /admin/article/{id}/ai-image/regenerate
+ * - POST /admin/article/{id}/ai-image/history/{historyId}/use
+ * - DELETE /admin/article/{id}/ai-image/history/{historyId}
+ * - POST /admin/article/{id}/ai-image/history/batch-delete
+ * - GET  /admin/article/{id}/ai-image/history/status
+ */
 #[IsGranted('ROLE_ADMIN')]
 #[Route('/admin/article/{id}/ai-image', name: 'admin_article_ai_image')]
 class ArticleAiImageController extends AbstractAiImageController
 {
+    use AiImageRoutesTrait; // All routes defined automatically!
+
     public function __construct(
         AiTextService $textService,
         AiImageService $imageService,
@@ -205,41 +215,6 @@ class ArticleAiImageController extends AbstractAiImageController
             $promptTemplateService,
             $mediaStorage
         );
-    }
-
-    // ==========================================
-    // PAGE AND ENDPOINTS
-    // ==========================================
-
-    #[Route('', name: '_page', methods: ['GET'])]
-    public function page(int $id, Request $request): Response
-    {
-        $subject = $request->query->get('subject', '');
-        return $this->doRenderPage($id, $subject);
-    }
-
-    #[Route('/generate-subject', name: '_generate_subject', methods: ['POST'])]
-    public function generateSubject(int $id): JsonResponse
-    {
-        return $this->doGenerateSubject($id);
-    }
-
-    #[Route('/regenerate', name: '_regenerate', methods: ['POST'])]
-    public function regenerate(int $id, Request $request): JsonResponse
-    {
-        return $this->doRegenerateImage($id, $request);
-    }
-
-    #[Route('/history/{historyId}/use', name: '_use_history', methods: ['POST'])]
-    public function useHistory(int $id, int $historyId): JsonResponse
-    {
-        return $this->doUseHistoryImage($id, $historyId);
-    }
-
-    #[Route('/history/{historyId}/delete', name: '_delete_history', methods: ['DELETE'])]
-    public function deleteHistory(int $id, int $historyId): JsonResponse
-    {
-        return $this->doDeleteHistoryImage($id, $historyId);
     }
 
     // ==========================================
@@ -272,22 +247,6 @@ class ArticleAiImageController extends AbstractAiImageController
     protected function getListUrl(AiImageAwareInterface $entity): string
     {
         return $this->generateUrl('admin_app_article_list');
-    }
-
-    protected function getRoutes(int $entityId): array
-    {
-        return [
-            'generateSubject' => $this->generateUrl('admin_article_ai_image_generate_subject', ['id' => $entityId]),
-            'regenerateImage' => $this->generateUrl('admin_article_ai_image_regenerate', ['id' => $entityId]),
-            'useHistory' => $this->generateUrl('admin_article_ai_image_use_history', [
-                'id' => $entityId,
-                'historyId' => 'HISTORY_ID'
-            ]),
-            'deleteHistory' => $this->generateUrl('admin_article_ai_image_delete_history', [
-                'id' => $entityId,
-                'historyId' => 'HISTORY_ID'
-            ]),
-        ];
     }
 
     protected function createHistoryItem(
@@ -358,14 +317,26 @@ class ArticleAiImageController extends AbstractAiImageController
     {
         return 'articles';
     }
-
-    // Optional: Override template if needed
-    // protected function getTemplate(): string
-    // {
-    //     return 'admin/article_ai_image.html.twig';
-    // }
 }
 ```
+
+### AiImageRoutesTrait
+
+The `AiImageRoutesTrait` provides all routes automatically, eliminating boilerplate. It defines:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `''` | Render the AI image page |
+| POST | `/generate-subject` | Generate subject with AI |
+| POST | `/regenerate` | Generate new image |
+| POST | `/history/{historyId}/use` | Use history image |
+| DELETE | `/history/{historyId}` | Delete history image |
+| POST | `/history/batch-delete` | Batch delete images |
+| GET | `/history/status` | Get history count/limit |
+
+Routes are automatically named based on your controller's `#[Route]` name attribute.
+
+> **Tip:** You can override any route by defining it in your controller - it will take precedence over the trait.
 
 ### Adding Link from Sonata Admin
 
@@ -605,6 +576,26 @@ xmon_ai_content:
     history:
         max_images: 10  # Override bundle default
 ```
+
+### History Limit Modal
+
+When the history limit is reached, the bundle automatically shows a management modal before allowing new image generation. This provides a user-friendly way to manage history:
+
+**Features:**
+- Lists all images in history with thumbnails
+- Checkboxes to select images for deletion
+- Current image is locked (cannot be deleted)
+- Counter showing selected images
+- "Delete and Generate" button to remove selected and proceed
+
+**Behavior:**
+1. User clicks "Generate image"
+2. If `history.count >= limit`, modal appears
+3. User selects which images to delete
+4. Clicking "Delete and Generate" removes selected images
+5. New image is generated automatically after deletion
+
+This approach ensures users have full control over which images to keep, rather than automatic FIFO deletion.
 
 ## Troubleshooting
 
