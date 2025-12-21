@@ -125,7 +125,7 @@ class MyService
 |----------|------------------|-------|
 | Gemini | Yes | Recommended, fast |
 | OpenRouter | Yes | Multiple models |
-| Pollinations | No | Always available |
+| Pollinations | Optional | Always available, higher rate limits with key |
 
 ### Image
 

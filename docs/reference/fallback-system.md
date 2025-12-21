@@ -47,7 +47,7 @@ A provider is considered available when:
 
 ## Internal Model Fallback
 
-Some providers (like OpenRouter) support internal fallback between models:
+Some providers (OpenRouter, Pollinations) support internal fallback between models:
 
 ```yaml
 openrouter:
@@ -55,9 +55,16 @@ openrouter:
     fallback_models:
         - 'meta-llama/llama-3.3-70b-instruct:free'
         - 'qwen/qwen3-235b-a22b:free'
+
+pollinations:
+    model: 'openai-fast'
+    fallback_models:
+        - 'openai'
 ```
 
 If the main model fails, the provider tries fallback models before the service moves to the next provider.
+
+> **Note:** Pollinations models have tier requirements. `openai` and `openai-fast` work without API key (anonymous tier). Models like `mistral`, `gemini`, `deepseek` require a `seed` tier API key. See [Providers Reference](providers.md) for details.
 
 ## Retry Logic
 

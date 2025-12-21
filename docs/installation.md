@@ -21,9 +21,10 @@ composer require sonata-project/media-bundle
 # Text providers
 XMON_AI_GEMINI_API_KEY=AIza...           # Gemini API (recommended)
 XMON_AI_OPENROUTER_API_KEY=sk-or-v1-...  # OpenRouter API (optional)
+XMON_AI_POLLINATIONS_API_KEY=your_key    # Optional: higher rate limits and access to more models
 
-# Image providers
-XMON_AI_POLLINATIONS_API_KEY=tu_secret_key  # Optional, without key there are rate limits
+# Image providers (same Pollinations key works for both text and images)
+# XMON_AI_POLLINATIONS_API_KEY=your_key
 ```
 
 ## Bundle Configuration
@@ -54,8 +55,10 @@ xmon_ai_content:
             pollinations:
                 enabled: true
                 priority: 10
-                model: 'openai'
-                fallback_models: []
+                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional
+                model: 'openai-fast'
+                fallback_models:
+                    - 'openai'
                 timeout: 60
         defaults:
             retries: 2
@@ -121,7 +124,7 @@ xmon_ai_content:
         providers:
             pollinations:
                 enabled: true
-                model: 'openai'
+                model: 'openai-fast'
             # gemini and openrouter don't appear = disabled
 ```
 
@@ -156,11 +159,14 @@ xmon_ai_content:
         providers:
             pollinations:
                 enabled: true
+                model: 'openai-fast'  # GPT-4.1 Nano (anonymous tier)
     image:
         providers:
             pollinations:
                 enabled: true
 ```
+
+> **Note:** Pollinations works without API key using `openai` or `openai-fast` models (anonymous tier). For access to `mistral`, `gemini`, `deepseek` models, a `seed` tier API key is required.
 
 ### Gemini as primary with fallback
 

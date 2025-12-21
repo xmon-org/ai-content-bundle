@@ -32,8 +32,10 @@ xmon_ai_content:
             pollinations:
                 enabled: true
                 priority: 10
-                model: 'openai'
-                fallback_models: []
+                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional
+                model: 'openai-fast'
+                fallback_models:
+                    - 'openai'
                 timeout: 60
 
         defaults:
@@ -166,7 +168,7 @@ xmon_ai_content:
 |----------|----------|---------|------------------|
 | Gemini | 100 | 30s | Yes |
 | OpenRouter | 50 | 90s | Yes |
-| Pollinations | 10 | 60s | No |
+| Pollinations | 10 | 60s | Optional (higher rate limits with key) |
 
 ### Image Provider Defaults
 
@@ -231,9 +233,10 @@ xmon_ai_content:
 # Text providers
 XMON_AI_GEMINI_API_KEY=AIza...
 XMON_AI_OPENROUTER_API_KEY=sk-or-v1-...
+XMON_AI_POLLINATIONS_API_KEY=your_key  # Optional: higher rate limits
 
-# Image providers
-XMON_AI_POLLINATIONS_API_KEY=your_key
+# Image providers (same key works for both text and image)
+# XMON_AI_POLLINATIONS_API_KEY=your_key
 
 # Optional: Custom provider
 XMON_AI_ANTHROPIC_API_KEY=sk-ant-...

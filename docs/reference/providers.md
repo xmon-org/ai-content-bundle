@@ -8,7 +8,7 @@ Available AI providers in xmon/ai-content-bundle.
 |----------|--------|------------------|------------------|-------|
 | Gemini | Implemented | Yes | 100 | Recommended, fast and free with limits |
 | OpenRouter | Implemented | Yes | 50 | Multiple models, internal fallback |
-| Pollinations | Implemented | No | 10 | Always available, final fallback |
+| Pollinations | Implemented | Optional | 10 | Always available, supports fallback_models |
 
 ### Gemini
 
@@ -56,21 +56,36 @@ openrouter:
 
 ### Pollinations
 
-Free AI API with no authentication required. Rate limited.
+Free AI API. Works without authentication but supports API key for higher rate limits.
 
 ```yaml
 pollinations:
     enabled: true
     priority: 10
-    model: 'openai'
+    api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional, for higher rate limits
+    model: 'openai-fast'  # GPT-4.1 Nano
+    fallback_models:
+        - 'openai'  # GPT-5 Nano
     timeout: 60
 ```
 
-**Models:**
-- `openai` - GPT-based
-- `mistral` - Mistral-based
+**Models by Tier:**
 
-**No API key needed** - Works out of the box but has rate limits.
+| Tier | Models | Access |
+|------|--------|--------|
+| `anonymous` | `openai`, `openai-fast` | No registration required |
+| `seed` | `mistral`, `gemini`, `deepseek`, `gemini-search` | Free registration |
+| `flower` | `qwen-coder` | Paid tier |
+
+**Recommended for anonymous tier:**
+- `openai-fast` - GPT-4.1 Nano (faster, fewer content filter issues)
+- `openai` - GPT-5 Nano (may have aggressive content filters)
+
+> **Note:** Models like `mistral` and `gemini` require a `seed` tier API key.
+
+**Available Models:** [Pollinations Models Endpoint](https://text.pollinations.ai/models)
+
+**Get API Key:** [Pollinations Dashboard](https://pollinations.ai/) - Optional, for higher rate limits and access to more models
 
 ## Image Providers
 
