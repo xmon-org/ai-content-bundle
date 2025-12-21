@@ -165,7 +165,7 @@ class PromptTemplateService
         if (!empty($template['variants'])) {
             // Validate that all placeholders have variants defined
             preg_match_all('/{variant_(\w+)}/', $system, $matches);
-            $requiredCategories = $matches[1] ?? [];
+            $requiredCategories = $matches[1];
 
             foreach ($requiredCategories as $category) {
                 if (!isset($template['variants'][$category])) {

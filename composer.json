@@ -31,7 +31,8 @@
         "phpstan/phpstan": "^1.10",
         "phpstan/phpstan-symfony": "^1.3",
         "phpunit/phpunit": "^10.0|^11.0",
-        "symfony/phpunit-bridge": "^7.0"
+        "symfony/phpunit-bridge": "^7.0",
+        "twig/twig": "^3.0"
     },
     "suggest": {
         "sonata-project/media-bundle": "Required for image storage with SonataMedia (^4.0)",
