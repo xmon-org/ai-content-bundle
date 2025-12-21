@@ -572,7 +572,73 @@ $styles = $this->getExtension(AiImageAdminExtension::class)->getStyleChoices();
 $preview = $this->getExtension(AiImageAdminExtension::class)->getGlobalStylePreview();
 ```
 
-## Customizing History Behavior
+## Customizing Controller Behavior
+
+The `AbstractAiImageController` provides several protected methods that can be overridden to customize behavior. These methods follow a consistent pattern: read from your application's configuration and fall back to the bundle's default.
+
+### Override Global Style
+
+By default, the bundle uses the first preset defined in YAML configuration as the "global" style. You can override this to read from a database entity:
+
+```php
+class MyEntityAiImageController extends AbstractAiImageController
+{
+    public function __construct(
+        // ... other dependencies
+        private readonly ConfigurationRepository $configRepository,
+    ) {
+        parent::__construct(/* ... */);
+    }
+
+    /**
+     * Get global style from database configuration.
+     */
+    protected function resolveGlobalStyle(): string
+    {
+        $config = $this->configRepository->getConfiguration();
+
+        if ($config !== null) {
+            // Return the complete style prompt from your entity
+            return $config->getBaseStylePrompt();
+        }
+
+        // Fallback to bundle's default (first preset)
+        return parent::resolveGlobalStyle();
+    }
+}
+```
+
+This allows you to:
+- Store style configuration in a database entity (e.g., Configuracion)
+- Let admin users configure the default style via Sonata Admin
+- Use different styles per entity type or context
+- Combine preset/custom modes managed through your application
+
+**Example with preset/custom mode:**
+
+```php
+protected function resolveGlobalStyle(): string
+{
+    $config = $this->configRepository->getConfiguration();
+
+    if ($config === null) {
+        return parent::resolveGlobalStyle();
+    }
+
+    // Check if using preset mode
+    if ($config->getStyleMode() === 'preset' && $config->getPresetKey()) {
+        return $this->promptBuilder->buildFromPreset($config->getPresetKey());
+    }
+
+    // Custom mode: build from individual components
+    return $this->promptBuilder->buildStyleOnly([
+        'style' => $config->getStyle(),
+        'composition' => $config->getComposition(),
+        'palette' => $config->getPalette(),
+        'custom_prompt' => $config->getCustomPrompt(),
+    ]);
+}
+```
 
 ### Override Maximum Images
 

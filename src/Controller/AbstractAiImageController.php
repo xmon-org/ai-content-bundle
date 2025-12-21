@@ -149,7 +149,8 @@ abstract class AbstractAiImageController extends AbstractController
         $historyLimit = $this->getMaxHistoryImages();
 
         // Prepare style options for the template
-        $globalStylePreview = $this->promptBuilder->buildGlobalStyle();
+        // Use resolveGlobalStyle() so subclasses can override (e.g., read from database)
+        $globalStylePreview = $this->resolveGlobalStyle();
 
         return $this->render($this->getTemplate(), [
             // Entity data
