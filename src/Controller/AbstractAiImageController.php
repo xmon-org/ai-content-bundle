@@ -14,6 +14,7 @@ use Xmon\AiContentBundle\Entity\AiImageContextInterface;
 use Xmon\AiContentBundle\Entity\AiImageHistoryInterface;
 use Xmon\AiContentBundle\Entity\AiPromptVariablesInterface;
 use Xmon\AiContentBundle\Service\AiImageService;
+use Xmon\AiContentBundle\Service\AiStyleService;
 use Xmon\AiContentBundle\Service\AiTextService;
 use Xmon\AiContentBundle\Service\ImageOptionsService;
 use Xmon\AiContentBundle\Service\MediaStorageService;
@@ -85,6 +86,7 @@ abstract class AbstractAiImageController extends AbstractController
         protected readonly PromptBuilder $promptBuilder,
         protected readonly PromptTemplateService $promptTemplateService,
         protected readonly ?MediaStorageService $mediaStorage = null,
+        protected readonly ?AiStyleService $styleService = null,
         protected readonly int $maxHistoryImages = 5,
     ) {
     }
@@ -149,7 +151,8 @@ abstract class AbstractAiImageController extends AbstractController
         $historyLimit = $this->getMaxHistoryImages();
 
         // Prepare style options for the template
-        $globalStylePreview = $this->promptBuilder->buildGlobalStyle();
+        // Use resolveGlobalStyle() so subclasses can override (e.g., read from database)
+        $globalStylePreview = $this->resolveGlobalStyle();
 
         return $this->render($this->getTemplate(), [
             // Entity data
@@ -590,9 +593,23 @@ abstract class AbstractAiImageController extends AbstractController
 
     /**
      * Resolve the global/default style.
+     *
+     * Uses the AiStyleService to get the style from registered providers.
+     * This allows database-backed providers to override the default YAML config.
+     *
+     * Override this method for custom style resolution logic.
      */
     protected function resolveGlobalStyle(): string
     {
+        // Use style service if available (supports multiple providers)
+        if ($this->styleService !== null) {
+            $style = $this->styleService->getGlobalStyle();
+            if ($style !== '') {
+                return $style;
+            }
+        }
+
+        // Fallback to PromptBuilder (uses first preset from YAML)
         return $this->promptBuilder->buildGlobalStyle();
     }
 

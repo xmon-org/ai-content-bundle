@@ -16,7 +16,7 @@ use Xmon\AiContentBundle\Service\PromptTemplateService;
 
 #[AsCommand(
     name: 'xmon:ai:debug',
-    description: 'Display the current configuration of xmon/ai-content-bundle',
+    description: 'Display the current configuration of xmon-org/ai-content-bundle',
 )]
 class DebugConfigCommand extends Command
 {
@@ -33,7 +33,7 @@ class DebugConfigCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $io->title('xmon/ai-content-bundle Configuration');
+        $io->title('xmon-org/ai-content-bundle Configuration');
 
         // Text Providers
         $io->section('Text Providers');

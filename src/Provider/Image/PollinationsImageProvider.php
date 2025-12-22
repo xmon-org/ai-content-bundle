@@ -80,6 +80,7 @@ class PollinationsImageProvider implements ImageProviderInterface
             'height' => $height,
             'seed' => $seed,
             'prompt_length' => \strlen($prompt),
+            'prompt' => $prompt,
         ]);
 
         try {

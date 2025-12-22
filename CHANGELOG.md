@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `xmon/ai-content-bundle` will be documented in this file.
+All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
 ## 1.0.0 (2025-12-21)
 

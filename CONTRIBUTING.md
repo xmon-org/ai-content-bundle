@@ -1,4 +1,4 @@
-# Contributing to xmon/ai-content-bundle
+# Contributing to xmon-org/ai-content-bundle
 
 ¡Gracias por tu interés en contribuir! 🎉
 

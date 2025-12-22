@@ -193,4 +193,135 @@ class VariantSelectorTest extends TestCase
         // Either option is valid since no match was found
         $this->assertContains($result['mood'], $variants['mood']);
     }
+
+    // ====================================================================
+    // Regex Pattern Tests
+    // ====================================================================
+
+    public function testSelectWithRegexKeyword(): void
+    {
+        $variants = [
+            'time_of_day' => [
+                'amanecer en la montaña',
+                'mediodía en la plaza',
+                'noche en el jardín',
+            ],
+        ];
+        $keywords = [
+            'time_of_day' => ['amanecer|atardecer|sol'],
+        ];
+
+        // "atardecer" in content matches pattern, "amanecer" in first option matches pattern
+        // Only first option scores because it contains a word from the pattern
+        $result = $this->selector->select($variants, 'Evento al atardecer', $keywords);
+
+        $this->assertArrayHasKey('time_of_day', $result);
+        // First option matches because "amanecer" is in both pattern and option
+        $this->assertEquals('amanecer en la montaña', $result['time_of_day']);
+    }
+
+    public function testSelectWithMultipleRegexPatterns(): void
+    {
+        $variants = [
+            'location' => [
+                'río tranquilo con piedras',
+                'montaña nevada',
+                'bosque antiguo',
+            ],
+        ];
+        $keywords = [
+            'location' => [
+                'río|agua|playa|cascada',
+                'montaña|nevada|sendero',
+                'bosque|árboles|antiguo',
+            ],
+        ];
+
+        // "cascada" in content matches first pattern
+        // "río" in first option also matches first pattern → first option scores +1
+        // Other options don't contain words from matched pattern
+        $result = $this->selector->select($variants, 'Retiro junto a la cascada', $keywords);
+
+        $this->assertArrayHasKey('location', $result);
+        $this->assertEquals('río tranquilo con piedras', $result['location']);
+    }
+
+    public function testRegexPatternDoesNotMatchContent(): void
+    {
+        $variants = [
+            'weather' => [
+                'día soleado',
+                'tormenta eléctrica',
+            ],
+        ];
+        $keywords = [
+            'weather' => ['lluvia|nieve|granizo'],
+        ];
+
+        // None of the pattern alternatives match the content
+        // Falls back to text similarity or random
+        $result = $this->selector->select($variants, 'Seminario de primavera', $keywords);
+
+        $this->assertArrayHasKey('weather', $result);
+        $this->assertContains($result['weather'], $variants['weather']);
+    }
+
+    public function testMixedSimpleAndRegexKeywords(): void
+    {
+        $variants = [
+            'location' => [
+                'museo con fuente',
+                'jardín botánico',
+                'plaza del pueblo',
+            ],
+        ];
+        $keywords = [
+            'location' => [
+                'museo',                    // Simple keyword
+                'jardín|parque|bosque',     // Regex pattern
+            ],
+        ];
+
+        // Content has "museo" → simple keyword matches for option with "museo"
+        // Regex pattern doesn't match since content has no jardín/parque/bosque
+        $result = $this->selector->select($variants, 'Evento en el museo de arte', $keywords);
+
+        $this->assertEquals('museo con fuente', $result['location']);
+    }
+
+    public function testRegexPatternCaseInsensitive(): void
+    {
+        $variants = [
+            'time' => [
+                'AMANECER brillante',
+                'tarde tranquila',
+            ],
+        ];
+        $keywords = [
+            'time' => ['amanecer|atardecer|mediodía'],
+        ];
+
+        // "AMANECER" in content should match lowercase pattern
+        $result = $this->selector->select($variants, 'Sesión al AMANECER', $keywords);
+
+        $this->assertArrayHasKey('time', $result);
+    }
+
+    public function testRegexWithUnicodeCharacters(): void
+    {
+        $variants = [
+            'mood' => [
+                'celebración alegre',
+                'meditación tranquila',
+            ],
+        ];
+        $keywords = [
+            'mood' => ['celebración|fiesta|graduación'],
+        ];
+
+        // Unicode word "celebración" with accent should match
+        $result = $this->selector->select($variants, 'Gran celebración en el dojo', $keywords);
+
+        $this->assertArrayHasKey('mood', $result);
+    }
 }

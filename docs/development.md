@@ -13,7 +13,7 @@ This bundle uses path repository during development:
         { "type": "path", "url": "../packages/ai-content-bundle" }
     ],
     "require": {
-        "xmon/ai-content-bundle": "@dev"
+        "xmon-org/ai-content-bundle": "@dev"
     }
 }
 ```
@@ -47,7 +47,7 @@ The bundle includes a diagnostic command that shows:
 ```
 $ bin/console xmon:ai:debug
 
-xmon/ai-content-bundle Configuration
+xmon-org/ai-content-bundle Configuration
 ====================================
 
 Text Providers

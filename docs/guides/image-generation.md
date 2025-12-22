@@ -228,6 +228,7 @@ This allows you to:
 ## Related
 
 - [Styles & Presets](styles-presets.md) - Control image styles with presets
+- [Style Providers](style-providers.md) - Database-backed style configuration
 - [Providers Reference](../reference/providers.md) - Available image providers
 - [Fallback System](../reference/fallback-system.md) - How automatic fallback works
 - [Admin Integration](admin-integration.md) - Sonata Admin integration with history

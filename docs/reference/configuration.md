@@ -1,6 +1,6 @@
 # Configuration Reference
 
-Complete YAML configuration reference for xmon/ai-content-bundle.
+Complete YAML configuration reference for xmon-org/ai-content-bundle.
 
 ## Full Configuration
 
@@ -319,6 +319,40 @@ variants:
 3. If still no matches: random selection
 
 **Important**: The matching is literal string comparison. Keep content, variants, and keywords in the same language for accurate matching. Use system prompt instructions to request output in a different language if needed.
+
+### Regex Patterns in Keywords
+
+Keywords can use pipe `|` syntax for OR matching:
+
+```yaml
+variant_keywords:
+    location:
+        - "río|agua|playa|cascada"      # Matches any of these words
+        - "montaña|nevada|sendero"
+    time_of_day:
+        - "amanecer|atardecer|sol"      # Time-related patterns
+        - "noche|luna|estrellas"
+```
+
+**Behavior:**
+
+| Keyword Type | Matching Rule |
+|--------------|---------------|
+| Simple (no `\|`) | Must appear in BOTH content AND option to score |
+| Regex (with `\|`) | Must match in BOTH content AND option to score |
+
+**Example:**
+
+```yaml
+variant_keywords:
+    location:
+        - "museo"                    # Simple: needs "museo" in content AND option
+        - "dojo|tatami"              # Regex: needs "dojo" OR "tatami" in content AND option
+```
+
+With content "Graduación en el dojo central":
+- Option "dojo tradicional con tatami" → `"dojo|tatami"` matches both → scores +1
+- Option "terraza con vistas" → `"dojo|tatami"` not in option → no score
 
 See [Prompt Templates Guide](../guides/prompt-templates.md#prompt-variants) for detailed examples.
 

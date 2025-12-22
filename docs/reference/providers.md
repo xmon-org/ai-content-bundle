@@ -1,6 +1,6 @@
 # Providers Reference
 
-Available AI providers in xmon/ai-content-bundle.
+Available AI providers in xmon-org/ai-content-bundle.
 
 ## Text Providers
 

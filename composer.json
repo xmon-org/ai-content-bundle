@@ -1,5 +1,5 @@
 {
-    "name": "xmon/ai-content-bundle",
+    "name": "xmon-org/ai-content-bundle",
     "description": "Symfony bundle for AI content generation (text and images) with provider fallback",
     "type": "symfony-bundle",
     "license": "MIT",

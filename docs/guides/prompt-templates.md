@@ -339,6 +339,62 @@ Content: "Seminario de aikido en el museo de Tokyo"
 
 Result: "patio de museo con fuente" is selected (score 1).
 
+### Regex Patterns for Flexible Matching
+
+When you need to match multiple related words, use pipe `|` syntax:
+
+```yaml
+variant_keywords:
+    location:
+        - "río|agua|playa|cascada"    # Any water-related word
+        - "montaña|nevada|cima"       # Any mountain-related word
+        - "bosque|árboles|selva"      # Any forest-related word
+    time_of_day:
+        - "amanecer|atardecer|sol"    # Dawn/dusk related
+        - "noche|luna|estrellas"      # Night related
+```
+
+**How regex patterns differ from simple keywords:**
+
+| Type | Syntax | Matching Rule |
+|------|--------|---------------|
+| Simple | `"museo"` | Must appear in BOTH content AND option |
+| Regex | `"río\|agua\|cascada"` | Must match in BOTH content AND option |
+
+**Example:**
+
+Content: "Retiro junto a la cascada"
+
+```yaml
+variant_keywords:
+    location:
+        - "río|agua|playa|cascada"    # Pattern for water-related options
+        - "montaña|nevada"            # Pattern for mountain-related options
+```
+
+Options with variants:
+- "río tranquilo con piedras" → `cascada` in content, `río` in option → scores +1
+- "montaña nevada" → `cascada` not in option → scores +0
+- "terraza con vistas" → nothing matches → scores +0
+
+Result: "río tranquilo con piedras" is selected because both content AND option match the pattern.
+
+**When to use regex patterns:**
+- Grouping synonyms or related concepts
+- Matching variations of the same word (singular/plural)
+- Flexible category matching where exact option text doesn't matter
+
+**Combining simple and regex keywords:**
+
+```yaml
+variant_keywords:
+    location:
+        - "museo"                    # Simple: precise matching
+        - "jardín|parque|bosque"     # Regex: flexible matching
+```
+
+This allows precise control when you know the exact word, combined with flexibility for related concepts.
+
 ### Multi-Language Output
 
 If you need the final output in a different language than your content, add an explicit instruction in the system prompt:
