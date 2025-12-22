@@ -449,6 +449,230 @@ Available blocks to override:
 - `xmon_ai_image_styles` - CSS block
 - `xmon_ai_image_scripts` - JavaScript block
 
+## Global Style Configuration with AiStyleConfigType
+
+The bundle provides `AiStyleConfigType` for configuring AI image styles globally (e.g., in a Settings or Configuration entity). This is the recommended approach for admin-editable style configuration.
+
+### The Trait-FormType Contract
+
+The `AiStyleConfigType` works together with `AiStyleConfigurableTrait`. They form a **contract**:
+
+```
+┌─────────────────────────────────────┐
+│ Your Entity (e.g., Configuracion)   │
+│                                     │
+│  uses AiStyleConfigurableTrait ─────┼──► Defines fields:
+│                                     │    - aiStyleMode (string)
+│                                     │    - aiStylePreset (?string)
+│                                     │    - aiStyleArtistic (?string)
+│                                     │    - aiStyleComposition (?string)
+│                                     │    - aiStylePalette (?string)
+│                                     │    - aiStyleAdditional (?string)
+└─────────────────────────────────────┘
+                ↓ inherit_data=true
+┌─────────────────────────────────────┐
+│ AiStyleConfigType (FormType)        │
+│                                     │
+│  Adds form fields with exact ───────┼──► Same names as trait:
+│  same names                         │    - aiStyleMode
+│                                     │    - aiStylePreset
+│                                     │    - aiStyleArtistic
+│                                     │    - aiStyleComposition
+│                                     │    - aiStylePalette
+│                                     │    - aiStyleAdditional
+└─────────────────────────────────────┘
+```
+
+Because `inherit_data => true` is the default, Symfony maps the form fields directly to the entity's properties. **The field names MUST match** - this is the implicit contract.
+
+### Step 1: Use the Trait in Your Entity
+
+```php
+<?php
+
+namespace App\Entity;
+
+use Doctrine\ORM\Mapping as ORM;
+use Xmon\AiContentBundle\Entity\AiStyleConfigurableInterface;
+use Xmon\AiContentBundle\Entity\AiStyleConfigurableTrait;
+
+#[ORM\Entity]
+class Configuracion implements AiStyleConfigurableInterface
+{
+    use AiStyleConfigurableTrait;  // <-- This adds the 6 fields
+
+    // Your presets, styles, compositions, palettes as constants
+    public const PRESETS = [
+        'sumi-e-classic' => [
+            'nombre' => 'Sumi-e Classic',
+            'estilo' => 'sumi-e Japanese ink wash painting style',
+            'composicion' => 'minimalist composition with flowing lines',
+            'paleta' => 'black white grey and subtle earth tones',
+        ],
+        // More presets...
+    ];
+
+    public const STYLES = [
+        'Traditional' => [
+            'Sumi-e' => 'sumi-e Japanese ink wash painting style',
+            'Ukiyo-e' => 'ukiyo-e woodblock print style',
+        ],
+        // More grouped styles...
+    ];
+
+    // ... other entity fields and methods
+}
+```
+
+### Step 2: Create Database Migration
+
+After adding the trait, create and run a migration:
+
+```bash
+bin/console doctrine:migrations:diff
+bin/console doctrine:migrations:migrate
+```
+
+The migration will add columns: `ai_style_mode`, `ai_style_preset`, `ai_style_artistic`, `ai_style_composition`, `ai_style_palette`, `ai_style_additional`.
+
+### Step 3: Use in Sonata Admin
+
+```php
+use Xmon\AiContentBundle\Form\AiStyleConfigType;
+
+class ConfiguracionAdmin extends AbstractAdmin
+{
+    protected function configureFormFields(FormMapper $form): void
+    {
+        $form
+            ->tab('AI')
+                ->with('Image Generation Style')
+                    ->add('aiStyleConfig', AiStyleConfigType::class, [
+                        // Required: your data arrays
+                        'presets' => Configuracion::PRESETS,
+                        'styles' => Configuracion::STYLES,
+                        'compositions' => Configuracion::COMPOSITIONS,
+                        'palettes' => Configuracion::PALETTES,
+
+                        // Preview (included automatically)
+                        'show_preview' => true,
+                        'preview_label' => 'Style Preview',
+                        'suffix' => 'no faces, no text',  // Fixed suffix
+                        'default_artistic' => 'watercolor style',
+                        'default_composition' => 'balanced composition',
+                        'default_palette' => 'natural colors',
+
+                        // Labels (customize for your language)
+                        'mode_label' => 'Configuration Mode',
+                        'preset_label' => 'Preset',
+                        // ... more label options
+                    ])
+                ->end()
+            ->end();
+    }
+}
+```
+
+### AiStyleConfigType Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| **Data Options** |
+| `presets` | array | `[]` | Preset configurations `['key' => ['nombre' => '...', 'estilo' => '...', 'composicion' => '...', 'paleta' => '...']]` |
+| `styles` | array | `[]` | Artistic styles (can be grouped) |
+| `compositions` | array | `[]` | Composition options (can be grouped) |
+| `palettes` | array | `[]` | Color palette options (can be grouped) |
+| **Preview Options** |
+| `show_preview` | bool | `true` | Show dynamic style preview |
+| `preview_label` | string | `'Style Preview'` | Label for preview section |
+| `suffix` | string | `''` | Fixed text appended to all styles |
+| `default_artistic` | ?string | `null` | Default artistic style when empty |
+| `default_composition` | ?string | `null` | Default composition when empty |
+| `default_palette` | ?string | `null` | Default palette when empty |
+| **Label Options** |
+| `mode_label` | string | `'Configuration Mode'` | Mode field label |
+| `preset_mode_label` | string | `'Use Preset'` | Preset mode radio label |
+| `custom_mode_label` | string | `'Custom Configuration'` | Custom mode radio label |
+| `preset_label` | string | `'Preset'` | Preset select label |
+| `artistic_label` | string | `'Artistic Style'` | Artistic select label |
+| `composition_label` | string | `'Composition'` | Composition select label |
+| `palette_label` | string | `'Color Palette'` | Palette select label |
+| `additional_label` | string | `'Additional Text'` | Additional textarea label |
+| **Placeholder Options** |
+| `preset_placeholder` | string | `'Select a preset...'` | Preset select placeholder |
+| `artistic_placeholder` | string | `'Select a style...'` | Artistic select placeholder |
+| `composition_placeholder` | string | `'Select a composition...'` | Composition placeholder |
+| `palette_placeholder` | string | `'Select a palette...'` | Palette placeholder |
+| `additional_placeholder` | string | `'Additional instructions...'` | Additional textarea placeholder |
+| **Help Text Options** |
+| `mode_help` | ?string | `null` | Help text for mode field |
+| `preset_help` | ?string | `null` | Help text for preset field |
+| `additional_help` | ?string | `null` | Help text for additional field |
+
+### Dynamic Preview
+
+The FormType includes JavaScript that provides real-time preview:
+
+- **Preset mode**: Shows the combined style from the selected preset
+- **Custom mode**: Shows the combined individual fields
+- **Both modes**: Adds the fixed suffix and additional text
+
+The preview updates automatically when any field changes - no page reload needed.
+
+### Using the Style in Image Generation
+
+Implement a Style Provider to use the database configuration for image generation:
+
+```php
+<?php
+
+namespace App\Provider;
+
+use App\Repository\ConfiguracionRepository;
+use Xmon\AiContentBundle\Provider\AiStyleProviderInterface;
+
+final class ConfiguracionStyleProvider implements AiStyleProviderInterface
+{
+    public function __construct(
+        private readonly ConfiguracionRepository $configuracionRepository,
+    ) {}
+
+    public function getGlobalStyle(): string
+    {
+        $config = $this->configuracionRepository->getConfiguracion();
+
+        if ($config === null) {
+            return '';
+        }
+
+        // getBaseStylePreview() uses buildStylePreview() from the trait
+        return $config->getBaseStylePreview();
+    }
+
+    public function getPriority(): int
+    {
+        return 100;  // Higher than YAML default (0)
+    }
+
+    public function isAvailable(): bool
+    {
+        return $this->configuracionRepository->getConfiguracion() !== null;
+    }
+}
+```
+
+Register as tagged service:
+
+```yaml
+# config/services.yaml
+services:
+    App\Provider\ConfiguracionStyleProvider:
+        tags:
+            - { name: 'xmon_ai_content.style_provider', priority: 100 }
+```
+
+See [Style Providers](style-providers.md) for more details.
+
 ## Form Types (For In-Form Integration)
 
 For simpler use cases, you can use Form Types directly in Sonata Admin forms instead of the dedicated page.
@@ -729,5 +953,6 @@ Check that `@XmonAiContent/form/fields.html.twig` is in your `twig.form_themes` 
 
 ## Related
 
-- [Styles & Presets](styles-presets.md) - Configure image styles
+- [Styles & Presets](styles-presets.md) - Configure image styles in YAML
+- [Style Providers](style-providers.md) - Database-backed style configuration
 - [Image Generation](image-generation.md) - Generate images programmatically

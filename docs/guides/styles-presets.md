@@ -290,5 +290,7 @@ try {
 
 ## Related
 
+- [Style Providers](style-providers.md) - Database-backed style configuration
 - [Image Generation](image-generation.md) - Basic image generation
+- [Admin Integration](admin-integration.md) - Sonata Admin setup
 - [Configuration Reference](../reference/configuration.md) - Full YAML reference
