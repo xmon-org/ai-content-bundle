@@ -49,6 +49,16 @@ services:
     # Prompt Builder (combines subject with style options)
     Xmon\AiContentBundle\Service\PromptBuilder: ~
 
+    # Style Providers
+    Xmon\AiContentBundle\Provider\Style\YamlStyleProvider:
+        tags:
+            - { name: 'xmon_ai_content.style_provider', priority: 0 }
+
+    # Style Service (aggregates style providers)
+    Xmon\AiContentBundle\Service\AiStyleService:
+        arguments:
+            $providers: !tagged_iterator { tag: 'xmon_ai_content.style_provider', default_priority_method: 'getPriority' }
+
     # Console Commands
     Xmon\AiContentBundle\Command\DebugConfigCommand:
         tags: ['console.command']
