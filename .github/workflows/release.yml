@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     # Solo ejecutar si el CI pasa
-    needs: []
+    # needs: []
 
     steps:
       - name: Checkout
