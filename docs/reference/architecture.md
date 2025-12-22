@@ -5,7 +5,7 @@ Bundle structure and components.
 ## Directory Structure
 
 ```
-xmon/ai-content-bundle/
+xmon-org/ai-content-bundle/
 ├── composer.json
 ├── README.md
 ├── docs/                            # Documentation

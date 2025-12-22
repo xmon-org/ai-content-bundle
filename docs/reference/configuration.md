@@ -1,6 +1,6 @@
 # Configuration Reference
 
-Complete YAML configuration reference for xmon/ai-content-bundle.
+Complete YAML configuration reference for xmon-org/ai-content-bundle.
 
 ## Full Configuration
 

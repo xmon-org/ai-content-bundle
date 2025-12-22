@@ -38,7 +38,7 @@
       "@semantic-release/changelog",
       {
         "changelogFile": "CHANGELOG.md",
-        "changelogTitle": "# Changelog\n\nAll notable changes to `xmon/ai-content-bundle` will be documented in this file."
+        "changelogTitle": "# Changelog\n\nAll notable changes to `xmon-org/ai-content-bundle` will be documented in this file."
       }
     ],
     [

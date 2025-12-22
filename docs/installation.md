@@ -1,11 +1,11 @@
 # Installation & Configuration
 
-Complete guide for installing and configuring xmon/ai-content-bundle.
+Complete guide for installing and configuring xmon-org/ai-content-bundle.
 
 ## Installation
 
 ```bash
-composer require xmon/ai-content-bundle
+composer require xmon-org/ai-content-bundle
 ```
 
 For SonataMedia integration:

@@ -1,10 +1,10 @@
-# xmon/ai-content-bundle
+# xmon-org/ai-content-bundle
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/xmon/ai-content-bundle.svg?style=flat-square)](https://packagist.org/packages/xmon/ai-content-bundle)
-[![PHP Version](https://img.shields.io/packagist/php-v/xmon/ai-content-bundle.svg?style=flat-square)](https://packagist.org/packages/xmon/ai-content-bundle)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/xmon-org/ai-content-bundle.svg?style=flat-square)](https://packagist.org/packages/xmon-org/ai-content-bundle)
+[![PHP Version](https://img.shields.io/packagist/php-v/xmon-org/ai-content-bundle.svg?style=flat-square)](https://packagist.org/packages/xmon-org/ai-content-bundle)
 [![Symfony](https://img.shields.io/badge/Symfony-7.x-purple.svg?style=flat-square&logo=symfony)](https://symfony.com)
-[![Total Downloads](https://img.shields.io/packagist/dt/xmon/ai-content-bundle.svg?style=flat-square)](https://packagist.org/packages/xmon/ai-content-bundle)
-[![License](https://img.shields.io/packagist/l/xmon/ai-content-bundle.svg?style=flat-square)](LICENSE)
+[![Total Downloads](https://img.shields.io/packagist/dt/xmon-org/ai-content-bundle.svg?style=flat-square)](https://packagist.org/packages/xmon-org/ai-content-bundle)
+[![License](https://img.shields.io/packagist/l/xmon-org/ai-content-bundle.svg?style=flat-square)](LICENSE)
 
 [![CI](https://github.com/xmon-org/ai-content-bundle/actions/workflows/ci.yml/badge.svg)](https://github.com/xmon-org/ai-content-bundle/actions/workflows/ci.yml)
 [![semantic-release](https://img.shields.io/badge/semantic--release-conventionalcommits-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
@@ -33,7 +33,7 @@ Symfony 7 bundle for AI content generation (text and images) with automatic fall
 ### 1. Installation
 
 ```bash
-composer require xmon/ai-content-bundle
+composer require xmon-org/ai-content-bundle
 ```
 
 ### 2. Configuration
@@ -105,6 +105,7 @@ class MyService
 - [Text Generation](docs/guides/text-generation.md) - Generate text with AI
 - [Image Generation](docs/guides/image-generation.md) - Generate images with AI
 - [Styles & Presets](docs/guides/styles-presets.md) - Control image styles
+- [Style Providers](docs/guides/style-providers.md) - Database-backed style configuration
 - [Prompt Templates](docs/guides/prompt-templates.md) - Configurable prompts with variants
 - [Custom Providers](docs/guides/custom-providers.md) - Add your own providers
 - [Admin Integration](docs/guides/admin-integration.md) - Sonata Admin integration
