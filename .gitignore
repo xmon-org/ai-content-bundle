@@ -31,3 +31,6 @@ Thumbs.db
 # Environment
 .env.local
 .env.*.local
+
+# Claude files
+.claude/
