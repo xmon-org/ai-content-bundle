@@ -1,0 +1,603 @@
+{#
+ # Form theme for xmon-org/ai-content-bundle form types.
+ #
+ # Include this in your Twig configuration:
+ #
+ #     twig:
+ #         form_themes:
+ #             - '@XmonAiContent/form/fields.html.twig'
+ #}
+
+{# Include the specialized templates #}
+{# Note: Do NOT use 'only' to preserve standard form variables (id, full_name, value, etc.) #}
+{% block xmon_ai_text_widget %}
+    {% include '@XmonAiContent/admin/form/ai_text_field.html.twig' %}
+{% endblock %}
+
+{# ============================================================
+   AiStyleConfigType widget - Global style configuration form
+   ============================================================ #}
+{% block xmon_ai_style_config_widget %}
+{# CSS for UX improvements - scoped to this widget #}
+<style>
+.xmon-ai-style-config {
+    --transition-duration: 0.25s;
+    --color-bg-dark: #e9ecef;
+    --color-bg-medium: #f1f3f5;
+    --color-bg-light: #f8f9fa;
+    --color-border: #ced4da;
+    --color-border-light: #dee2e6;
+    --color-accent: #3d5a80;
+    --color-text: #212529;
+    --color-text-muted: #6c757d;
+}
+
+{# Segmented control for mode selector - more prominent #}
+.xmon-ai-style-config .xmon-ai-mode-selector-wrapper {
+    background: var(--color-bg-dark);
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    margin-bottom: 16px;
+}
+.xmon-ai-style-config .xmon-ai-mode-selector {
+    display: inline-flex;
+    background: #fff;
+    border-radius: 8px;
+    padding: 4px;
+    gap: 4px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
+}
+.xmon-ai-style-config .xmon-ai-mode-selector .xmon-ai-mode-btn {
+    padding: 10px 24px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    transition: all var(--transition-duration) ease;
+}
+.xmon-ai-style-config .xmon-ai-mode-selector .xmon-ai-mode-btn:hover {
+    color: var(--color-text);
+    background: var(--color-bg-light);
+}
+.xmon-ai-style-config .xmon-ai-mode-selector .xmon-ai-mode-btn.active {
+    background: var(--color-accent);
+    color: #fff;
+    box-shadow: 0 2px 4px rgba(61, 90, 128, 0.3);
+}
+
+{# Hide default radio buttons when using segmented control #}
+.xmon-ai-style-config .xmon-ai-mode-row .form-group {
+    display: none;
+}
+
+{# Panel styling - visible container #}
+.xmon-ai-style-config .xmon-ai-preset-panel,
+.xmon-ai-style-config .xmon-ai-custom-panel {
+    overflow: hidden;
+    transition: opacity var(--transition-duration) ease, max-height var(--transition-duration) ease;
+}
+.xmon-ai-style-config .xmon-ai-preset-panel.visible,
+.xmon-ai-style-config .xmon-ai-custom-panel.visible {
+    opacity: 1;
+    max-height: 500px;
+    background: var(--color-bg-light);
+    border: 1px solid var(--color-border-light);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+.xmon-ai-style-config .xmon-ai-preset-panel.hidden,
+.xmon-ai-style-config .xmon-ai-custom-panel.hidden {
+    opacity: 0;
+    max-height: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none;
+}
+
+{# Preset description box - more distinctive #}
+.xmon-ai-style-config .xmon-ai-preset-description {
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: #fff;
+    border-left: 4px solid var(--color-accent);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    transition: all var(--transition-duration) ease;
+}
+.xmon-ai-style-config .xmon-ai-preset-description:empty {
+    display: none;
+}
+
+{# Additional text section - subtle container #}
+.xmon-ai-style-config .xmon-ai-additional-row {
+    background: var(--color-bg-medium);
+    border: 1px solid var(--color-border-light);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+{# Improved help text contrast #}
+.xmon-ai-style-config .form-text,
+.xmon-ai-style-config .help-block {
+    color: #495057 !important;
+    font-size: 0.8rem;
+    margin-top: 6px;
+}
+
+{# Humanized preview - darker background to stand out #}
+.xmon-ai-style-config .xmon-ai-preview-section {
+    background: var(--color-bg-dark);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 24px;
+}
+.xmon-ai-style-config .xmon-ai-preview-section > label {
+    color: var(--color-text);
+    margin-bottom: 12px;
+    display: block;
+}
+.xmon-ai-style-config .xmon-ai-preview-box {
+    background: #fff;
+    border: 1px solid var(--color-border-light);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    padding: 16px;
+}
+.xmon-ai-style-config .xmon-ai-preview-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--color-bg-medium);
+}
+.xmon-ai-style-config .xmon-ai-preview-item:last-child {
+    border-bottom: none;
+}
+.xmon-ai-style-config .xmon-ai-preview-label {
+    flex: 0 0 120px;
+    font-weight: 600;
+    color: var(--color-accent);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.xmon-ai-style-config .xmon-ai-preview-value {
+    flex: 1;
+    color: var(--color-text);
+    font-size: 0.875rem;
+    word-break: break-word;
+}
+.xmon-ai-style-config .xmon-ai-preview-empty {
+    color: #adb5bd;
+    font-style: italic;
+}
+</style>
+
+<div class="xmon-ai-style-config" id="{{ id }}"
+     data-presets="{{ presets_json }}"
+     data-suffix="{{ suffix }}"
+     data-default-artistic="{{ default_artistic }}"
+     data-default-composition="{{ default_composition }}"
+     data-default-palette="{{ default_palette }}">
+
+    {# Segmented control for mode (replaces radio buttons visually) #}
+    <div class="xmon-ai-mode-selector-wrapper mb-4">
+        <div class="xmon-ai-mode-selector">
+            <button type="button" class="xmon-ai-mode-btn" data-mode="preset">
+                <i class="fa fa-bookmark-o me-1"></i> Preset
+            </button>
+            <button type="button" class="xmon-ai-mode-btn" data-mode="custom">
+                <i class="fa fa-sliders me-1"></i> Personalizado
+            </button>
+        </div>
+    </div>
+
+    {# Hidden: Original radio buttons (keep for form submission) #}
+    <div class="xmon-ai-mode-row mb-3">
+        {{ form_row(form.aiStyleMode) }}
+    </div>
+
+    {# Preset panel - shown when mode is 'preset' #}
+    <div class="xmon-ai-preset-panel mb-3 hidden">
+        {{ form_row(form.aiStylePreset) }}
+        <div class="xmon-ai-preset-description"></div>
+    </div>
+
+    {# Custom panel - shown when mode is 'custom' #}
+    <div class="xmon-ai-custom-panel mb-3 hidden">
+        <div class="row">
+            <div class="col-md-6 col-lg-4 mb-3">
+                {{ form_row(form.aiStyleArtistic) }}
+            </div>
+            <div class="col-md-6 col-lg-4 mb-3">
+                {{ form_row(form.aiStyleComposition) }}
+            </div>
+            <div class="col-md-6 col-lg-4 mb-3">
+                {{ form_row(form.aiStylePalette) }}
+            </div>
+        </div>
+    </div>
+
+    {# Additional text - always visible #}
+    <div class="xmon-ai-additional-row mb-3">
+        {{ form_row(form.aiStyleAdditional) }}
+    </div>
+
+    {# Humanized preview section #}
+    {% if show_preview %}
+    <div class="xmon-ai-preview-section">
+        <label class="form-label fw-semibold mb-3">
+            <i class="fa fa-eye me-1"></i> {{ preview_label }}
+        </label>
+        <div class="xmon-ai-preview-box p-3">
+            <div class="xmon-ai-preview-content">
+                <div class="xmon-ai-preview-item" data-field="estilo">
+                    <span class="xmon-ai-preview-label">Estilo</span>
+                    <span class="xmon-ai-preview-value xmon-ai-preview-empty">—</span>
+                </div>
+                <div class="xmon-ai-preview-item" data-field="composicion">
+                    <span class="xmon-ai-preview-label">Composición</span>
+                    <span class="xmon-ai-preview-value xmon-ai-preview-empty">—</span>
+                </div>
+                <div class="xmon-ai-preview-item" data-field="paleta">
+                    <span class="xmon-ai-preview-label">Paleta</span>
+                    <span class="xmon-ai-preview-value xmon-ai-preview-empty">—</span>
+                </div>
+                <div class="xmon-ai-preview-item" data-field="sufijo">
+                    <span class="xmon-ai-preview-label">Restricciones</span>
+                    <span class="xmon-ai-preview-value xmon-ai-preview-empty">—</span>
+                </div>
+                <div class="xmon-ai-preview-item" data-field="adicional">
+                    <span class="xmon-ai-preview-label">Adicional</span>
+                    <span class="xmon-ai-preview-value xmon-ai-preview-empty">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{# JavaScript for dynamic behavior #}
+<script>
+(function() {
+    const containerId = '{{ id }}';
+
+    function initStyleConfig(container) {
+        if (container.dataset.initialized) return;
+        container.dataset.initialized = 'true';
+
+        const presets = JSON.parse(container.dataset.presets || '{}');
+        const suffix = container.dataset.suffix || '';
+
+        const presetPanel = container.querySelector('.xmon-ai-preset-panel');
+        const customPanel = container.querySelector('.xmon-ai-custom-panel');
+        const presetDescription = container.querySelector('.xmon-ai-preset-description');
+        const modeButtons = container.querySelectorAll('.xmon-ai-mode-btn');
+
+        function findModeRadios() {
+            return container.querySelectorAll('input[type="radio"][name*="aiStyleMode"]');
+        }
+
+        function findSelect(namePattern) {
+            return container.querySelector('select[name*="' + namePattern + '"]');
+        }
+
+        function findTextarea(namePattern) {
+            return container.querySelector('textarea[name*="' + namePattern + '"]');
+        }
+
+        function getSelectedMode() {
+            const radios = findModeRadios();
+            for (const radio of radios) {
+                if (radio.checked) return radio.value;
+            }
+            return 'preset';
+        }
+
+        function setMode(mode) {
+            // Update hidden radios
+            const radios = findModeRadios();
+            radios.forEach(function(radio) {
+                const shouldCheck = radio.value === mode;
+                radio.checked = shouldCheck;
+                // Trigger iCheck if available
+                if (typeof jQuery !== 'undefined' && jQuery.fn.iCheck) {
+                    jQuery(radio).iCheck(shouldCheck ? 'check' : 'uncheck');
+                }
+            });
+
+            // Update segmented control buttons
+            modeButtons.forEach(function(btn) {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+
+            updatePanels();
+        }
+
+        function updatePanels() {
+            const mode = getSelectedMode();
+
+            // Toggle panel visibility with transition classes
+            if (presetPanel) {
+                presetPanel.classList.toggle('hidden', mode !== 'preset');
+                presetPanel.classList.toggle('visible', mode === 'preset');
+            }
+            if (customPanel) {
+                customPanel.classList.toggle('hidden', mode !== 'custom');
+                customPanel.classList.toggle('visible', mode === 'custom');
+            }
+
+            // Pre-fill custom fields when switching from preset
+            if (mode === 'custom') {
+                prefillCustomFromPreset();
+            }
+
+            updatePreview();
+            updatePresetDescription();
+        }
+
+        function prefillCustomFromPreset() {
+            const presetSelect = findSelect('aiStylePreset');
+            if (!presetSelect || !presetSelect.value) return;
+
+            const preset = presets[presetSelect.value];
+            if (!preset) return;
+
+            const artisticSelect = findSelect('aiStyleArtistic');
+            const compositionSelect = findSelect('aiStyleComposition');
+            const paletteSelect = findSelect('aiStylePalette');
+
+            // Only pre-fill if custom fields are empty
+            if (artisticSelect && !artisticSelect.value && preset.estilo) {
+                setSelectValue(artisticSelect, preset.estilo);
+            }
+            if (compositionSelect && !compositionSelect.value && preset.composicion) {
+                setSelectValue(compositionSelect, preset.composicion);
+            }
+            if (paletteSelect && !paletteSelect.value && preset.paleta) {
+                setSelectValue(paletteSelect, preset.paleta);
+            }
+        }
+
+        function setSelectValue(select, value) {
+            // Find option by value
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === value) {
+                    select.selectedIndex = i;
+                    // Trigger Select2 update if present
+                    if (typeof jQuery !== 'undefined') {
+                        jQuery(select).trigger('change');
+                    }
+                    break;
+                }
+            }
+        }
+
+        function updatePresetDescription() {
+            if (!presetDescription) return;
+
+            const presetSelect = findSelect('aiStylePreset');
+            if (!presetSelect || !presetSelect.value) {
+                presetDescription.textContent = '';
+                return;
+            }
+
+            const preset = presets[presetSelect.value];
+            if (preset && preset.descripcion) {
+                presetDescription.textContent = preset.descripcion;
+            } else {
+                presetDescription.textContent = '';
+            }
+        }
+
+        function updatePreview() {
+            const previewContent = container.querySelector('.xmon-ai-preview-content');
+            if (!previewContent) return;
+
+            const mode = getSelectedMode();
+            const presetSelect = findSelect('aiStylePreset');
+            const artisticSelect = findSelect('aiStyleArtistic');
+            const compositionSelect = findSelect('aiStyleComposition');
+            const paletteSelect = findSelect('aiStylePalette');
+            const additionalInput = findTextarea('aiStyleAdditional');
+
+            let estilo = '', composicion = '', paleta = '';
+
+            if (mode === 'preset' && presetSelect && presetSelect.value) {
+                const preset = presets[presetSelect.value];
+                if (preset) {
+                    estilo = preset.estilo || '';
+                    composicion = preset.composicion || '';
+                    paleta = preset.paleta || '';
+                }
+            } else if (mode === 'custom') {
+                estilo = artisticSelect?.value || '';
+                composicion = compositionSelect?.value || '';
+                paleta = paletteSelect?.value || '';
+            }
+
+            const additional = additionalInput?.value?.trim() || '';
+
+            // Update each preview item
+            updatePreviewItem(previewContent, 'estilo', estilo);
+            updatePreviewItem(previewContent, 'composicion', composicion);
+            updatePreviewItem(previewContent, 'paleta', paleta);
+            updatePreviewItem(previewContent, 'sufijo', suffix);
+            updatePreviewItem(previewContent, 'adicional', additional);
+        }
+
+        function updatePreviewItem(container, field, value) {
+            const item = container.querySelector('[data-field="' + field + '"]');
+            if (!item) return;
+
+            const valueEl = item.querySelector('.xmon-ai-preview-value');
+            if (!valueEl) return;
+
+            if (value) {
+                valueEl.textContent = value;
+                valueEl.classList.remove('xmon-ai-preview-empty');
+            } else {
+                valueEl.textContent = '—';
+                valueEl.classList.add('xmon-ai-preview-empty');
+            }
+        }
+
+        // Bind segmented control buttons
+        modeButtons.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                setMode(this.dataset.mode);
+            });
+        });
+
+        // Bind events to radios - support both native and iCheck (Sonata Admin)
+        const radios = findModeRadios();
+        radios.forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                // Sync segmented control
+                modeButtons.forEach(function(btn) {
+                    btn.classList.toggle('active', btn.dataset.mode === radio.value);
+                });
+                updatePanels();
+            });
+
+            if (typeof jQuery !== 'undefined') {
+                jQuery(radio).on('ifChanged', function() {
+                    modeButtons.forEach(function(btn) {
+                        btn.classList.toggle('active', btn.dataset.mode === radio.value);
+                    });
+                    updatePanels();
+                });
+            }
+        });
+
+        // Bind to selects
+        ['aiStylePreset', 'aiStyleArtistic', 'aiStyleComposition', 'aiStylePalette'].forEach(function(name) {
+            const select = findSelect(name);
+            if (select) {
+                select.addEventListener('change', function() {
+                    if (name === 'aiStylePreset') {
+                        updatePresetDescription();
+                    }
+                    updatePreview();
+                });
+                if (typeof jQuery !== 'undefined') {
+                    jQuery(select).on('change', function() {
+                        if (name === 'aiStylePreset') {
+                            updatePresetDescription();
+                        }
+                        updatePreview();
+                    });
+                }
+            }
+        });
+
+        // Textarea
+        const additionalInput = findTextarea('aiStyleAdditional');
+        if (additionalInput) {
+            additionalInput.addEventListener('input', function() {
+                updatePreview();
+            });
+        }
+
+        // Initial state
+        const initialMode = getSelectedMode();
+        modeButtons.forEach(function(btn) {
+            btn.classList.toggle('active', btn.dataset.mode === initialMode);
+        });
+        updatePanels();
+        updatePresetDescription();
+    }
+
+    const container = document.getElementById(containerId);
+    if (container) {
+        initStyleConfig(container);
+    } else if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            const c = document.getElementById(containerId);
+            if (c) initStyleConfig(c);
+        });
+    }
+})();
+</script>
+{% endblock %}
+
+{# ============================================================
+   AiStyleType widget - Style selector for image regeneration
+   (different from AiStyleConfigType)
+   ============================================================ #}
+{% block xmon_ai_style_widget %}
+    {{ form_widget(form.mode) }}
+
+    {% if form.preset is defined %}
+    <div class="xmon-ai-preset-panel" style="display: none;">
+        {{ form_row(form.preset) }}
+    </div>
+    {% endif %}
+
+    <div class="xmon-ai-custom-panel" style="display: none;">
+        <div class="row">
+            {% if form.style is defined %}
+            <div class="col-md-6 col-lg-3">{{ form_row(form.style) }}</div>
+            {% endif %}
+            {% if form.composition is defined %}
+            <div class="col-md-6 col-lg-3">{{ form_row(form.composition) }}</div>
+            {% endif %}
+            {% if form.palette is defined %}
+            <div class="col-md-6 col-lg-3">{{ form_row(form.palette) }}</div>
+            {% endif %}
+            {% if form.extra is defined %}
+            <div class="col-md-6 col-lg-3">{{ form_row(form.extra) }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if show_preview is defined and show_preview %}
+    <div class="xmon-ai-style-preview mt-2">
+        <label class="form-label small">Style Preview:</label>
+        <div class="p-2 bg-light border rounded">
+            <code class="small">{{ global_style_preview|default('') }}</code>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block xmon_ai_image_widget %}
+    <div class="xmon-ai-image-field">
+        {% if ai_current_image_url %}
+        <div class="mb-2">
+            <img src="{{ ai_current_image_url }}" class="img-thumbnail" style="max-width: 150px; max-height: 100px;" alt="Current image">
+        </div>
+        {% endif %}
+
+        {% if ai_regenerate_endpoint %}
+        <button type="button" class="{{ ai_button_class }}" data-bs-toggle="modal" data-bs-target="#{{ id }}-modal">
+            {{ ai_regenerate_button_label }}
+        </button>
+
+        {% include ai_modal_template with {
+            modal_id: id ~ '-modal',
+            field_id: id,
+            modal_title: ai_modal_title,
+            regenerate_endpoint: ai_regenerate_endpoint,
+            generate_subject_endpoint: ai_generate_subject_endpoint,
+            use_history_endpoint: ai_use_history_endpoint,
+            delete_history_endpoint: ai_delete_history_endpoint,
+            current_image_url: ai_current_image_url,
+            current_image_id: ai_current_image_id,
+            subject: ai_subject,
+            style: ai_style,
+            history: ai_history,
+            show_style_selector: ai_show_style_selector,
+            show_history: ai_show_history,
+            generate_subject_button_label: ai_generate_subject_button_label,
+        } %}
+        {% endif %}
+    </div>
+{% endblock %}
