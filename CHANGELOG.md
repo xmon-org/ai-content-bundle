@@ -2,6 +2,22 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.1.0](https://github.com/xmon-org/ai-content-bundle/compare/1.0.0...1.1.0) (2025-12-22)
+
+### ✨ Features
+
+* **admin:** usa resolveGlobalStyle() para preview de estilos ([5c3cb13](https://github.com/xmon-org/ai-content-bundle/commit/5c3cb13b12c763cf5ba86b48c450d9dd83069de6))
+* **prompts:** añade soporte regex en variant_keywords ([33908b7](https://github.com/xmon-org/ai-content-bundle/commit/33908b7426f855f65422aa4c9d7f8f70e93e72b2))
+* **styles:** añade sistema de configuración de estilos IA ([adf867c](https://github.com/xmon-org/ai-content-bundle/commit/adf867c3e55165c2656e934ca60b9cb7c35a3610))
+
+### ♻️ Refactoring
+
+* mueve recursos de src/Resources a templates/ y public/ ([6c78828](https://github.com/xmon-org/ai-content-bundle/commit/6c7882844f27a7c6bde3e84430d5376a1407af04))
+
+### 📚 Documentation
+
+* documenta AiStyleConfigType y actualiza guías ([6f7ead8](https://github.com/xmon-org/ai-content-bundle/commit/6f7ead863c0f10428380287707fa05ac921cdc0e))
+
 ## 1.0.0 (2025-12-21)
 
 ### ✨ Features
