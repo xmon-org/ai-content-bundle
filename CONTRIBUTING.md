@@ -33,6 +33,38 @@ composer cs-fix
 
 # Ejecutar todas las verificaciones
 composer check
+
+# Generar baseline de PHPStan (si hay errores legacy)
+composer phpstan:baseline
+```
+
+## Git Hooks
+
+Git hooks are configured automatically on `composer install`.
+
+### Pre-commit Hook
+
+Runs automatically before each commit:
+
+1. **PHP-CS-Fixer**: Auto-formats staged PHP files
+2. **PHPStan**: Static analysis on modified files in `src/` and `tests/`
+
+If PHPStan finds errors, the commit is rejected.
+
+### Bypassing Hooks (Not Recommended)
+
+```bash
+git commit --no-verify -m "message"
+```
+
+Only use in emergencies. Hooks prevent quality issues.
+
+### Manual Hook Setup
+
+If hooks are not working:
+
+```bash
+composer setup-hooks
 ```
 
 ## Convención de commits

@@ -5,6 +5,9 @@ parameters:
     level: 5
     paths:
         - src
+    tmpDir: .phpstan/cache
+    parallel:
+        maximumNumberOfProcesses: 4
     excludePaths:
         # Configuración de DI excluida
         - src/DependencyInjection/Configuration.php
@@ -15,6 +18,10 @@ parameters:
         - src/Form
         - src/Controller
     treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: false
     ignoreErrors:
         # Propiedades preparadas para futuro uso
         - '#Property .+::\$fallbackModels is never read, only written#'
+        # Symfony generics (común en bundles)
+        - '#generic class Symfony\\Component\\DependencyInjection\\.+ but does not specify its types#'
+        - '#generic interface Symfony\\Contracts\\EventDispatcher\\EventDispatcherInterface but does not specify its types#'
