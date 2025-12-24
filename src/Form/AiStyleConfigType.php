@@ -182,7 +182,8 @@ class AiStyleConfigType extends AbstractType
         // Use ImageOptionsService as fallback when options are null or empty
         $resolver->setNormalizer('presets', function ($options, $value) {
             if (null === $value || [] === $value) {
-                return $this->imageOptionsService->getAllPresetsData();
+                // Use getPresetsForForm() which resolves style/composition/palette keys to prompts
+                return $this->imageOptionsService->getPresetsForForm();
             }
 
             return $value;
