@@ -14,10 +14,10 @@ namespace Xmon\AiContentBundle\Service;
 class ImageOptionsService
 {
     /**
-     * @param array<string, array{label: string, prompt: string}>                                                          $styles
-     * @param array<string, array{label: string, prompt: string}>                                                          $compositions
-     * @param array<string, array{label: string, prompt: string}>                                                          $palettes
-     * @param array<string, array{label: string, prompt: string}>                                                          $extras
+     * @param array<string, array{label: string, prompt: string, group?: ?string}>                                         $styles
+     * @param array<string, array{label: string, prompt: string, group?: ?string}>                                         $compositions
+     * @param array<string, array{label: string, prompt: string, group?: ?string}>                                         $palettes
+     * @param array<string, array{label: string, prompt: string, group?: ?string}>                                         $extras
      * @param array<string, array{name: string, style: ?string, composition: ?string, palette: ?string, extras: string[]}> $presets
      */
     public function __construct(
@@ -86,6 +86,71 @@ class ImageOptionsService
         }
 
         return $result;
+    }
+
+    /**
+     * Get all presets with full data.
+     *
+     * @return array<string, array{name: string, style: ?string, composition: ?string, palette: ?string, extras: string[]}>
+     */
+    public function getAllPresetsData(): array
+    {
+        return $this->presets;
+    }
+
+    // ==========================================
+    // GETTERS FOR UI (grouped for ChoiceType optgroup)
+    // ==========================================
+
+    /**
+     * Get all available styles grouped for Symfony ChoiceType optgroup.
+     *
+     * Items with the same 'group' value are grouped together.
+     * Items without a group are placed under 'General'.
+     *
+     * @param string $defaultGroup Group name for items without explicit group
+     *
+     * @return array<string, array<string, string>> Format: ['Group' => ['label' => 'key', ...], ...]
+     */
+    public function getStylesGrouped(string $defaultGroup = 'General'): array
+    {
+        return $this->formatGrouped($this->styles, $defaultGroup);
+    }
+
+    /**
+     * Get all available compositions grouped for Symfony ChoiceType optgroup.
+     *
+     * @param string $defaultGroup Group name for items without explicit group
+     *
+     * @return array<string, array<string, string>>
+     */
+    public function getCompositionsGrouped(string $defaultGroup = 'General'): array
+    {
+        return $this->formatGrouped($this->compositions, $defaultGroup);
+    }
+
+    /**
+     * Get all available palettes grouped for Symfony ChoiceType optgroup.
+     *
+     * @param string $defaultGroup Group name for items without explicit group
+     *
+     * @return array<string, array<string, string>>
+     */
+    public function getPalettesGrouped(string $defaultGroup = 'General'): array
+    {
+        return $this->formatGrouped($this->palettes, $defaultGroup);
+    }
+
+    /**
+     * Get all available extras grouped for Symfony ChoiceType optgroup.
+     *
+     * @param string $defaultGroup Group name for items without explicit group
+     *
+     * @return array<string, array<string, string>>
+     */
+    public function getExtrasGrouped(string $defaultGroup = 'General'): array
+    {
+        return $this->formatGrouped($this->extras, $defaultGroup);
     }
 
     // ==========================================
@@ -183,9 +248,9 @@ class ImageOptionsService
     // ==========================================
 
     /**
-     * Get all styles with full data (label + prompt).
+     * Get all styles with full data (label + prompt + optional group).
      *
-     * @return array<string, array{label: string, prompt: string}>
+     * @return array<string, array{label: string, prompt: string, group?: ?string}>
      */
     public function getAllStylesData(): array
     {
@@ -193,9 +258,9 @@ class ImageOptionsService
     }
 
     /**
-     * Get all compositions with full data (label + prompt).
+     * Get all compositions with full data (label + prompt + optional group).
      *
-     * @return array<string, array{label: string, prompt: string}>
+     * @return array<string, array{label: string, prompt: string, group?: ?string}>
      */
     public function getAllCompositionsData(): array
     {
@@ -203,9 +268,9 @@ class ImageOptionsService
     }
 
     /**
-     * Get all palettes with full data (label + prompt).
+     * Get all palettes with full data (label + prompt + optional group).
      *
-     * @return array<string, array{label: string, prompt: string}>
+     * @return array<string, array{label: string, prompt: string, group?: ?string}>
      */
     public function getAllPalettesData(): array
     {
@@ -213,9 +278,9 @@ class ImageOptionsService
     }
 
     /**
-     * Get all extras with full data (label + prompt).
+     * Get all extras with full data (label + prompt + optional group).
      *
-     * @return array<string, array{label: string, prompt: string}>
+     * @return array<string, array{label: string, prompt: string, group?: ?string}>
      */
     public function getAllExtrasData(): array
     {
@@ -223,9 +288,9 @@ class ImageOptionsService
     }
 
     /**
-     * Get raw style data including prompt.
+     * Get raw style data including prompt and optional group.
      *
-     * @return array{label: string, prompt: string}|null
+     * @return array{label: string, prompt: string, group?: ?string}|null
      */
     public function getStyleData(string $key): ?array
     {
@@ -233,9 +298,9 @@ class ImageOptionsService
     }
 
     /**
-     * Get raw composition data including prompt.
+     * Get raw composition data including prompt and optional group.
      *
-     * @return array{label: string, prompt: string}|null
+     * @return array{label: string, prompt: string, group?: ?string}|null
      */
     public function getCompositionData(string $key): ?array
     {
@@ -243,9 +308,9 @@ class ImageOptionsService
     }
 
     /**
-     * Get raw palette data including prompt.
+     * Get raw palette data including prompt and optional group.
      *
-     * @return array{label: string, prompt: string}|null
+     * @return array{label: string, prompt: string, group?: ?string}|null
      */
     public function getPaletteData(string $key): ?array
     {
@@ -253,9 +318,9 @@ class ImageOptionsService
     }
 
     /**
-     * Get raw extra data including prompt.
+     * Get raw extra data including prompt and optional group.
      *
-     * @return array{label: string, prompt: string}|null
+     * @return array{label: string, prompt: string, group?: ?string}|null
      */
     public function getExtraData(string $key): ?array
     {
@@ -269,7 +334,7 @@ class ImageOptionsService
     /**
      * Extract labels from an options array.
      *
-     * @param array<string, array{label: string, prompt: string}> $options
+     * @param array<string, array{label: string, prompt: string, group?: ?string}> $options
      *
      * @return array<string, string>
      */
@@ -281,5 +346,40 @@ class ImageOptionsService
         }
 
         return $result;
+    }
+
+    /**
+     * Format options array for Symfony ChoiceType with optgroup support.
+     *
+     * Groups options by their 'group' field. Options without a group
+     * are placed under the default group.
+     *
+     * Returns format compatible with Symfony ChoiceType optgroup:
+     * ['Group Name' => ['Label' => 'key', ...], ...]
+     *
+     * @param array<string, array{label: string, prompt: string, group?: ?string}> $options
+     * @param string                                                                $defaultGroup
+     *
+     * @return array<string, array<string, string>> Format: ['Group' => ['label' => 'key', ...], ...]
+     */
+    private function formatGrouped(array $options, string $defaultGroup): array
+    {
+        $grouped = [];
+
+        foreach ($options as $key => $option) {
+            $group = $option['group'] ?? $defaultGroup;
+            if (null === $group || '' === $group) {
+                $group = $defaultGroup;
+            }
+
+            if (!isset($grouped[$group])) {
+                $grouped[$group] = [];
+            }
+
+            // Format: label => key (Symfony ChoiceType format)
+            $grouped[$group][$option['label']] = $key;
+        }
+
+        return $grouped;
     }
 }

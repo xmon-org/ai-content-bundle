@@ -11,6 +11,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Xmon\AiContentBundle\Service\ImageOptionsService;
 
 /**
  * Form type for AI style configuration.
@@ -21,7 +22,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * - Style, Composition, Palette selectors (for custom mode)
  * - Additional text modifier
  *
- * Usage in Sonata Admin:
+ * Usage in Sonata Admin (simple - uses service defaults):
  *
  *     use Xmon\AiContentBundle\Form\AiStyleConfigType;
  *
@@ -31,18 +32,16 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  *             ->tab('AI')
  *                 ->with('AI Image Generation')
  *                     ->add('aiStyleConfig', AiStyleConfigType::class, [
- *                         'presets' => MyEntity::PRESETS,
- *                         'styles' => MyEntity::STYLES,
- *                         'compositions' => MyEntity::COMPOSITIONS,
- *                         'palettes' => MyEntity::PALETTES,
  *                         // Optional: customize labels (Spanish example)
  *                         'mode_label' => 'Modo de configuración',
  *                         'preset_label' => 'Preset de estilo',
- *                         // etc.
  *                     ])
  *                 ->end()
  *             ->end();
  *     }
+ *
+ * The form uses ImageOptionsService to get styles, compositions, palettes and presets.
+ * Options are loaded from bundle configuration (xmon_ai_content.yaml).
  *
  * The form uses inherit_data=true by default, so fields map directly to
  * the parent entity's AiStyleConfigurableTrait properties.
@@ -52,6 +51,11 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  */
 class AiStyleConfigType extends AbstractType
 {
+    public function __construct(
+        private readonly ImageOptionsService $imageOptionsService,
+    ) {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -127,11 +131,11 @@ class AiStyleConfigType extends AbstractType
             // Hide the container label (redundant with Sonata's box title)
             'label' => false,
 
-            // Options data
-            'presets' => [],
-            'styles' => [],
-            'compositions' => [],
-            'palettes' => [],
+            // Options data - null means "use service defaults"
+            'presets' => null,
+            'styles' => null,
+            'compositions' => null,
+            'palettes' => null,
 
             // Labels
             'mode_label' => 'Configuration Mode',
@@ -164,29 +168,63 @@ class AiStyleConfigType extends AbstractType
             'default_palette' => null,
         ]);
 
-        $resolver->setAllowedTypes('presets', 'array');
-        $resolver->setAllowedTypes('styles', 'array');
-        $resolver->setAllowedTypes('compositions', 'array');
-        $resolver->setAllowedTypes('palettes', 'array');
+        $resolver->setAllowedTypes('presets', ['null', 'array']);
+        $resolver->setAllowedTypes('styles', ['null', 'array']);
+        $resolver->setAllowedTypes('compositions', ['null', 'array']);
+        $resolver->setAllowedTypes('palettes', ['null', 'array']);
         $resolver->setAllowedTypes('show_preview', 'bool');
         $resolver->setAllowedTypes('preview_label', 'string');
         $resolver->setAllowedTypes('suffix', 'string');
         $resolver->setAllowedTypes('default_artistic', ['null', 'string']);
         $resolver->setAllowedTypes('default_composition', ['null', 'string']);
         $resolver->setAllowedTypes('default_palette', ['null', 'string']);
+
+        // Use ImageOptionsService as fallback when options are null or empty
+        $resolver->setNormalizer('presets', function ($options, $value) {
+            if (null === $value || [] === $value) {
+                return $this->imageOptionsService->getAllPresetsData();
+            }
+
+            return $value;
+        });
+
+        $resolver->setNormalizer('styles', function ($options, $value) {
+            if (null === $value || [] === $value) {
+                return $this->imageOptionsService->getStylesGrouped();
+            }
+
+            return $value;
+        });
+
+        $resolver->setNormalizer('compositions', function ($options, $value) {
+            if (null === $value || [] === $value) {
+                return $this->imageOptionsService->getCompositionsGrouped();
+            }
+
+            return $value;
+        });
+
+        $resolver->setNormalizer('palettes', function ($options, $value) {
+            if (null === $value || [] === $value) {
+                return $this->imageOptionsService->getPalettesGrouped();
+            }
+
+            return $value;
+        });
     }
 
     public function buildView(FormView $view, FormInterface $form, array $options): void
     {
         // Pass presets data as JSON for JavaScript dynamic preview and descriptions
+        // Support both bundle format (name/style/composition/palette) and legacy format (nombre/estilo/composicion/paleta)
         $presetsData = [];
         foreach ($options['presets'] as $key => $data) {
             $presetsData[$key] = [
-                'name' => $data['nombre'] ?? $key,
-                'estilo' => $data['estilo'] ?? '',
-                'composicion' => $data['composicion'] ?? '',
-                'paleta' => $data['paleta'] ?? '',
-                'descripcion' => $data['descripcion'] ?? null,
+                'name' => $data['name'] ?? $data['nombre'] ?? $key,
+                'style' => $data['style'] ?? $data['estilo'] ?? '',
+                'composition' => $data['composition'] ?? $data['composicion'] ?? '',
+                'palette' => $data['palette'] ?? $data['paleta'] ?? '',
+                'description' => $data['description'] ?? $data['descripcion'] ?? null,
             ];
         }
 
@@ -208,12 +246,14 @@ class AiStyleConfigType extends AbstractType
      * Format preset choices for ChoiceType.
      *
      * Expected input format:
+     *     ['preset-key' => ['name' => 'Display Name', ...], ...]
+     *     or legacy format:
      *     ['preset-key' => ['nombre' => 'Display Name', ...], ...]
      *
      * Output format:
      *     ['Display Name' => 'preset-key', ...]
      *
-     * @param array<string, array{nombre: string}> $presets
+     * @param array<string, array{name?: string, nombre?: string}> $presets
      *
      * @return array<string, string>
      */
@@ -221,7 +261,8 @@ class AiStyleConfigType extends AbstractType
     {
         $choices = [];
         foreach ($presets as $key => $data) {
-            $label = $data['nombre'] ?? $key;
+            // Support both 'name' (bundle standard) and 'nombre' (legacy/Spanish)
+            $label = $data['name'] ?? $data['nombre'] ?? $key;
             $choices[$label] = $key;
         }
 
