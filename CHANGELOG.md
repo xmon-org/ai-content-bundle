@@ -2,6 +2,22 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.2.0](https://github.com/xmon-org/ai-content-bundle/compare/1.1.0...1.2.0) (2025-12-24)
+
+### ✨ Features
+
+* **image:** añade optgroup y carga automática de opciones ([8cec638](https://github.com/xmon-org/ai-content-bundle/commit/8cec6387419fa73a2b9a7e2b6532f036ddf46e50))
+
+### 🐛 Bug Fixes
+
+* **form:** usa getPresetsForForm para resolver prompts en presets ([52b272d](https://github.com/xmon-org/ai-content-bundle/commit/52b272d17dacf7d992e5fdc8aecf9bb47891e300))
+* **image:** corrige lógica de grupo en formatGrouped ([825746c](https://github.com/xmon-org/ai-content-bundle/commit/825746c76e5f8a4399d2d18d0f92ba63e23c8ebe))
+
+### 📚 Documentation
+
+* corrige enlace del badge de licencia en README ([ac807af](https://github.com/xmon-org/ai-content-bundle/commit/ac807af5c17c2e1496a4aa053771faf5185ff306))
+* optimize phpstan config and enhance development workflow ([adc06ee](https://github.com/xmon-org/ai-content-bundle/commit/adc06ee295f5f41c86a43c5d9c32294d2c3fef4e))
+
 ## [1.1.0](https://github.com/xmon-org/ai-content-bundle/compare/1.0.0...1.1.0) (2025-12-22)
 
 ### ✨ Features
