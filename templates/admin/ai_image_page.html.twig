@@ -937,6 +937,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var stylesData = {{ stylesData|default({})|json_encode|raw }};
     var compositionsData = {{ compositionsData|default({})|json_encode|raw }};
     var palettesData = {{ palettesData|default({})|json_encode|raw }};
+    var styleSuffix = {{ styleSuffix|default('')|json_encode|raw }};
 
     // History limit configuration
     var historyLimit = {{ historyLimit|default(5) }};
@@ -1372,11 +1373,16 @@ document.addEventListener('DOMContentLoaded', function() {
         var subject = subjectField ? subjectField.value.trim() : '';
 
         if (selectedMode === 'global') {
+            // Global style already includes suffix (comes from server)
             styleText = globalStylePreview;
         } else if (selectedMode === 'preset' && presetSelect) {
             var presetKey = presetSelect.value;
             if (presetKey && presetsData[presetKey]) {
                 styleText = presetsData[presetKey].preview || '';
+                // Add suffix if exists
+                if (styleSuffix && styleText) {
+                    styleText = styleText + ', ' + styleSuffix;
+                }
             } else {
                 stylePreview.innerHTML = '<em class="text-warning">{{ "Select a preset from the list..."|trans }}</em>';
                 return;
@@ -1397,6 +1403,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 parts.push(customExtra.value);
             }
             styleText = parts.join(', ') || '{{ "Select style options above"|trans }}';
+            // Add suffix if exists
+            if (styleSuffix && styleText && styleText !== '{{ "Select style options above"|trans }}') {
+                styleText = styleText + ', ' + styleSuffix;
+            }
         }
 
         var subjectHtml = subject

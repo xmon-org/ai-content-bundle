@@ -193,6 +193,8 @@ abstract class AbstractAiImageController extends AbstractController
             'entityStyleInfo' => $entityStyleInfo,
             // Keep globalStylePreview for backwards compatibility
             'globalStylePreview' => $defaultStylePreview,
+            // Suffix for style prompts (technical restrictions)
+            'styleSuffix' => $this->getStyleSuffix(),
 
             // Service availability flags
             'textServiceConfigured' => $this->textService->isConfigured(),
