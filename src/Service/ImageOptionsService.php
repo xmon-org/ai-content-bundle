@@ -355,20 +355,22 @@ class ImageOptionsService
      * are placed under the default group.
      *
      * Returns format compatible with Symfony ChoiceType optgroup:
-     * ['Group Name' => ['Label' => 'key', ...], ...]
+     * ['Group Name' => ['Label' => 'prompt', ...], ...]
+     *
+     * The value stored by ChoiceType is the PROMPT, not the key.
+     * This ensures backward compatibility with existing data.
      *
      * @param array<string, array{label: string, prompt: string, group?: ?string}> $options
-     * @param string                                                                $defaultGroup
      *
-     * @return array<string, array<string, string>> Format: ['Group' => ['label' => 'key', ...], ...]
+     * @return array<string, array<string, string>> Format: ['Group' => ['label' => 'prompt', ...], ...]
      */
     private function formatGrouped(array $options, string $defaultGroup): array
     {
         $grouped = [];
 
         foreach ($options as $key => $option) {
-            $group = $option['group'] ?? $defaultGroup;
-            if (null === $group || '' === $group) {
+            $group = $option['group'] ?? '';
+            if ('' === $group) {
                 $group = $defaultGroup;
             }
 
@@ -376,10 +378,124 @@ class ImageOptionsService
                 $grouped[$group] = [];
             }
 
-            // Format: label => key (Symfony ChoiceType format)
-            $grouped[$group][$option['label']] = $key;
+            // Format: label => prompt (stores actual prompt in entity)
+            $grouped[$group][$option['label']] = $option['prompt'];
         }
 
         return $grouped;
+    }
+
+    // ==========================================
+    // FORM INTEGRATION HELPERS
+    // ==========================================
+
+    /**
+     * Get presets formatted for AiStyleConfigType form.
+     *
+     * Returns presets with resolved style/composition/palette prompts
+     * in the format expected by the form and the trait's buildStylePreview().
+     *
+     * @return array<string, array{nombre: string, descripcion: ?string, estilo: string, composicion: string, paleta: string}>
+     */
+    public function getPresetsForForm(): array
+    {
+        $result = [];
+
+        foreach ($this->presets as $key => $preset) {
+            // Resolve style/composition/palette keys to actual prompts
+            $stylePrompt = '';
+            if (!empty($preset['style'])) {
+                $stylePrompt = $this->getStylePrompt($preset['style']) ?? $preset['style'];
+            }
+
+            $compositionPrompt = '';
+            if (!empty($preset['composition'])) {
+                $compositionPrompt = $this->getCompositionPrompt($preset['composition']) ?? $preset['composition'];
+            }
+
+            $palettePrompt = '';
+            if (!empty($preset['palette'])) {
+                $palettePrompt = $this->getPalettePrompt($preset['palette']) ?? $preset['palette'];
+            }
+
+            $result[$key] = [
+                'nombre' => $preset['name'],
+                'descripcion' => $preset['description'] ?? null,
+                'estilo' => $stylePrompt,
+                'composicion' => $compositionPrompt,
+                'paleta' => $palettePrompt,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get preset choices for ChoiceType (label => key format).
+     *
+     * @return array<string, string>
+     */
+    public function getPresetChoices(): array
+    {
+        $choices = [];
+        foreach ($this->presets as $key => $preset) {
+            $choices[$preset['name']] = $key;
+        }
+
+        return $choices;
+    }
+
+    /**
+     * Get a resolved preset by key (with prompts, not keys).
+     *
+     * @return array{nombre: string, descripcion: ?string, estilo: string, composicion: string, paleta: string}|null
+     */
+    public function getResolvedPreset(string $key): ?array
+    {
+        $preset = $this->presets[$key] ?? null;
+        if ($preset === null) {
+            return null;
+        }
+
+        return [
+            'nombre' => $preset['name'],
+            'descripcion' => $preset['description'] ?? null,
+            'estilo' => $this->getStylePrompt($preset['style'] ?? '') ?? '',
+            'composicion' => $this->getCompositionPrompt($preset['composition'] ?? '') ?? '',
+            'paleta' => $this->getPalettePrompt($preset['palette'] ?? '') ?? '',
+        ];
+    }
+
+    /**
+     * Build a complete style string from a preset key.
+     *
+     * @param string      $presetKey      The preset key
+     * @param string      $suffix         Fixed suffix to append (e.g., "no text, professional quality")
+     * @param string|null $additionalText Optional additional text to append
+     *
+     * @return string|null The complete style string, or null if preset not found
+     */
+    public function buildStyleFromPreset(string $presetKey, string $suffix = '', ?string $additionalText = null): ?string
+    {
+        $resolved = $this->getResolvedPreset($presetKey);
+        if ($resolved === null) {
+            return null;
+        }
+
+        $parts = array_filter([
+            $resolved['estilo'],
+            $resolved['composicion'],
+            $resolved['paleta'],
+        ], static fn ($p) => $p !== '');
+
+        if ($suffix !== '') {
+            $parts[] = $suffix;
+        }
+
+        if ($additionalText !== null && trim($additionalText) !== '') {
+            $parts[] = trim($additionalText);
+        }
+
+        return implode(', ', $parts);
     }
 }
