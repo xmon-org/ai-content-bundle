@@ -51,6 +51,7 @@
     "scripts": {
         "test": "phpunit",
         "phpstan": "phpstan analyse",
+        "phpstan:baseline": "phpstan analyse --generate-baseline",
         "cs-check": "php-cs-fixer fix --dry-run --diff",
         "cs-fix": "php-cs-fixer fix",
         "check": [

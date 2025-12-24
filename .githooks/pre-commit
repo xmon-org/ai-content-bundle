@@ -1,8 +1,9 @@
 #!/bin/bash
+set -e
 
-# Pre-commit hook: ejecuta PHP-CS-Fixer antes de cada commit
+# Pre-commit hook: PHP-CS-Fixer + PHPStan
 
-echo "🔧 Ejecutando PHP-CS-Fixer..."
+echo "🔍 Pre-commit checks..."
 
 # Verificar si vendor existe
 if [ ! -d "vendor" ]; then
@@ -10,19 +11,35 @@ if [ ! -d "vendor" ]; then
     exit 1
 fi
 
-# Ejecutar cs-fix solo en archivos staged
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.php$')
+# Obtener archivos PHP staged
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.php$' || true)
 
 if [ -z "$STAGED_FILES" ]; then
-    echo "✅ No hay archivos PHP staged, saltando CS-Fixer."
+    echo "✅ No hay archivos PHP staged, saltando validaciones."
     exit 0
 fi
 
-# Ejecutar cs-fix en los archivos staged
+# 1. PHP-CS-Fixer (auto-fix)
+echo "🔧 Ejecutando PHP-CS-Fixer..."
 echo "$STAGED_FILES" | xargs vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --quiet
-
-# Re-añadir los archivos arreglados al stage
 echo "$STAGED_FILES" | xargs git add
 
-echo "✅ PHP-CS-Fixer completado."
+# 2. PHPStan (solo archivos en src/ o tests/)
+echo "🔍 Ejecutando PHPStan en archivos modificados..."
+ANALYZED_FILES=$(echo "$STAGED_FILES" | grep -E '^(src|tests)/' || true)
+
+if [ -n "$ANALYZED_FILES" ]; then
+    if ! echo "$ANALYZED_FILES" | xargs vendor/bin/phpstan analyse --no-progress --error-format=table; then
+        echo ""
+        echo "❌ PHPStan encontró errores."
+        echo ""
+        echo "Opciones:"
+        echo "  1. Corrige los errores y vuelve a intentar el commit"
+        echo "  2. Usa 'git commit --no-verify' para saltar esta validación (NO RECOMENDADO)"
+        echo ""
+        exit 1
+    fi
+fi
+
+echo "✅ Pre-commit checks completados."
 exit 0
