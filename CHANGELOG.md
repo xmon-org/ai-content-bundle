@@ -2,6 +2,23 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.3.0](https://github.com/xmon-org/ai-content-bundle/compare/1.2.0...1.3.0) (2025-12-24)
+
+### ✨ Features
+
+* **image:** añade resolución de estilos por entidad ([0d63f13](https://github.com/xmon-org/ai-content-bundle/commit/0d63f1381a0af5389aef59ea657e3d056519e9f0))
+* **image:** añade sufijo configurable a prompts de estilo ([aac0e57](https://github.com/xmon-org/ai-content-bundle/commit/aac0e57da1484f1e4af872bd3dddf176260c52c7))
+* **templates:** implementa optgroup en selectores de estilo ([2850bb7](https://github.com/xmon-org/ai-content-bundle/commit/2850bb75322cb241f6776739a95e58f297d2a6af))
+* **templates:** muestra sufijo de estilo en preview de imagen ([6245585](https://github.com/xmon-org/ai-content-bundle/commit/624558520902feb074f1dbd9b42aad46f43a93e4))
+
+### ♻️ Refactoring
+
+* **form:** normaliza presets a inglés y registra form type ([31a8100](https://github.com/xmon-org/ai-content-bundle/commit/31a810081678646204b2ba8fd7cebdd61c3f1677))
+
+### 📚 Documentation
+
+* **image-options:** documenta métodos *GroupedByKey para HTML selects ([d8269c5](https://github.com/xmon-org/ai-content-bundle/commit/d8269c502b26d5b7258c2628d37832a35da3a61a))
+
 ## [1.2.0](https://github.com/xmon-org/ai-content-bundle/compare/1.1.0...1.2.0) (2025-12-24)
 
 ### ✨ Features
