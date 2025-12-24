@@ -151,14 +151,25 @@
                             <i class="fa fa-paint-brush"></i> {% block style_label %}2. {{ 'Choose HOW it will look'|trans }}{% endblock %}
                         </label>
 
-                        {# Global style option #}
+                        {# Current/Entity style option #}
                         <div class="radio">
                             <label style="font-weight: normal; color: #555;">
                                 <input type="radio" name="styleMode" id="styleModeGlobal" value="global" checked>
                                 <strong>{{ 'Use current configuration'|trans }}</strong>
                             </label>
                             <div id="globalStyleHint" style="margin-top: 5px; margin-left: 20px;">
-                                <small class="text-muted" style="font-size: 11px;">→ {{ 'Default style'|trans }}</small>
+                                {% if entityStyleInfo is defined and entityStyleInfo.source != 'global' %}
+                                <small style="font-size: 11px;">
+                                    <span class="label label-info" style="font-weight: normal;">
+                                        <i class="fa fa-tag"></i> {{ entityStyleInfo.sourceName }}
+                                    </span>
+                                    {% if entityStyleInfo.presetName %}
+                                    <span style="color: #666;"> → {{ entityStyleInfo.presetName }}</span>
+                                    {% endif %}
+                                </small>
+                                {% else %}
+                                <small class="text-muted" style="font-size: 11px;">→ {{ 'Global configuration'|trans }}</small>
+                                {% endif %}
                             </div>
                         </div>
 
