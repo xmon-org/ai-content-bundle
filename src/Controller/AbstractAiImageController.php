@@ -582,10 +582,27 @@ abstract class AbstractAiImageController extends AbstractController
     {
         $presetKey = $request->request->get('stylePreset', '');
         if (!empty($presetKey) && $this->imageOptionsService->hasPreset($presetKey)) {
-            return $this->promptBuilder->buildFromPreset($presetKey);
+            $suffix = $this->getStyleSuffix();
+
+            return $this->imageOptionsService->buildStyleFromPreset($presetKey, $suffix);
         }
 
         return $this->resolveGlobalStyle();
+    }
+
+    /**
+     * Get the suffix to append to all style prompts.
+     *
+     * This suffix is added to preset and custom styles. Useful for
+     * technical restrictions like "no text no watermarks".
+     *
+     * Override this method to provide a project-specific suffix.
+     *
+     * @return string The suffix to append, or empty string for none
+     */
+    protected function getStyleSuffix(): string
+    {
+        return '';
     }
 
     /**
@@ -593,12 +610,19 @@ abstract class AbstractAiImageController extends AbstractController
      */
     protected function resolveCustomStyle(Request $request): string
     {
-        return $this->promptBuilder->buildStyleOnly([
+        $style = $this->promptBuilder->buildStyleOnly([
             'style' => $request->request->get('styleStyle'),
             'composition' => $request->request->get('styleComposition'),
             'palette' => $request->request->get('stylePalette'),
             'custom_prompt' => $request->request->get('styleExtra'),
         ]);
+
+        $suffix = $this->getStyleSuffix();
+        if ($suffix !== '' && $style !== '') {
+            return $style.', '.$suffix;
+        }
+
+        return $style;
     }
 
     /**
