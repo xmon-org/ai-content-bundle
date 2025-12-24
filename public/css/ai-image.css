@@ -206,3 +206,10 @@
         color: #adb5bd;
     }
 }
+
+
+.select2-results__options .select2-container--bootstrap .select2-results__group {
+    font-size: 16px;
+    padding: 16px 12px 6px 12px;
+    background-color: #ddd;
+}

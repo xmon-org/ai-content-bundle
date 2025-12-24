@@ -3,6 +3,12 @@ services:
         autowire: true
         autoconfigure: true
 
+    # Form Types
+    Xmon\AiContentBundle\Form\AiStyleConfigType:
+        arguments:
+            $imageOptionsService: '@Xmon\AiContentBundle\Service\ImageOptionsService'
+        tags: ['form.type']
+
     # Image Providers
     Xmon\AiContentBundle\Provider\Image\PollinationsImageProvider:
         arguments:
