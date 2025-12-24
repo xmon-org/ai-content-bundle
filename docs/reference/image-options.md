@@ -195,8 +195,15 @@ class MyService
         // Get flat list (key => label)
         $styles = $this->imageOptions->getStyles();
 
-        // Get grouped list for ChoiceType (group => [label => key])
+        // Get grouped list for Symfony ChoiceType optgroup
+        // Format: ['Group' => ['label' => 'prompt', ...], ...]
+        // Use this when you need to STORE the prompt value
         $groupedStyles = $this->imageOptions->getStylesGrouped();
+
+        // Get grouped list for HTML select optgroup
+        // Format: ['Group' => ['key' => 'label', ...], ...]
+        // Use this when you need to STORE the key and resolve prompt later
+        $groupedByKey = $this->imageOptions->getStylesGroupedByKey();
 
         // Get full data including prompt and group
         $allData = $this->imageOptions->getAllStylesData();
@@ -212,6 +219,55 @@ class MyService
 }
 ```
 
+### Grouped Methods: Two Formats
+
+The bundle provides two different grouped formats for different use cases:
+
+#### `getStylesGrouped()` - For Symfony ChoiceType
+
+Returns `['Group' => ['Label' => 'prompt', ...], ...]`
+
+Use this when:
+- Building Symfony Forms with `ChoiceType`
+- You want to store the **prompt** directly in your entity
+- The stored value will be used as-is in image generation
+
+```php
+// In a FormType
+$builder->add('style', ChoiceType::class, [
+    'choices' => $this->imageOptions->getStylesGrouped(),
+]);
+// Entity stores: "sumi-e Japanese ink wash painting style"
+```
+
+#### `getStylesGroupedByKey()` - For HTML Selects
+
+Returns `['Group' => ['key' => 'label', ...], ...]`
+
+Use this when:
+- Building HTML selects manually in Twig templates
+- You want to store the **key** and resolve the prompt later
+- You need to reference options by their configuration key
+
+```twig
+{# In a Twig template #}
+<select name="style">
+    {% for groupName, options in styles %}
+    <optgroup label="{{ groupName }}">
+        {% for key, label in options %}
+        <option value="{{ key }}">{{ label }}</option>
+        {% endfor %}
+    </optgroup>
+    {% endfor %}
+</select>
+{# Select value is: "sumi-e" (the key) #}
+```
+
+Then resolve the prompt in your controller/service:
+```php
+$prompt = $this->imageOptions->getStylePrompt($selectedKey);
+```
+
 ## Available Methods
 
 ### ImageOptionsService
@@ -219,7 +275,8 @@ class MyService
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `getStyles()` | `array<string, string>` | Flat list: key => label |
-| `getStylesGrouped($defaultGroup)` | `array<string, array>` | Grouped for ChoiceType optgroup |
+| `getStylesGrouped($defaultGroup)` | `array<string, array>` | Grouped for ChoiceType: `[group => [label => prompt]]` |
+| `getStylesGroupedByKey($defaultGroup)` | `array<string, array>` | Grouped for HTML selects: `[group => [key => label]]` |
 | `getAllStylesData()` | `array` | Full data with label, prompt, group |
 | `getStylePrompt($key)` | `?string` | Get prompt for a style |
 | `getStyleData($key)` | `?array` | Get full data for a style |
