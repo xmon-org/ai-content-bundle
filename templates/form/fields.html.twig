@@ -355,14 +355,14 @@
             const paletteSelect = findSelect('aiStylePalette');
 
             // Only pre-fill if custom fields are empty
-            if (artisticSelect && !artisticSelect.value && preset.estilo) {
-                setSelectValue(artisticSelect, preset.estilo);
+            if (artisticSelect && !artisticSelect.value && preset.style) {
+                setSelectValue(artisticSelect, preset.style);
             }
-            if (compositionSelect && !compositionSelect.value && preset.composicion) {
-                setSelectValue(compositionSelect, preset.composicion);
+            if (compositionSelect && !compositionSelect.value && preset.composition) {
+                setSelectValue(compositionSelect, preset.composition);
             }
-            if (paletteSelect && !paletteSelect.value && preset.paleta) {
-                setSelectValue(paletteSelect, preset.paleta);
+            if (paletteSelect && !paletteSelect.value && preset.palette) {
+                setSelectValue(paletteSelect, preset.palette);
             }
         }
 
@@ -390,8 +390,8 @@
             }
 
             const preset = presets[presetSelect.value];
-            if (preset && preset.descripcion) {
-                presetDescription.textContent = preset.descripcion;
+            if (preset && preset.description) {
+                presetDescription.textContent = preset.description;
             } else {
                 presetDescription.textContent = '';
             }
@@ -413,9 +413,9 @@
             if (mode === 'preset' && presetSelect && presetSelect.value) {
                 const preset = presets[presetSelect.value];
                 if (preset) {
-                    estilo = preset.estilo || '';
-                    composicion = preset.composicion || '';
-                    paleta = preset.paleta || '';
+                    estilo = preset.style || '';
+                    composicion = preset.composition || '';
+                    paleta = preset.palette || '';
                 }
             } else if (mode === 'custom') {
                 estilo = artisticSelect?.value || '';

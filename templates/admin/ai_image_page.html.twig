@@ -151,14 +151,25 @@
                             <i class="fa fa-paint-brush"></i> {% block style_label %}2. {{ 'Choose HOW it will look'|trans }}{% endblock %}
                         </label>
 
-                        {# Global style option #}
+                        {# Current/Entity style option #}
                         <div class="radio">
                             <label style="font-weight: normal; color: #555;">
                                 <input type="radio" name="styleMode" id="styleModeGlobal" value="global" checked>
                                 <strong>{{ 'Use current configuration'|trans }}</strong>
                             </label>
                             <div id="globalStyleHint" style="margin-top: 5px; margin-left: 20px;">
-                                <small class="text-muted" style="font-size: 11px;">→ {{ 'Default style'|trans }}</small>
+                                {% if entityStyleInfo is defined and entityStyleInfo.source != 'global' %}
+                                <small style="font-size: 11px;">
+                                    <span class="label label-info" style="font-weight: normal;">
+                                        <i class="fa fa-tag"></i> {{ entityStyleInfo.sourceName }}
+                                    </span>
+                                    {% if entityStyleInfo.presetName %}
+                                    <span style="color: #666;"> → {{ entityStyleInfo.presetName }}</span>
+                                    {% endif %}
+                                </small>
+                                {% else %}
+                                <small class="text-muted" style="font-size: 11px;">→ {{ 'Global configuration'|trans }}</small>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -195,8 +206,12 @@
                                 <label for="customStyle" style="font-size: 12px; font-weight: 600; color: #555;">{{ 'Artistic style'|trans }}</label>
                                 <select class="form-control" id="customStyle">
                                     <option value="">{{ 'Default'|trans }}</option>
-                                    {% for key, label in styles %}
-                                    <option value="{{ key }}">{{ label }}</option>
+                                    {% for groupName, options in styles %}
+                                    <optgroup label="{{ groupName }}">
+                                        {% for key, label in options %}
+                                        <option value="{{ key }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </optgroup>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -207,8 +222,12 @@
                                 <label for="customComposition" style="font-size: 12px; font-weight: 600; color: #555;">{{ 'Composition'|trans }}</label>
                                 <select class="form-control" id="customComposition">
                                     <option value="">{{ 'Default'|trans }}</option>
-                                    {% for key, label in compositions %}
-                                    <option value="{{ key }}">{{ label }}</option>
+                                    {% for groupName, options in compositions %}
+                                    <optgroup label="{{ groupName }}">
+                                        {% for key, label in options %}
+                                        <option value="{{ key }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </optgroup>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -219,8 +238,12 @@
                                 <label for="customPalette" style="font-size: 12px; font-weight: 600; color: #555;">{{ 'Color palette'|trans }}</label>
                                 <select class="form-control" id="customPalette">
                                     <option value="">{{ 'Default'|trans }}</option>
-                                    {% for key, label in palettes %}
-                                    <option value="{{ key }}">{{ label }}</option>
+                                    {% for groupName, options in palettes %}
+                                    <optgroup label="{{ groupName }}">
+                                        {% for key, label in options %}
+                                        <option value="{{ key }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </optgroup>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -926,6 +949,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var stylesData = {{ stylesData|default({})|json_encode|raw }};
     var compositionsData = {{ compositionsData|default({})|json_encode|raw }};
     var palettesData = {{ palettesData|default({})|json_encode|raw }};
+    var styleSuffix = {{ styleSuffix|default('')|json_encode|raw }};
 
     // History limit configuration
     var historyLimit = {{ historyLimit|default(5) }};
@@ -1361,11 +1385,16 @@ document.addEventListener('DOMContentLoaded', function() {
         var subject = subjectField ? subjectField.value.trim() : '';
 
         if (selectedMode === 'global') {
+            // Global style already includes suffix (comes from server)
             styleText = globalStylePreview;
         } else if (selectedMode === 'preset' && presetSelect) {
             var presetKey = presetSelect.value;
             if (presetKey && presetsData[presetKey]) {
                 styleText = presetsData[presetKey].preview || '';
+                // Add suffix if exists
+                if (styleSuffix && styleText) {
+                    styleText = styleText + ', ' + styleSuffix;
+                }
             } else {
                 stylePreview.innerHTML = '<em class="text-warning">{{ "Select a preset from the list..."|trans }}</em>';
                 return;
@@ -1386,6 +1415,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 parts.push(customExtra.value);
             }
             styleText = parts.join(', ') || '{{ "Select style options above"|trans }}';
+            // Add suffix if exists
+            if (styleSuffix && styleText && styleText !== '{{ "Select style options above"|trans }}') {
+                styleText = styleText + ', ' + styleSuffix;
+            }
         }
 
         var subjectHtml = subject

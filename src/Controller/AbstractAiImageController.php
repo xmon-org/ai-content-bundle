@@ -151,8 +151,10 @@ abstract class AbstractAiImageController extends AbstractController
         $historyLimit = $this->getMaxHistoryImages();
 
         // Prepare style options for the template
-        // Use resolveGlobalStyle() so subclasses can override (e.g., read from database)
-        $globalStylePreview = $this->resolveGlobalStyle();
+        // First try entity-specific style (e.g., from Tag/NewsSource), then fall back to global
+        $entityStyle = $this->resolveEntityStyle($entity);
+        $entityStyleInfo = $this->getEntityStyleInfo($entity);
+        $defaultStylePreview = $entityStyle ?? $this->resolveGlobalStyle();
 
         return $this->render($this->getTemplate(), [
             // Entity data
@@ -174,11 +176,11 @@ abstract class AbstractAiImageController extends AbstractController
             'historyLimit' => $historyLimit,
             'isAtLimit' => $historyCount >= $historyLimit,
 
-            // Style options (for selects - labels only)
+            // Style options (for selects - grouped for optgroup)
             'presets' => $this->getPresetsForTemplate(),
-            'styles' => $this->imageOptionsService->getStyles(),
-            'compositions' => $this->imageOptionsService->getCompositions(),
-            'palettes' => $this->imageOptionsService->getPalettes(),
+            'styles' => $this->imageOptionsService->getStylesGroupedByKey(),
+            'compositions' => $this->imageOptionsService->getCompositionsGroupedByKey(),
+            'palettes' => $this->imageOptionsService->getPalettesGroupedByKey(),
             'extras' => $this->imageOptionsService->getExtras(),
 
             // Full style data (for JavaScript preview - includes prompts)
@@ -186,8 +188,13 @@ abstract class AbstractAiImageController extends AbstractController
             'compositionsData' => $this->imageOptionsService->getAllCompositionsData(),
             'palettesData' => $this->imageOptionsService->getAllPalettesData(),
 
-            // Preview data
-            'globalStylePreview' => $globalStylePreview,
+            // Preview data (entity style takes priority over global)
+            'defaultStylePreview' => $defaultStylePreview,
+            'entityStyleInfo' => $entityStyleInfo,
+            // Keep globalStylePreview for backwards compatibility
+            'globalStylePreview' => $defaultStylePreview,
+            // Suffix for style prompts (technical restrictions)
+            'styleSuffix' => $this->getStyleSuffix(),
 
             // Service availability flags
             'textServiceConfigured' => $this->textService->isConfigured(),
@@ -345,9 +352,9 @@ abstract class AbstractAiImageController extends AbstractController
         }
 
         try {
-            // Resolve style based on mode
+            // Resolve style based on mode (pass entity for entity-specific style resolution)
             $styleMode = $request->request->get('styleMode', 'global');
-            $baseStyle = $this->resolveStyle($styleMode, $request);
+            $baseStyle = $this->resolveStyle($styleMode, $request, $entity);
 
             // Build full prompt: subject + style
             $fullPrompt = trim($subject).($baseStyle ? ', '.$baseStyle : '');
@@ -555,13 +562,18 @@ abstract class AbstractAiImageController extends AbstractController
 
     /**
      * Resolve the style string based on the mode selected.
+     *
+     * @param string                     $styleMode The style mode ('global', 'preset', 'custom')
+     * @param Request                    $request   The HTTP request with form data
+     * @param AiImageAwareInterface|null $entity    Optional entity for entity-specific style resolution
      */
-    protected function resolveStyle(string $styleMode, Request $request): string
+    protected function resolveStyle(string $styleMode, Request $request, ?AiImageAwareInterface $entity = null): string
     {
         return match ($styleMode) {
             'preset' => $this->resolvePresetStyle($request),
             'custom' => $this->resolveCustomStyle($request),
-            default => $this->resolveGlobalStyle(),
+            // For 'global' mode: try entity-specific style first, then fall back to global
+            default => ($entity !== null ? $this->resolveEntityStyle($entity) : null) ?? $this->resolveGlobalStyle(),
         };
     }
 
@@ -572,10 +584,27 @@ abstract class AbstractAiImageController extends AbstractController
     {
         $presetKey = $request->request->get('stylePreset', '');
         if (!empty($presetKey) && $this->imageOptionsService->hasPreset($presetKey)) {
-            return $this->promptBuilder->buildFromPreset($presetKey);
+            $suffix = $this->getStyleSuffix();
+
+            return $this->imageOptionsService->buildStyleFromPreset($presetKey, $suffix);
         }
 
         return $this->resolveGlobalStyle();
+    }
+
+    /**
+     * Get the suffix to append to all style prompts.
+     *
+     * This suffix is added to preset and custom styles. Useful for
+     * technical restrictions like "no text no watermarks".
+     *
+     * Override this method to provide a project-specific suffix.
+     *
+     * @return string The suffix to append, or empty string for none
+     */
+    protected function getStyleSuffix(): string
+    {
+        return '';
     }
 
     /**
@@ -583,12 +612,19 @@ abstract class AbstractAiImageController extends AbstractController
      */
     protected function resolveCustomStyle(Request $request): string
     {
-        return $this->promptBuilder->buildStyleOnly([
+        $style = $this->promptBuilder->buildStyleOnly([
             'style' => $request->request->get('styleStyle'),
             'composition' => $request->request->get('styleComposition'),
             'palette' => $request->request->get('stylePalette'),
             'custom_prompt' => $request->request->get('styleExtra'),
         ]);
+
+        $suffix = $this->getStyleSuffix();
+        if ($suffix !== '' && $style !== '') {
+            return $style.', '.$suffix;
+        }
+
+        return $style;
     }
 
     /**
@@ -611,6 +647,52 @@ abstract class AbstractAiImageController extends AbstractController
 
         // Fallback to PromptBuilder (uses first preset from YAML)
         return $this->promptBuilder->buildGlobalStyle();
+    }
+
+    /**
+     * Resolve a style specific to the entity.
+     *
+     * Override this method to provide entity-specific style resolution.
+     * For example, a Noticia might have a Tag with a preset that should
+     * take priority over the global style.
+     *
+     * This method is called:
+     * - In doRenderPage() for the initial preview
+     * - In resolveStyle() when mode is 'global' (renamed to 'entity' in UI)
+     *
+     * @param AiImageAwareInterface $entity The entity being processed
+     *
+     * @return string|null The resolved style prompt, or null to fall back to global
+     */
+    protected function resolveEntityStyle(AiImageAwareInterface $entity): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Get detailed information about the style that will be applied to an entity.
+     *
+     * Override this method to provide context about which style source
+     * is being used (e.g., "Tag: Internacional", "NewsSource: Aikido Journal", "Global").
+     *
+     * The returned array should contain:
+     * - source: string - The source type ('tag', 'newsSource', 'global', etc.)
+     * - sourceName: string - Human-readable source description
+     * - presetKey: string|null - The preset key if applicable
+     * - presetName: string|null - Human-readable preset name
+     *
+     * @param AiImageAwareInterface $entity The entity being processed
+     *
+     * @return array{source: string, sourceName: string, presetKey: string|null, presetName: string|null}
+     */
+    protected function getEntityStyleInfo(AiImageAwareInterface $entity): array
+    {
+        return [
+            'source' => 'global',
+            'sourceName' => 'Global configuration',
+            'presetKey' => null,
+            'presetName' => null,
+        ];
     }
 
     /**
