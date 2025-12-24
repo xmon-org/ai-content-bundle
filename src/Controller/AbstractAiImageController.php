@@ -176,11 +176,11 @@ abstract class AbstractAiImageController extends AbstractController
             'historyLimit' => $historyLimit,
             'isAtLimit' => $historyCount >= $historyLimit,
 
-            // Style options (for selects - labels only)
+            // Style options (for selects - grouped for optgroup)
             'presets' => $this->getPresetsForTemplate(),
-            'styles' => $this->imageOptionsService->getStyles(),
-            'compositions' => $this->imageOptionsService->getCompositions(),
-            'palettes' => $this->imageOptionsService->getPalettes(),
+            'styles' => $this->imageOptionsService->getStylesGroupedByKey(),
+            'compositions' => $this->imageOptionsService->getCompositionsGroupedByKey(),
+            'palettes' => $this->imageOptionsService->getPalettesGroupedByKey(),
             'extras' => $this->imageOptionsService->getExtras(),
 
             // Full style data (for JavaScript preview - includes prompts)

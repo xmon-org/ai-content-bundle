@@ -206,8 +206,12 @@
                                 <label for="customStyle" style="font-size: 12px; font-weight: 600; color: #555;">{{ 'Artistic style'|trans }}</label>
                                 <select class="form-control" id="customStyle">
                                     <option value="">{{ 'Default'|trans }}</option>
-                                    {% for key, label in styles %}
-                                    <option value="{{ key }}">{{ label }}</option>
+                                    {% for groupName, options in styles %}
+                                    <optgroup label="{{ groupName }}">
+                                        {% for key, label in options %}
+                                        <option value="{{ key }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </optgroup>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -218,8 +222,12 @@
                                 <label for="customComposition" style="font-size: 12px; font-weight: 600; color: #555;">{{ 'Composition'|trans }}</label>
                                 <select class="form-control" id="customComposition">
                                     <option value="">{{ 'Default'|trans }}</option>
-                                    {% for key, label in compositions %}
-                                    <option value="{{ key }}">{{ label }}</option>
+                                    {% for groupName, options in compositions %}
+                                    <optgroup label="{{ groupName }}">
+                                        {% for key, label in options %}
+                                        <option value="{{ key }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </optgroup>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -230,8 +238,12 @@
                                 <label for="customPalette" style="font-size: 12px; font-weight: 600; color: #555;">{{ 'Color palette'|trans }}</label>
                                 <select class="form-control" id="customPalette">
                                     <option value="">{{ 'Default'|trans }}</option>
-                                    {% for key, label in palettes %}
-                                    <option value="{{ key }}">{{ label }}</option>
+                                    {% for groupName, options in palettes %}
+                                    <optgroup label="{{ groupName }}">
+                                        {% for key, label in options %}
+                                        <option value="{{ key }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </optgroup>
                                     {% endfor %}
                                 </select>
                             </div>

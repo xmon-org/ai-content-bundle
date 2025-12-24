@@ -154,6 +154,62 @@ class ImageOptionsService
     }
 
     // ==========================================
+    // GETTERS FOR UI (grouped by key for HTML selects)
+    // ==========================================
+
+    /**
+     * Get all available styles grouped by key for HTML select optgroup.
+     *
+     * Unlike getStylesGrouped() which returns label => prompt (for ChoiceType),
+     * this returns key => label format suitable for HTML select elements
+     * where the option value needs to be the key.
+     *
+     * @param string $defaultGroup Group name for items without explicit group
+     *
+     * @return array<string, array<string, string>> Format: ['Group' => ['key' => 'label', ...], ...]
+     */
+    public function getStylesGroupedByKey(string $defaultGroup = 'General'): array
+    {
+        return $this->formatGroupedByKey($this->styles, $defaultGroup);
+    }
+
+    /**
+     * Get all available compositions grouped by key for HTML select optgroup.
+     *
+     * @param string $defaultGroup Group name for items without explicit group
+     *
+     * @return array<string, array<string, string>>
+     */
+    public function getCompositionsGroupedByKey(string $defaultGroup = 'General'): array
+    {
+        return $this->formatGroupedByKey($this->compositions, $defaultGroup);
+    }
+
+    /**
+     * Get all available palettes grouped by key for HTML select optgroup.
+     *
+     * @param string $defaultGroup Group name for items without explicit group
+     *
+     * @return array<string, array<string, string>>
+     */
+    public function getPalettesGroupedByKey(string $defaultGroup = 'General'): array
+    {
+        return $this->formatGroupedByKey($this->palettes, $defaultGroup);
+    }
+
+    /**
+     * Get all available extras grouped by key for HTML select optgroup.
+     *
+     * @param string $defaultGroup Group name for items without explicit group
+     *
+     * @return array<string, array<string, string>>
+     */
+    public function getExtrasGroupedByKey(string $defaultGroup = 'General'): array
+    {
+        return $this->formatGroupedByKey($this->extras, $defaultGroup);
+    }
+
+    // ==========================================
     // GETTERS FOR PROMPT FRAGMENTS
     // ==========================================
 
@@ -380,6 +436,40 @@ class ImageOptionsService
 
             // Format: label => prompt (stores actual prompt in entity)
             $grouped[$group][$option['label']] = $option['prompt'];
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Format options array for HTML select with optgroup support.
+     *
+     * Groups options by their 'group' field. Options without a group
+     * are placed under the default group.
+     *
+     * Unlike formatGrouped(), this preserves the KEY as the value,
+     * suitable for HTML select elements where option value is the key.
+     *
+     * @param array<string, array{label: string, prompt: string, group?: ?string}> $options
+     *
+     * @return array<string, array<string, string>> Format: ['Group' => ['key' => 'label', ...], ...]
+     */
+    private function formatGroupedByKey(array $options, string $defaultGroup): array
+    {
+        $grouped = [];
+
+        foreach ($options as $key => $option) {
+            $group = $option['group'] ?? '';
+            if ('' === $group) {
+                $group = $defaultGroup;
+            }
+
+            if (!isset($grouped[$group])) {
+                $grouped[$group] = [];
+            }
+
+            // Format: key => label (stores key in select value)
+            $grouped[$group][$key] = $option['label'];
         }
 
         return $grouped;
