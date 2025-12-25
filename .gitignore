@@ -37,4 +37,5 @@ Thumbs.db
 # Claude files
 .claude/
 
-_pollinations
+# Development documents
+docs/dev/
