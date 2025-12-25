@@ -36,3 +36,6 @@ Thumbs.db
 
 # Claude files
 .claude/
+
+# Development documents
+docs/dev/
