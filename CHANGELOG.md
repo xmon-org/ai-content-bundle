@@ -2,6 +2,16 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.4.0](https://github.com/xmon-org/ai-content-bundle/compare/1.3.0...1.4.0) (2025-12-26)
+
+### ✨ Features
+
+* **providers:** simplifica arquitectura a Pollinations único + TaskTypes ([feb371f](https://github.com/xmon-org/ai-content-bundle/commit/feb371f0aa7b9148133a31ad16e2c34ea0df9a69))
+
+### 🐛 Bug Fixes
+
+* **models:** actualiza modelos con datos reales de Pollinations API ([f0449e7](https://github.com/xmon-org/ai-content-bundle/commit/f0449e74bf35cdf2819639b178d9bcf203d92f04))
+
 ## [1.3.0](https://github.com/xmon-org/ai-content-bundle/compare/1.2.0...1.3.0) (2025-12-24)
 
 ### ✨ Features
