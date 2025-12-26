@@ -8,34 +8,31 @@ Complete YAML configuration reference for xmon-org/ai-content-bundle.
 # config/packages/xmon_ai_content.yaml
 xmon_ai_content:
     # ============================================
+    # TASK TYPES (Model selection per task)
+    # ============================================
+    tasks:
+        news_content:
+            default_model: 'claude'
+            allowed_models: ['claude', 'gemini', 'openai', 'gemini-fast', 'mistral']
+
+        image_prompt:
+            default_model: 'gemini-fast'
+            allowed_models: ['openai-fast', 'gemini-fast', 'mistral']
+
+        image_generation:
+            default_model: 'gptimage'
+            allowed_models: ['flux', 'gptimage', 'seedream', 'nanobanana', 'turbo']
+
+    # ============================================
     # TEXT PROVIDERS
     # ============================================
     text:
         providers:
-            gemini:
-                enabled: true
-                priority: 100
-                api_key: '%env(XMON_AI_GEMINI_API_KEY)%'
-                model: 'gemini-2.0-flash-lite'
-                fallback_models: []
-                timeout: 30
-
-            openrouter:
-                enabled: true
-                priority: 50
-                api_key: '%env(XMON_AI_OPENROUTER_API_KEY)%'
-                model: 'google/gemini-2.0-flash-exp:free'
-                fallback_models:
-                    - 'meta-llama/llama-3.3-70b-instruct:free'
-                timeout: 90
-
             pollinations:
                 enabled: true
                 priority: 10
-                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional
-                model: 'openai-fast'
-                fallback_models:
-                    - 'openai'
+                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional for basic use
+                model: 'openai'  # Fallback model (TaskType config takes precedence)
                 timeout: 60
 
         defaults:
@@ -51,7 +48,7 @@ xmon_ai_content:
                 enabled: true
                 priority: 100
                 api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
-                model: 'flux'
+                model: 'flux'  # Fallback model (TaskType config takes precedence)
                 timeout: 120
 
         defaults:
@@ -64,8 +61,8 @@ xmon_ai_content:
     # ADMIN UI SETTINGS
     # ============================================
     admin:
-        base_template: '@SonataAdmin/standard_layout.html.twig'  # Custom layout
-        show_bundle_credit: true   # Show "Powered by XmonAiContentBundle" footer
+        base_template: '@SonataAdmin/standard_layout.html.twig'
+        show_bundle_credit: true
 
     # ============================================
     # SONATA MEDIA INTEGRATION
@@ -78,36 +75,31 @@ xmon_ai_content:
     # IMAGE OPTIONS (Styles, Compositions, etc.)
     # ============================================
     image_options:
-        # Custom styles (merged with defaults)
         styles:
             custom-style:
                 label: 'My Custom Style'
                 prompt: 'custom style description for AI'
 
-        # Custom compositions
         compositions:
             custom-comp:
                 label: 'Custom Composition'
                 prompt: 'composition description'
 
-        # Custom palettes
         palettes:
             custom-palette:
                 label: 'Custom Palette'
                 prompt: 'color palette description'
 
-        # Custom extras
         extras:
             custom-extra:
                 label: 'Custom Extra'
                 prompt: 'extra modifier description'
 
-        # Disable specific defaults
         disable_defaults:
-            styles: []           # ['oil-painting', 'digital-art']
-            compositions: []     # ['panoramic']
-            palettes: []         # ['high-contrast']
-            extras: []           # ['silhouettes']
+            styles: []
+            compositions: []
+            palettes: []
+            extras: []
 
     # ============================================
     # PRESETS (Predefined option combinations)
@@ -120,90 +112,118 @@ xmon_ai_content:
             palette: 'monochrome'
             extras: ['no-text', 'atmospheric']
 
-    # Disable specific default presets
-    disable_preset_defaults: []  # ['zen-contemplativo']
+    disable_preset_defaults: []
 
     # ============================================
     # PROMPT TEMPLATES
     # ============================================
     prompts:
         templates:
-            # Simple template (no variants)
             custom-template:
                 name: 'My Custom Template'
                 description: 'What this template does'
                 system: |
                     System prompt instructions here.
-                    Multi-line supported.
                 user: |
                     User message with {variable} placeholders.
                     Title: {title}
-                    Content: {content}
 
-            # Template with variants (advanced)
-            # Use same language for content, variants and keywords
-            scene-generator:
-                name: 'Scene Generator'
-                description: 'Generates scenes with pre-selected elements'
-                system: |
-                    Genera una escena usando EXACTAMENTE:
-                    - UBICACIÓN: {variant_location}
-                    - AMBIENTE: {variant_mood}
-
-                    IMPORTANTE: Responde EN INGLÉS.
-                user: "Título: {title}\nResumen: {summary}"
-
-                # Pre-defined options (same language as content)
-                variants:
-                    location:
-                        - "patio de museo con fuente"
-                        - "terraza en azotea con vistas"
-                        - "sendero de jardín botánico"
-                    mood:
-                        - "contemplación tranquila"
-                        - "después de celebración"
-
-                # Keywords for intelligent matching (same language)
-                variant_keywords:
-                    location: ["museo", "jardín", "terraza"]
-                    mood: ["celebración", "memorial", "mañana"]
-
-        # Disable specific default templates
-        disable_defaults: []  # ['title-generator', 'summarizer']
+        disable_defaults: []
 
     # ============================================
     # HISTORY (Image history settings)
     # ============================================
     history:
-        max_images: 5    # Maximum images per entity (1-50)
+        max_images: 5
 ```
+
+## Task Types Configuration
+
+The `tasks` section configures which AI models to use for different types of operations.
+
+### Available Task Types
+
+| Task Type | Description | Model Type |
+|-----------|-------------|------------|
+| `news_content` | Article/content generation | Text |
+| `image_prompt` | Scene description for images | Text |
+| `image_generation` | Actual image creation | Image |
+
+### Task Configuration Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `default_model` | string | Yes | Model to use when none specified |
+| `allowed_models` | array | Yes | List of models allowed for this task |
+
+### Text Models
+
+| Model Key | Name | ~Responses/Pollen | Recommended For |
+|-----------|------|-------------------|-----------------|
+| `claude` | Claude Sonnet 4.5 | 330 | `news_content` (high quality) |
+| `gemini` | Gemini 3 Flash | 1,600 | General content |
+| `openai` | GPT-5 Mini | 8,000 | General purpose |
+| `gemini-fast` | Gemini 2.5 Flash Lite | 12,000 | `image_prompt` (fast) |
+| `openai-fast` | GPT-5 Nano | 11,000 | Quick operations |
+| `mistral` | Mistral Small | 13,000 | Backup/fallback |
+
+### Image Models
+
+| Model Key | Name | ~Images/Pollen | Notes |
+|-----------|------|----------------|-------|
+| `gptimage` | OpenAI Image 1 Mini | 160 | Best for complex scenes |
+| `seedream` | ByteDance ARK 2K | 35 | High quality |
+| `nanobanana` | Gemini Image | 25 | With reference |
+| `flux` | Flux (free) | 8,300 | Good default |
+| `turbo` | Turbo (free) | 3,300 | Fast previews |
+
+### Example Configurations
+
+**Premium Configuration (Best Quality):**
+
+```yaml
+tasks:
+    news_content:
+        default_model: 'claude'
+        allowed_models: ['claude', 'gemini']
+    image_prompt:
+        default_model: 'gemini-fast'
+        allowed_models: ['gemini-fast', 'openai-fast']
+    image_generation:
+        default_model: 'gptimage'
+        allowed_models: ['gptimage', 'seedream', 'flux']
+```
+
+**Free Configuration (No Cost):**
+
+```yaml
+tasks:
+    news_content:
+        default_model: 'openai'
+        allowed_models: ['openai', 'openai-fast', 'mistral']
+    image_prompt:
+        default_model: 'openai-fast'
+        allowed_models: ['openai-fast', 'mistral']
+    image_generation:
+        default_model: 'flux'
+        allowed_models: ['flux', 'turbo']
+```
+
+See [Task Types Guide](../guides/task-types.md) for detailed usage examples.
 
 ## Provider Configuration
 
-### Common Fields
+### Pollinations (Text & Image)
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `enabled` | bool | `true` | Enable/disable the provider |
 | `priority` | int | varies | Higher = tried first |
-| `api_key` | string | `null` | API key (required for most) |
-| `model` | string | varies | Default model |
-| `fallback_models` | array | `[]` | Backup models |
+| `api_key` | string | `null` | Optional for basic use, required for premium models |
+| `model` | string | varies | Fallback model (TaskType takes precedence) |
 | `timeout` | int | varies | Request timeout (seconds) |
 
-### Text Provider Defaults
-
-| Provider | Priority | Timeout | Requires API Key |
-|----------|----------|---------|------------------|
-| Gemini | 100 | 30s | Yes |
-| OpenRouter | 50 | 90s | Yes |
-| Pollinations | 10 | 60s | Optional (higher rate limits with key) |
-
-### Image Provider Defaults
-
-| Provider | Priority | Timeout | Requires API Key |
-|----------|----------|---------|------------------|
-| Pollinations | 100 | 120s | Optional |
+> **Note:** Model selection is now handled by the `tasks` configuration. The `model` field in providers is only used as a fallback if no TaskType is specified.
 
 ## Image Options Structure
 
@@ -222,10 +242,10 @@ styles:
 presets:
     key-name:
         name: 'Human-readable name'
-        style: 'style-key'        # Optional
-        composition: 'comp-key'   # Optional
-        palette: 'palette-key'    # Optional
-        extras: ['extra1', 'extra2']  # Optional
+        style: 'style-key'
+        composition: 'comp-key'
+        palette: 'palette-key'
+        extras: ['extra1', 'extra2']
 ```
 
 ## Prompt Template Structure
@@ -246,146 +266,51 @@ Variables use `{variable_name}` syntax and are replaced at runtime.
 
 ### Template with Variants
 
-For best results, keep variants and keywords in the **same language** as your content.
-If you need output in a different language, add an explicit instruction in the system prompt.
-
 ```yaml
 prompts:
     templates:
         key-name:
             name: 'Scene Generator'
-            description: 'Generates scenes with pre-selected elements'
             system: |
-                Genera contenido usando:
-                - UBICACIÓN: {variant_location}
-                - AMBIENTE: {variant_mood}
+                Generate using:
+                - LOCATION: {variant_location}
+                - MOOD: {variant_mood}
+            user: 'Title: {title}'
 
-                IMPORTANTE: Tu respuesta debe estar EN INGLÉS.
-            user: 'Título: {title}\nResumen: {summary}'
-
-            # Pre-defined options (same language as content)
             variants:
                 location:
-                    - "patio de museo con fuente"
-                    - "terraza en azotea con vistas a la ciudad"
-                    - "sendero de jardín botánico"
+                    - "museum courtyard"
+                    - "rooftop terrace"
                 mood:
-                    - "contemplación tranquila"
-                    - "después de celebración"
-                    - "anticipación matutina"
+                    - "peaceful contemplation"
+                    - "celebration aftermath"
 
-            # Keywords for intelligent selection (same language as content)
             variant_keywords:
-                location:
-                    - "museo"
-                    - "terraza"
-                    - "jardín"
-                mood:
-                    - "celebración"
-                    - "memorial"
-                    - "mañana"
+                location: ["museum", "terrace"]
+                mood: ["celebration", "memorial"]
 ```
 
-### Prompt Template Fields
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | Yes | Human-readable name for UI display |
-| `description` | string | No | Explanation of what the template does |
-| `system` | string | Yes | System prompt (instructions for the AI) |
-| `user` | string | Yes | User message template with `{variable}` placeholders |
-| `variants` | map | No | Category => list of options for dynamic injection |
-| `variant_keywords` | map | No | Category => keywords for intelligent selection |
-
-### Variant Placeholders
-
-In the `system` prompt, use `{variant_CATEGORY}` placeholders that match keys in `variants`:
-
-```yaml
-system: |
-    Use LOCATION: {variant_location}    # Matches variants.location
-    Use PRESENCE: {variant_presence}    # Matches variants.presence
-variants:
-    location: [...]
-    presence: [...]
-```
-
-### Variant Selection Algorithm
-
-1. If `variant_keywords` is defined for the category:
-   - Score each option by keywords found in **both** content AND option
-   - Select highest-scoring option
-2. If no keywords (or no matches): extract words from options, match against content
-3. If still no matches: random selection
-
-**Important**: The matching is literal string comparison. Keep content, variants, and keywords in the same language for accurate matching. Use system prompt instructions to request output in a different language if needed.
-
-### Regex Patterns in Keywords
-
-Keywords can use pipe `|` syntax for OR matching:
-
-```yaml
-variant_keywords:
-    location:
-        - "río|agua|playa|cascada"      # Matches any of these words
-        - "montaña|nevada|sendero"
-    time_of_day:
-        - "amanecer|atardecer|sol"      # Time-related patterns
-        - "noche|luna|estrellas"
-```
-
-**Behavior:**
-
-| Keyword Type | Matching Rule |
-|--------------|---------------|
-| Simple (no `\|`) | Must appear in BOTH content AND option to score |
-| Regex (with `\|`) | Must match in BOTH content AND option to score |
-
-**Example:**
-
-```yaml
-variant_keywords:
-    location:
-        - "museo"                    # Simple: needs "museo" in content AND option
-        - "dojo|tatami"              # Regex: needs "dojo" OR "tatami" in content AND option
-```
-
-With content "Graduación en el dojo central":
-- Option "dojo tradicional con tatami" → `"dojo|tatami"` matches both → scores +1
-- Option "terraza con vistas" → `"dojo|tatami"` not in option → no score
-
-See [Prompt Templates Guide](../guides/prompt-templates.md#prompt-variants) for detailed examples.
+See [Prompt Templates Guide](../guides/prompt-templates.md) for detailed examples.
 
 ## Admin UI Settings
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `base_template` | string | `@SonataAdmin/standard_layout.html.twig` | Base template for AI image pages. Override to use your project's custom admin layout. |
-| `show_bundle_credit` | bool | `true` | Show "Powered by XmonAiContentBundle" footer in the AI image generation page. Set to `false` to hide. |
-
-```yaml
-xmon_ai_content:
-    admin:
-        base_template: '@App/admin/layout.html.twig'  # Custom project layout
-        show_bundle_credit: false  # Hide bundle credit
-```
+| `base_template` | string | `@SonataAdmin/standard_layout.html.twig` | Base template for AI image pages |
+| `show_bundle_credit` | bool | `true` | Show bundle credit footer |
 
 ## Environment Variables
 
 ```bash
-# Text providers
-XMON_AI_GEMINI_API_KEY=AIza...
-XMON_AI_OPENROUTER_API_KEY=sk-or-v1-...
-XMON_AI_POLLINATIONS_API_KEY=your_key  # Optional: higher rate limits
-
-# Image providers (same key works for both text and image)
-# XMON_AI_POLLINATIONS_API_KEY=your_key
-
-# Optional: Custom provider
-XMON_AI_ANTHROPIC_API_KEY=sk-ant-...
+# Single API key for all AI operations (optional for basic use)
+XMON_AI_POLLINATIONS_API_KEY=your_pollinations_api_key
 ```
+
+> **Note:** The API key is optional for basic models (openai, openai-fast, flux, turbo) but required for premium models (claude, gptimage, seedream).
 
 ## Related
 
+- [Task Types Guide](../guides/task-types.md) - Detailed TaskType usage
+- [Providers Reference](providers.md) - Available models and costs
 - [Installation](../installation.md) - Setup guide
 - [Architecture](architecture.md) - Bundle structure

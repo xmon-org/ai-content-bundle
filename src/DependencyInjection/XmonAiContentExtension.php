@@ -11,13 +11,13 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Xmon\AiContentBundle\Provider\Image\PollinationsImageProvider;
-use Xmon\AiContentBundle\Provider\Text\GeminiTextProvider;
-use Xmon\AiContentBundle\Provider\Text\OpenRouterTextProvider;
 use Xmon\AiContentBundle\Provider\Text\PollinationsTextProvider;
 use Xmon\AiContentBundle\Service\AiTextService;
 use Xmon\AiContentBundle\Service\ImageOptionsService;
 use Xmon\AiContentBundle\Service\MediaStorageService;
+use Xmon\AiContentBundle\Service\ModelRegistryService;
 use Xmon\AiContentBundle\Service\PromptTemplateService;
+use Xmon\AiContentBundle\Service\TaskConfigService;
 use Xmon\AiContentBundle\Twig\AiContentExtension;
 
 class XmonAiContentExtension extends Extension
@@ -50,6 +50,9 @@ class XmonAiContentExtension extends Extension
         // Configure providers
         $this->configureImageProviders($container, $config['image'] ?? []);
         $this->configureTextProviders($container, $config['text'] ?? []);
+
+        // Configure task types (models per task)
+        $this->configureTaskTypes($container, $config['tasks'] ?? []);
 
         // Configure image options (styles, compositions, palettes, extras, presets)
         $this->configureImageOptions(
@@ -106,53 +109,38 @@ class XmonAiContentExtension extends Extension
         $container->setParameter('xmon_ai_content.image.defaults', $defaults);
     }
 
+    /**
+     * Configure text providers (Pollinations only - simplified architecture Dec 2025).
+     *
+     * Model selection is now handled by TaskConfigService based on TaskType.
+     * The provider just needs to be enabled; the model is passed at runtime.
+     */
     private function configureTextProviders(ContainerBuilder $container, array $textConfig): void
     {
         $providers = $textConfig['providers'] ?? [];
         $defaults = $textConfig['defaults'] ?? [];
 
-        // Provider class mapping
-        $providerClasses = [
-            'gemini' => GeminiTextProvider::class,
-            'openrouter' => OpenRouterTextProvider::class,
-            'pollinations' => PollinationsTextProvider::class,
-        ];
+        // Configure Pollinations text provider if enabled
+        if (isset($providers['pollinations']) && $providers['pollinations']['enabled']) {
+            $pollinationsConfig = $providers['pollinations'];
 
-        // Default values per provider
-        $providerDefaults = [
-            'gemini' => ['model' => 'gemini-2.0-flash-lite', 'timeout' => 30, 'priority' => 100],
-            'openrouter' => ['model' => 'google/gemini-2.0-flash-exp:free', 'timeout' => 90, 'priority' => 50],
-            'pollinations' => ['model' => 'openai', 'timeout' => 60, 'priority' => 10],
-        ];
+            if ($container->hasDefinition(PollinationsTextProvider::class)) {
+                $definition = $container->getDefinition(PollinationsTextProvider::class);
 
-        // Configure each known provider with unified schema
-        foreach ($providerClasses as $name => $class) {
-            if (!isset($providers[$name]) || !$providers[$name]['enabled']) {
-                continue;
+                if (isset($pollinationsConfig['api_key'])) {
+                    $definition->setArgument('$apiKey', $pollinationsConfig['api_key']);
+                }
+                $definition->setArgument('$model', $pollinationsConfig['model'] ?? 'openai');
+                $definition->setArgument('$fallbackModels', $pollinationsConfig['fallback_models'] ?? []);
+                $definition->setArgument('$timeout', $pollinationsConfig['timeout'] ?? 60);
+
+                $priority = $pollinationsConfig['priority'] ?? 10;
+                $definition->setArgument('$priority', $priority);
+
+                // Update tag priority
+                $definition->clearTag('xmon_ai_content.text_provider');
+                $definition->addTag('xmon_ai_content.text_provider', ['priority' => $priority]);
             }
-
-            if (!$container->hasDefinition($class)) {
-                continue;
-            }
-
-            $config = $providers[$name];
-            $providerDefault = $providerDefaults[$name];
-            $definition = $container->getDefinition($class);
-
-            $priority = $config['priority'] ?? $providerDefault['priority'];
-
-            // Common fields for all providers (unified schema)
-            if (isset($config['api_key'])) {
-                $definition->setArgument('$apiKey', $config['api_key']);
-            }
-            $definition->setArgument('$model', $config['model'] ?? $providerDefault['model']);
-            $definition->setArgument('$fallbackModels', $config['fallback_models'] ?? []);
-            $definition->setArgument('$timeout', $config['timeout'] ?? $providerDefault['timeout']);
-            $definition->setArgument('$priority', $priority);
-
-            // Update the tag priority for proper ordering in tagged_iterator
-            $definition->clearTag('xmon_ai_content.text_provider');
-            $definition->addTag('xmon_ai_content.text_provider', ['priority' => $priority]);
         }
 
         // Configure AiTextService with defaults
@@ -165,6 +153,31 @@ class XmonAiContentExtension extends Extension
         // Store config
         $container->setParameter('xmon_ai_content.text.providers', $providers);
         $container->setParameter('xmon_ai_content.text.defaults', $defaults);
+    }
+
+    /**
+     * Configure task types with their default/allowed models.
+     *
+     * This bridges the ModelRegistryService (catalog of available models with costs)
+     * with user configuration (which models are enabled for each task type).
+     *
+     * The ModelRegistryService contains immutable provider data (model names, costs).
+     * The Configuration.php schema allows users to customize which models are allowed
+     * for each task type in their specific project.
+     *
+     * @param array<string, array{default_model?: string, allowed_models?: list<string>}> $tasksConfig
+     */
+    private function configureTaskTypes(ContainerBuilder $container, array $tasksConfig): void
+    {
+        // ModelRegistryService has no config arguments - it's a pure catalog
+        // TaskConfigService receives the tasks configuration
+        if ($container->hasDefinition(TaskConfigService::class)) {
+            $definition = $container->getDefinition(TaskConfigService::class);
+            $definition->setArgument('$tasksConfig', $tasksConfig);
+        }
+
+        // Store config as parameter for external access
+        $container->setParameter('xmon_ai_content.tasks', $tasksConfig);
     }
 
     private function configureAdmin(ContainerBuilder $container, array $adminConfig): void

@@ -14,12 +14,12 @@ Symfony 7 bundle for AI content generation (text and images) with automatic fall
 
 ## Features
 
-- **Text generation** with Gemini, OpenRouter, Pollinations
-- **Image generation** with Pollinations (Flux model)
-- **Automatic fallback** between providers
+- **Text generation** with multiple models (Claude, Gemini, GPT, Mistral) via Pollinations API
+- **Image generation** with multiple models (GPTImage, Flux, Seedream, Turbo)
+- **Task Types** - Configure different models for different tasks (content, prompts, images)
+- **Cost tracking** - See estimated costs per model in the UI
 - **Style presets** for consistent image generation
-- **Configurable prompt templates** for text generation
-- **Prompt variants** with intelligent content-based selection
+- **Configurable prompt templates** with intelligent variant selection
 - **SonataMedia integration** (optional)
 - **Sonata Admin integration** with image regeneration UI (optional)
 
@@ -42,10 +42,23 @@ composer require xmon-org/ai-content-bundle
 ```yaml
 # config/packages/xmon_ai_content.yaml
 xmon_ai_content:
+    # Configure models per task type
+    tasks:
+        news_content:
+            default_model: 'claude'
+            allowed_models: ['claude', 'gemini', 'openai']
+        image_prompt:
+            default_model: 'gemini-fast'
+            allowed_models: ['gemini-fast', 'openai-fast']
+        image_generation:
+            default_model: 'gptimage'
+            allowed_models: ['flux', 'gptimage', 'turbo']
+
     text:
         providers:
             pollinations:
                 enabled: true
+                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional for basic use
     image:
         providers:
             pollinations:
@@ -55,6 +68,7 @@ xmon_ai_content:
 ### 3. Generate Text
 
 ```php
+use Xmon\AiContentBundle\Enum\TaskType;
 use Xmon\AiContentBundle\Service\AiTextService;
 
 class MyService
@@ -65,7 +79,9 @@ class MyService
 
     public function summarize(string $content): string
     {
-        $result = $this->aiTextService->generate(
+        // Uses the model configured for NEWS_CONTENT task
+        $result = $this->aiTextService->generateForTask(
+            TaskType::NEWS_CONTENT,
             systemPrompt: 'You are a helpful assistant.',
             userMessage: "Summarize: {$content}",
         );
@@ -88,7 +104,8 @@ class MyService
 
     public function generateImage(): void
     {
-        $result = $this->aiImageService->generate(
+        // Uses the model configured for IMAGE_GENERATION task
+        $result = $this->aiImageService->generateForTask(
             prompt: 'A serene Japanese dojo with morning light',
         );
 
@@ -103,6 +120,7 @@ class MyService
 - [Installation Guide](docs/installation.md) - Full setup instructions
 
 ### Guides
+- [Task Types](docs/guides/task-types.md) - Configure models per task
 - [Text Generation](docs/guides/text-generation.md) - Generate text with AI
 - [Image Generation](docs/guides/image-generation.md) - Generate images with AI
 - [Styles & Presets](docs/guides/styles-presets.md) - Control image styles
@@ -113,28 +131,37 @@ class MyService
 
 ### Reference
 - [Configuration](docs/reference/configuration.md) - Full YAML reference
-- [Providers](docs/reference/providers.md) - Available AI providers
+- [Providers](docs/reference/providers.md) - Available AI models and costs
 - [Fallback System](docs/reference/fallback-system.md) - How automatic fallback works
 - [Architecture](docs/reference/architecture.md) - Bundle structure
 
 ### Development
 - [Development Guide](docs/development.md) - Local setup and commands
 
-## Available Providers
+## Available Models
 
-### Text
+### Text Models (via Pollinations)
 
-| Provider | Requires API Key | Notes |
-|----------|------------------|-------|
-| Gemini | Yes | Recommended, fast |
-| OpenRouter | Yes | Multiple models |
-| Pollinations | Optional | Always available, higher rate limits with key |
+| Model | ~Responses/Pollen | Recommended For |
+|-------|-------------------|-----------------|
+| `claude` | 330 | High-quality content |
+| `gemini` | 1,600 | General content |
+| `openai` | 8,000 | General purpose |
+| `gemini-fast` | 12,000 | Fast operations |
+| `openai-fast` | 11,000 | Quick tasks |
+| `mistral` | 13,000 | Fallback |
 
-### Image
+### Image Models (via Pollinations)
 
-| Provider | Requires API Key | Notes |
-|----------|------------------|-------|
-| Pollinations | Optional | Flux model |
+| Model | ~Images/Pollen | Notes |
+|-------|----------------|-------|
+| `gptimage` | 160 | Best for complex scenes |
+| `seedream` | 35 | High quality |
+| `nanobanana` | 25 | Reference-based |
+| `flux` | 8,300 | Good default (free) |
+| `turbo` | 3,300 | Fast previews (free) |
+
+> **Pricing:** 1 pollen = $1 USD
 
 ## Debug Command
 
@@ -143,17 +170,6 @@ bin/console xmon:ai:debug
 ```
 
 Shows configured providers, styles, presets, and prompt templates.
-
-## Roadmap
-
-- [x] Phase 1: Base structure + Pollinations
-- [x] Phase 2: SonataMedia integration
-- [x] Phase 3: Text providers (Gemini, OpenRouter, Pollinations)
-- [x] Phase 4: Styles/presets system (ImageOptionsService, PromptBuilder)
-- [x] Phase 5: Configurable prompts (PromptTemplateService)
-- [x] Phase 6: Admin regeneration UI (Form Types, Controller, Templates)
-- [ ] Phase 7: Aikido project migration
-- [ ] Phase 8: Packagist publication
 
 ## License
 

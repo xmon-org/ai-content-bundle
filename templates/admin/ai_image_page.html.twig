@@ -275,6 +275,21 @@
                             <i class="fa fa-exclamation-triangle"></i> {{ 'Image service not configured'|trans }}
                         </small>
                         {% endif %}
+
+                        {# Cost indicator #}
+                        {% if imageModels is defined and defaultImageModel is defined and imageModels[defaultImageModel] is defined %}
+                        <div id="costIndicator" style="margin-top: 10px; padding: 8px 12px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; text-align: center;">
+                            <small style="color: #666;">
+                                <i class="fa fa-info-circle"></i>
+                                {{ 'Model'|trans }}: <strong>{{ imageModels[defaultImageModel].name }}</strong>
+                                {% if imageModels[defaultImageModel].isFree %}
+                                    <span class="label label-success" style="margin-left: 5px;">{{ 'Free'|trans }}</span>
+                                {% else %}
+                                    <span style="margin-left: 5px; color: #888;">({{ imageModels[defaultImageModel].formattedCost }})</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% if xmon_ai_show_bundle_credit %}

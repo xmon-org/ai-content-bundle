@@ -6,31 +6,8 @@ services:
         autowire: true
         autoconfigure: true
 
-    # Text Providers
-    # Priority: higher number = tried first (Symfony tagged_iterator sorts descending)
-    # AutoconfigureTag on interface enables external providers, bundle providers need explicit tags
-    Xmon\AiContentBundle\Provider\Text\GeminiTextProvider:
-        arguments:
-            $apiKey: null
-            $model: 'gemini-2.0-flash-lite'
-            $fallbackModels: []
-            $timeout: 30
-            $priority: 100
-        tags:
-            - { name: 'xmon_ai_content.text_provider', priority: 100 }
-            - { name: 'monolog.logger', channel: 'ai' }
-
-    Xmon\AiContentBundle\Provider\Text\OpenRouterTextProvider:
-        arguments:
-            $apiKey: null
-            $model: 'google/gemini-2.0-flash-exp:free'
-            $fallbackModels: []
-            $timeout: 90
-            $priority: 50
-        tags:
-            - { name: 'xmon_ai_content.text_provider', priority: 50 }
-            - { name: 'monolog.logger', channel: 'ai' }
-
+    # Text Provider (Pollinations only - simplified architecture Dec 2025)
+    # All text generation uses Pollinations API with model selection via TaskConfigService
     Xmon\AiContentBundle\Provider\Text\PollinationsTextProvider:
         arguments:
             $model: 'openai'
@@ -45,6 +22,7 @@ services:
     Xmon\AiContentBundle\Service\AiTextService:
         arguments:
             $providers: !tagged_iterator { tag: 'xmon_ai_content.text_provider', default_priority_method: 'getPriority' }
+            $taskConfigService: '@Xmon\AiContentBundle\Service\TaskConfigService'
             $retries: 2
             $retryDelay: 3
         tags:

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Xmon\AiContentBundle\Service;
 
 use Psr\Log\LoggerInterface;
+use Xmon\AiContentBundle\Enum\TaskType;
 use Xmon\AiContentBundle\Exception\AiProviderException;
 use Xmon\AiContentBundle\Model\ImageResult;
+use Xmon\AiContentBundle\Model\ModelInfo;
 use Xmon\AiContentBundle\Provider\ImageProviderInterface;
 
 class AiImageService
@@ -16,6 +18,7 @@ class AiImageService
      */
     public function __construct(
         private readonly iterable $providers,
+        private readonly ?TaskConfigService $taskConfigService = null,
         private readonly ?LoggerInterface $logger = null,
         private readonly int $retries = 3,
         private readonly int $retryDelay = 5,
@@ -85,6 +88,89 @@ class AiImageService
         ));
 
         throw new AiProviderException(\sprintf('All image providers failed: %s', $errorDetails ?: 'No providers available'), 'all');
+    }
+
+    /**
+     * Generate an image for a specific task type (IMAGE_GENERATION).
+     *
+     * Uses the TaskConfigService to determine which model to use based on
+     * the task type configuration. Falls back to generate() if no config service.
+     *
+     * @param string $prompt  The text prompt describing the image
+     * @param array{
+     *     width?: int,
+     *     height?: int,
+     *     model?: string,
+     *     seed?: int,
+     *     nologo?: bool,
+     *     enhance?: bool,
+     *     provider?: string
+     * } $options Additional generation options (model can be overridden here)
+     *
+     * @throws AiProviderException When model is not allowed for task or all providers fail
+     */
+    public function generateForTask(string $prompt, array $options = []): ImageResult
+    {
+        if ($this->taskConfigService === null) {
+            $this->logger?->warning('[AiImageService] TaskConfigService not available, using default generate()');
+
+            return $this->generate($prompt, $options);
+        }
+
+        // For images, we always use IMAGE_GENERATION task type
+        $taskType = TaskType::IMAGE_GENERATION;
+
+        // Resolve the model to use (validates if explicitly requested)
+        $model = $this->taskConfigService->resolveModel(
+            $taskType,
+            $options['model'] ?? null
+        );
+
+        $this->logger?->info('[AiImageService] Generating for task', [
+            'task' => $taskType->value,
+            'model' => $model,
+        ]);
+
+        // Merge model into options
+        $options['model'] = $model;
+
+        return $this->generate($prompt, $options);
+    }
+
+    /**
+     * Get the allowed models for image generation.
+     *
+     * @return array<string, ModelInfo>
+     */
+    public function getAllowedModelsForTask(): array
+    {
+        if ($this->taskConfigService === null) {
+            return [];
+        }
+
+        return $this->taskConfigService->getAllowedModelsWithInfo(TaskType::IMAGE_GENERATION);
+    }
+
+    /**
+     * Get the default model for image generation.
+     */
+    public function getDefaultModel(): ?string
+    {
+        return $this->taskConfigService?->getDefaultModel(TaskType::IMAGE_GENERATION);
+    }
+
+    /**
+     * Get the allowed models formatted for UI selects.
+     *
+     * @return array<string, string> [key => "Name (cost)"]
+     */
+    public function getAllowedModelsForSelect(): array
+    {
+        if ($this->taskConfigService === null) {
+            return [];
+        }
+
+        return $this->taskConfigService->getAllowedModelsForSelect(TaskType::IMAGE_GENERATION);
     }
 
     /**

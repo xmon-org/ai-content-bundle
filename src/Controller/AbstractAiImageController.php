@@ -13,11 +13,13 @@ use Xmon\AiContentBundle\Entity\AiImageAwareInterface;
 use Xmon\AiContentBundle\Entity\AiImageContextInterface;
 use Xmon\AiContentBundle\Entity\AiImageHistoryInterface;
 use Xmon\AiContentBundle\Entity\AiPromptVariablesInterface;
+use Xmon\AiContentBundle\Enum\TaskType;
 use Xmon\AiContentBundle\Service\AiImageService;
 use Xmon\AiContentBundle\Service\AiStyleService;
 use Xmon\AiContentBundle\Service\AiTextService;
 use Xmon\AiContentBundle\Service\ImageOptionsService;
 use Xmon\AiContentBundle\Service\MediaStorageService;
+use Xmon\AiContentBundle\Service\ModelRegistryService;
 use Xmon\AiContentBundle\Service\PromptBuilder;
 use Xmon\AiContentBundle\Service\PromptTemplateService;
 
@@ -87,6 +89,7 @@ abstract class AbstractAiImageController extends AbstractController
         protected readonly PromptTemplateService $promptTemplateService,
         protected readonly ?MediaStorageService $mediaStorage = null,
         protected readonly ?AiStyleService $styleService = null,
+        protected readonly ?ModelRegistryService $modelRegistry = null,
         protected readonly int $maxHistoryImages = 5,
     ) {
     }
@@ -200,6 +203,12 @@ abstract class AbstractAiImageController extends AbstractController
             'textServiceConfigured' => $this->textService->isConfigured(),
             'imageServiceConfigured' => $this->imageService->isConfigured(),
 
+            // Model information with costs (for UI cost display)
+            'imageModels' => $this->getImageModelsForTemplate(),
+            'textModels' => $this->getTextModelsForTemplate(),
+            'defaultImageModel' => $this->imageService->getDefaultModel(),
+            'defaultTextModel' => $this->textService->getDefaultModelForTask(TaskType::IMAGE_PROMPT),
+
             // Routes for AJAX calls (to be implemented by child)
             'routes' => $this->getRoutes($id),
 
@@ -207,6 +216,58 @@ abstract class AbstractAiImageController extends AbstractController
             'backUrl' => $this->getBackUrl($entity),
             'listUrl' => $this->getListUrl($entity),
         ]);
+    }
+
+    /**
+     * Get image models with cost information for the template.
+     *
+     * @return array<string, array{key: string, name: string, formattedCost: string, responsesPerPollen: int, isFree: bool}>
+     */
+    protected function getImageModelsForTemplate(): array
+    {
+        if ($this->modelRegistry === null) {
+            return [];
+        }
+
+        $models = [];
+        foreach ($this->modelRegistry->getAllImageModels() as $key => $modelInfo) {
+            $models[$key] = [
+                'key' => $modelInfo->key,
+                'name' => $modelInfo->name,
+                'formattedCost' => $modelInfo->getFormattedCost(),
+                'responsesPerPollen' => $modelInfo->responsesPerPollen,
+                'isFree' => $modelInfo->isFree(),
+                'description' => $modelInfo->description,
+            ];
+        }
+
+        return $models;
+    }
+
+    /**
+     * Get text models with cost information for the template.
+     *
+     * @return array<string, array{key: string, name: string, formattedCost: string, responsesPerPollen: int, isFree: bool}>
+     */
+    protected function getTextModelsForTemplate(): array
+    {
+        if ($this->modelRegistry === null) {
+            return [];
+        }
+
+        $models = [];
+        foreach ($this->modelRegistry->getAllTextModels() as $key => $modelInfo) {
+            $models[$key] = [
+                'key' => $modelInfo->key,
+                'name' => $modelInfo->name,
+                'formattedCost' => $modelInfo->getFormattedCost(),
+                'responsesPerPollen' => $modelInfo->responsesPerPollen,
+                'isFree' => $modelInfo->isFree(),
+                'description' => $modelInfo->description,
+            ];
+        }
+
+        return $models;
     }
 
     /**
@@ -306,8 +367,9 @@ abstract class AbstractAiImageController extends AbstractController
             // Render the template with variables (replaces {placeholder} syntax)
             $prompts = $this->promptTemplateService->render('image_subject', $variables);
 
-            // Generate the subject using the rendered template
-            $result = $this->textService->generate(
+            // Generate the subject using TaskType for model selection
+            $result = $this->textService->generateForTask(
+                taskType: TaskType::IMAGE_PROMPT,
                 systemPrompt: $prompts['system'],
                 userMessage: $prompts['user'],
             );
@@ -359,8 +421,8 @@ abstract class AbstractAiImageController extends AbstractController
             // Build full prompt: subject + style
             $fullPrompt = trim($subject).($baseStyle ? ', '.$baseStyle : '');
 
-            // Generate the image
-            $imageResult = $this->imageService->generate($fullPrompt);
+            // Generate the image using TaskType for model selection
+            $imageResult = $this->imageService->generateForTask($fullPrompt);
 
             // Store the image (if MediaStorageService is available)
             $media = null;

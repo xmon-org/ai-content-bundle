@@ -25,6 +25,7 @@ services:
     Xmon\AiContentBundle\Service\AiImageService:
         arguments:
             $providers: !tagged_iterator { tag: 'xmon_ai_content.image_provider', default_priority_method: 'getPriority' }
+            $taskConfigService: '@Xmon\AiContentBundle\Service\TaskConfigService'
             $retries: 3
             $retryDelay: 5
         tags:
@@ -54,6 +55,19 @@ services:
 
     # Prompt Builder (combines subject with style options)
     Xmon\AiContentBundle\Service\PromptBuilder: ~
+
+    # Model Registry (catalog of available models with costs)
+    # Contains immutable provider data - model names, costs per response, descriptions.
+    # This is the "source of truth" for what models exist and their pricing.
+    Xmon\AiContentBundle\Service\ModelRegistryService: ~
+
+    # Task Config Service (per-task model configuration)
+    # Bridges ModelRegistryService with user configuration.
+    # Determines which models are allowed/default for each TaskType.
+    Xmon\AiContentBundle\Service\TaskConfigService:
+        arguments:
+            $modelRegistry: '@Xmon\AiContentBundle\Service\ModelRegistryService'
+            $tasksConfig: []
 
     # Style Providers
     Xmon\AiContentBundle\Provider\Style\YamlStyleProvider:
