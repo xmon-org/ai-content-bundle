@@ -85,15 +85,7 @@ class TaskConfigService
     public function validateModel(TaskType $taskType, string $model): void
     {
         if (!$this->isModelAllowed($taskType, $model)) {
-            throw new AiProviderException(
-                sprintf(
-                    'Model "%s" is not allowed for task "%s". Allowed models: %s',
-                    $model,
-                    $taskType->value,
-                    implode(', ', $this->getAllowedModels($taskType))
-                ),
-                'pollinations'
-            );
+            throw new AiProviderException(\sprintf('Model "%s" is not allowed for task "%s". Allowed models: %s', $model, $taskType->value, implode(', ', $this->getAllowedModels($taskType))), 'pollinations');
         }
     }
 
@@ -109,10 +101,7 @@ class TaskConfigService
         $modelInfo = $this->modelRegistry->getModel($model);
 
         if ($modelInfo === null) {
-            throw new AiProviderException(
-                sprintf('Model "%s" not found in registry', $model),
-                'pollinations'
-            );
+            throw new AiProviderException(\sprintf('Model "%s" not found in registry', $model), 'pollinations');
         }
 
         return $modelInfo;
@@ -148,7 +137,7 @@ class TaskConfigService
         $result = [];
 
         foreach ($this->getAllowedModelsWithInfo($taskType) as $key => $model) {
-            $result[$key] = sprintf('%s (%s)', $model->name, $model->getFormattedCost());
+            $result[$key] = \sprintf('%s (%s)', $model->name, $model->getFormattedCost());
         }
 
         return $result;

@@ -96,7 +96,7 @@ class AiImageService
      * Uses the TaskConfigService to determine which model to use based on
      * the task type configuration. Falls back to generate() if no config service.
      *
-     * @param string $prompt  The text prompt describing the image
+     * @param string $prompt The text prompt describing the image
      * @param array{
      *     width?: int,
      *     height?: int,

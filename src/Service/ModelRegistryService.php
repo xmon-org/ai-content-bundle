@@ -104,7 +104,7 @@ class ModelRegistryService
             name: $data['name'],
             type: 'text',
             responsesPerPollen: $data['responsesPerPollen'],
-            description: $data['description'] ?? null,
+            description: $data['description'],
         );
     }
 
@@ -124,7 +124,7 @@ class ModelRegistryService
             name: $data['name'],
             type: 'image',
             responsesPerPollen: $data['responsesPerPollen'],
-            description: $data['description'] ?? null,
+            description: $data['description'],
         );
     }
 
@@ -232,7 +232,7 @@ class ModelRegistryService
     {
         $result = [];
         foreach ($this->getAllTextModels() as $key => $model) {
-            $result[$key] = sprintf('%s (%s)', $model->name, $model->getFormattedCost());
+            $result[$key] = \sprintf('%s (%s)', $model->name, $model->getFormattedCost());
         }
 
         return $result;
@@ -247,7 +247,7 @@ class ModelRegistryService
     {
         $result = [];
         foreach ($this->getAllImageModels() as $key => $model) {
-            $result[$key] = sprintf('%s (%s)', $model->name, $model->getFormattedCost());
+            $result[$key] = \sprintf('%s (%s)', $model->name, $model->getFormattedCost());
         }
 
         return $result;

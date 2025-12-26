@@ -69,10 +69,10 @@ readonly class ModelInfo
     public function getFormattedCost(): string
     {
         if ($this->responsesPerPollen >= 1000) {
-            return sprintf('~%sK per pollen', number_format($this->responsesPerPollen / 1000, 1));
+            return \sprintf('~%sK per pollen', number_format($this->responsesPerPollen / 1000, 1));
         }
 
-        return sprintf('~%d per pollen', $this->responsesPerPollen);
+        return \sprintf('~%d per pollen', $this->responsesPerPollen);
     }
 
     /**
