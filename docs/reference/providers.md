@@ -2,97 +2,119 @@
 
 Available AI providers in xmon-org/ai-content-bundle.
 
-> **Architecture Decision (December 2025):** The bundle uses Pollinations as the sole provider for both text and image generation. Pollinations provides access to multiple AI models (Claude, Gemini, GPT, Mistral, etc.) through a unified API, simplifying configuration and eliminating the need for multiple API keys.
+> **Architecture Decision (December 2025):** The bundle uses Pollinations as the sole provider for both text and image generation. Pollinations provides access to multiple AI models (Claude, Gemini, GPT, Mistral, etc.) through a unified API.
+
+## Query Available Models
+
+Get the current list of models with pricing directly from Pollinations:
+
+```bash
+# All text models with pricing
+curl -H "Authorization: Bearer YOUR_API_KEY" https://gen.pollinations.ai/models
+
+# All image models with pricing
+curl -H "Authorization: Bearer YOUR_API_KEY" https://gen.pollinations.ai/image/models
+```
+
+## Access Tiers
+
+Models are available based on your account tier:
+
+| Tier | Requirements | Access |
+|------|--------------|--------|
+| `anonymous` | None | Basic models (`openai`, `openai-fast`, `flux`, `turbo`) |
+| `seed` | API key from [auth.pollinations.ai](https://auth.pollinations.ai) | + `gemini*`, `deepseek`, `mistral`, `nanobanana` |
+| `flower` | Premium account | All models (pollen credits) |
 
 ## Text Provider
 
-| Provider | Status | Requires API Key | Notes |
-|----------|--------|------------------|-------|
-| Pollinations | Implemented | Optional | Access to Claude, Gemini, GPT, Mistral via unified API |
-
-### Pollinations
-
-Unified AI API that provides access to multiple models through a single endpoint.
-
 ```yaml
-pollinations:
-    enabled: true
-    priority: 10
-    api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional for basic use, required for premium models
-    model: 'openai'  # Default model
-    timeout: 60
+text:
+    providers:
+        pollinations:
+            enabled: true
+            priority: 10
+            api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Required for seed/flower tier
+            timeout: 60
 ```
 
-**Available Text Models:**
+### Available Text Models
 
-| Model Key | Model Name | ~Responses/Pollen | Best For |
-|-----------|------------|-------------------|----------|
-| `claude` | Claude Sonnet 4.5 | 330 | High-quality content (NEWS_CONTENT) |
-| `gemini` | Gemini 3 Flash | 1,600 | General content |
-| `openai` | GPT-5 Mini | 8,000 | General purpose |
-| `gemini-fast` | Gemini 2.5 Flash Lite | 12,000 | Fast prompts (IMAGE_PROMPT) |
-| `openai-fast` | GPT-5 Nano | 11,000 | Quick operations |
-| `mistral` | Mistral Small | 13,000 | Backup/fallback |
+| Model | Tier | ~Resp/$ | Description |
+|-------|------|---------|-------------|
+| `openai-fast` | anonymous | 2,272 | GPT-5 Nano - Ultra fast, no reasoning |
+| `openai` | anonymous | 1,666 | GPT-5 Mini - Fast & balanced |
+| `nova-micro` | seed | 7,142 | Amazon Nova Micro - Ultra cheap |
+| `gemini-fast` | seed | 2,500 | Gemini 2.5 Flash Lite - Fast prompts |
+| `mistral` | seed | 2,857 | Mistral Small 3.2 - Efficient |
+| `grok` | seed | 2,000 | xAI Grok 4 Fast - Real-time |
+| `deepseek` | seed | 595 | DeepSeek V3.2 - Reasoning |
+| `qwen-coder` | seed | 1,111 | Qwen 2.5 Coder - Code generation |
+| `gemini` | seed | 333 | Gemini 3 Flash - Pro-grade |
+| `gemini-search` | seed | 333 | Gemini 3 Flash with Search |
+| `claude-fast` | flower | 200 | Claude Haiku 4.5 - Fast premium |
+| `perplexity-fast` | flower | 1,000 | Perplexity Sonar - Web search |
+| `claude` | flower | 66 | Claude Sonnet 4.5 - High quality |
+| `openai-large` | flower | 71 | GPT-5.2 - Most powerful |
+| `gemini-large` | flower | 83 | Gemini 3 Pro - 1M context |
+| `claude-large` | flower | 40 | Claude Opus 4.5 - Most intelligent |
 
-> **Pricing:** 1 pollen ≈ $1 USD. Cost per response = 1 / responses_per_pollen
-
-**Model Selection:** Models are selected per TaskType. See [Task Types Guide](../guides/task-types.md).
-
-**Get API Key:** [Pollinations Dashboard](https://pollinations.ai/)
+> **Pricing:** 1 pollen = $1 USD. ~Resp/$ = approximate responses per dollar.
 
 ## Image Provider
 
-| Provider | Status | Requires API Key | Notes |
-|----------|--------|------------------|-------|
-| Pollinations | Implemented | Optional | Multiple models including free options |
-
-### Pollinations (Images)
-
-Image generation API with multiple model options.
-
 ```yaml
-pollinations:
-    enabled: true
-    priority: 100
-    api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional for free models
-    model: 'flux'  # Default free model
-    timeout: 120
+image:
+    providers:
+        pollinations:
+            enabled: true
+            priority: 100
+            api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Required for premium models
+            timeout: 120
 ```
 
-**Available Image Models:**
+### Available Image Models
 
-| Model Key | Model Name | ~Images/Pollen | Notes |
-|-----------|------------|----------------|-------|
-| `gptimage` | OpenAI Image 1 Mini | 160 | Best for complex scenes (recommended for aikido) |
-| `seedream` | ByteDance ARK 2K | 35 | High quality |
-| `nanobanana` | Gemini Image | 25 | With reference images |
-| `flux` | Flux (free) | 8,300 | Good default, free tier |
-| `turbo` | Turbo (free) | 3,300 | Fast previews, free tier |
+| Model | Tier | ~Img/$ | Description |
+|-------|------|--------|-------------|
+| `flux` | anonymous | 8,333 | Fast & high quality (free) |
+| `turbo` | anonymous | 3,333 | Ultra-fast previews (free) |
+| `zimage` | seed | 5,000 | Z-Image-Turbo (alpha) |
+| `nanobanana` | seed | 33,333 | Gemini 2.5 Flash, reference images |
+| `nanobanana-pro` | flower | 8,333 | Gemini 3 Pro, 4K |
+| `gptimage` | flower | 125,000 | OpenAI, best prompt understanding |
+| `gptimage-large` | flower | 31,250 | OpenAI 1.5, advanced |
+| `seedream` | flower | 33 | ByteDance ARK, complex scenes |
+| `seedream-pro` | flower | 25 | ByteDance 4K, multi-image |
+| `kontext` | flower | 25 | Context-aware generation |
 
 **Options:**
 - `width`, `height` - Image dimensions
 - `seed` - For reproducible results
-- `nologo` - Remove watermark (requires API key)
-- `enhance` - AI enhances prompt automatically
-
-**Model Selection:** Models are selected per TaskType. See [Task Types Guide](../guides/task-types.md).
+- `nologo` - Remove watermark
+- `enhance` - AI enhances prompt
 
 ## Cost Estimation
 
-With default premium configuration (1 pollen = $1 USD):
+With seed tier (gemini + flux):
 
 | Task | Model | Cost |
 |------|-------|------|
-| News content | claude | ~$0.003/article |
-| Image prompt | gemini-fast | ~$0.00008/prompt |
-| Image generation | gptimage | ~$0.006/image |
-| **Total per article** | | **~$0.01** |
+| News content | gemini | ~$0.003/article |
+| Image prompt | gemini-fast | ~$0.0004/prompt |
+| Image generation | flux | FREE |
+| **Total per article** | | **~$0.004** |
 
-> 100 complete articles (with images) ≈ $1 USD
+> 250 complete articles (with images) ≈ $1 USD
 
-## Custom Providers
+With flower tier (claude + gptimage):
 
-You can create custom providers. See [Custom Providers Guide](../guides/custom-providers.md).
+| Task | Model | Cost |
+|------|-------|------|
+| News content | claude | ~$0.015/article |
+| Image prompt | claude-fast | ~$0.005/prompt |
+| Image generation | gptimage | ~$0.000008/image |
+| **Total per article** | | **~$0.02** |
 
 ## Related
 

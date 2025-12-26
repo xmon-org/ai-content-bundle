@@ -213,39 +213,57 @@ $defaultModel = $this->aiTextService->getDefaultModelForTask(TaskType::IMAGE_PRO
 
 ## Available Models
 
+Query current models with pricing:
+```bash
+curl -H "Authorization: Bearer YOUR_KEY" https://gen.pollinations.ai/models
+curl -H "Authorization: Bearer YOUR_KEY" https://gen.pollinations.ai/image/models
+```
+
 ### Text Models
 
-| Key | Name | ~Responses/Pollen | Best For |
-|-----|------|-------------------|----------|
-| `claude` | Claude Sonnet 4.5 | 330 | High-quality content |
-| `gemini` | Gemini 3 Flash | 1,600 | General content |
-| `openai` | GPT-5 Mini | 8,000 | General purpose |
-| `gemini-fast` | Gemini 2.5 Flash Lite | 12,000 | Fast operations |
-| `openai-fast` | GPT-5 Nano | 11,000 | Quick tasks |
-| `mistral` | Mistral Small | 13,000 | Fallback |
+| Key | Tier | ~Resp/$ | Best For |
+|-----|------|---------|----------|
+| `openai-fast` | anonymous | 2,272 | Quick tasks (free) |
+| `openai` | anonymous | 1,666 | General purpose (free) |
+| `gemini-fast` | seed | 2,500 | Fast prompts |
+| `mistral` | seed | 2,857 | Backup/fallback |
+| `deepseek` | seed | 595 | Reasoning tasks |
+| `gemini` | seed | 333 | Quality content |
+| `claude` | flower | 66 | Premium content |
 
 ### Image Models
 
-| Key | Name | ~Images/Pollen | Best For |
-|-----|------|----------------|----------|
-| `gptimage` | OpenAI Image 1 Mini | 160 | Complex scenes (aikido, hakamas) |
-| `seedream` | ByteDance ARK 2K | 35 | High quality |
-| `nanobanana` | Gemini Image | 25 | Reference-based |
-| `flux` | Flux (free) | 8,300 | Good default |
-| `turbo` | Turbo (free) | 3,300 | Fast previews |
+| Key | Tier | ~Img/$ | Best For |
+|-----|------|--------|----------|
+| `flux` | anonymous | 8,333 | Good default (free) |
+| `turbo` | anonymous | 3,333 | Fast previews (free) |
+| `nanobanana` | seed | 33,333 | With reference images |
+| `gptimage` | flower | 125,000 | Complex scenes |
+| `seedream` | flower | 33 | High quality |
 
 ## Cost Estimation
 
-With premium defaults (1 pollen = $1 USD):
+### Seed tier (gemini + flux):
 
 | Operation | Model | Cost |
 |-----------|-------|------|
-| Article content | claude | ~$0.003 |
-| Image prompt | gemini-fast | ~$0.00008 |
-| Image generation | gptimage | ~$0.006 |
-| **Complete article with image** | | **~$0.01** |
+| Article content | gemini | ~$0.003 |
+| Image prompt | gemini-fast | ~$0.0004 |
+| Image generation | flux | FREE |
+| **Complete article** | | **~$0.004** |
 
-> **100 complete articles (with images) = ~$1 USD**
+> **250 articles (with images) ≈ $1 USD**
+
+### Flower tier (claude + gptimage):
+
+| Operation | Model | Cost |
+|-----------|-------|------|
+| Article content | claude | ~$0.015 |
+| Image prompt | claude-fast | ~$0.005 |
+| Image generation | gptimage | ~$0.000008 |
+| **Complete article** | | **~$0.02** |
+
+> **50 articles (with images) ≈ $1 USD**
 
 ## Best Practices
 

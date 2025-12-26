@@ -4,21 +4,24 @@ declare(strict_types=1);
 
 namespace Xmon\AiContentBundle\Model;
 
+use Xmon\AiContentBundle\Enum\ModelTier;
+
 /**
  * Immutable DTO containing model information including costs.
  *
  * Cost reference: 1 pollen = $1 USD
  * The responsesPerPollen indicates how many responses you get per $1.
+ * Value of 0 means the model is free (unlimited responses).
  */
 readonly class ModelInfo
 {
     public function __construct(
         /**
-         * Model identifier (e.g., 'claude', 'gptimage').
+         * Model identifier (e.g., 'openai', 'flux').
          */
         public string $key,
         /**
-         * Human-readable name (e.g., 'Claude Sonnet 4.5').
+         * Human-readable name (e.g., 'GPT-4.1 Nano').
          */
         public string $name,
         /**
@@ -27,9 +30,13 @@ readonly class ModelInfo
         public string $type,
         /**
          * Approximate responses per 1 pollen ($1 USD).
-         * Higher = cheaper. Example: 330 means ~330 responses per $1.
+         * Higher = cheaper. 0 = free (unlimited).
          */
         public int $responsesPerPollen,
+        /**
+         * Access tier required for this model.
+         */
+        public ModelTier $tier = ModelTier::ANONYMOUS,
         /**
          * Optional description of the model capabilities.
          */
@@ -76,13 +83,21 @@ readonly class ModelInfo
     }
 
     /**
-     * Check if this is a free model (very high responses per pollen).
+     * Check if this is a free model.
      *
-     * Models with 3000+ responses per pollen are considered effectively free.
+     * Free models have responsesPerPollen = 0 (unlimited) or tier = anonymous.
      */
     public function isFree(): bool
     {
-        return $this->responsesPerPollen >= 3000;
+        return $this->responsesPerPollen === 0 || $this->tier === ModelTier::ANONYMOUS;
+    }
+
+    /**
+     * Check if this model requires an API key.
+     */
+    public function requiresApiKey(): bool
+    {
+        return $this->tier->requiresApiKey();
     }
 
     /**
@@ -113,10 +128,13 @@ readonly class ModelInfo
             'name' => $this->name,
             'type' => $this->type,
             'responsesPerPollen' => $this->responsesPerPollen,
+            'tier' => $this->tier->value,
+            'tierLabel' => $this->tier->getLabel(),
             'description' => $this->description,
             'costPerResponse' => $this->getCostPerResponse(),
             'formattedCost' => $this->getFormattedCost(),
             'isFree' => $this->isFree(),
+            'requiresApiKey' => $this->requiresApiKey(),
         ];
     }
 }

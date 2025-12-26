@@ -140,28 +140,46 @@ class MyService
 
 ## Available Models
 
+Query available models with pricing from Pollinations API:
+```bash
+# All models with pricing
+curl -H "Authorization: Bearer YOUR_API_KEY" https://gen.pollinations.ai/models
+
+# Image models with pricing
+curl -H "Authorization: Bearer YOUR_API_KEY" https://gen.pollinations.ai/image/models
+```
+
 ### Text Models (via Pollinations)
 
-| Model | ~Responses/Pollen | Recommended For |
-|-------|-------------------|-----------------|
-| `claude` | 330 | High-quality content |
-| `gemini` | 1,600 | General content |
-| `openai` | 8,000 | General purpose |
-| `gemini-fast` | 12,000 | Fast operations |
-| `openai-fast` | 11,000 | Quick tasks |
-| `mistral` | 13,000 | Fallback |
+| Model | Tier | ~Resp/$ | Description |
+|-------|------|---------|-------------|
+| `openai-fast` | anonymous | 2,272 | GPT-5 Nano - Ultra fast |
+| `openai` | anonymous | 1,666 | GPT-5 Mini - Balanced |
+| `gemini-fast` | seed | 2,500 | Gemini 2.5 Flash Lite - Fast & cheap |
+| `gemini` | seed | 333 | Gemini 3 Flash - Pro-grade |
+| `gemini-search` | seed | 333 | Gemini 3 Flash with Search |
+| `deepseek` | seed | 595 | DeepSeek V3.2 - Reasoning |
+| `mistral` | seed | 2,857 | Mistral Small 3.2 - Efficient |
+| `claude` | flower | 66 | Claude Sonnet 4.5 - Premium |
+| `gptimage` | flower | - | GPT Image 1 Mini - Premium |
 
 ### Image Models (via Pollinations)
 
-| Model | ~Images/Pollen | Notes |
-|-------|----------------|-------|
-| `gptimage` | 160 | Best for complex scenes |
-| `seedream` | 35 | High quality |
-| `nanobanana` | 25 | Reference-based |
-| `flux` | 8,300 | Good default (free) |
-| `turbo` | 3,300 | Fast previews (free) |
+| Model | Tier | ~Img/$ | Description |
+|-------|------|--------|-------------|
+| `flux` | anonymous | 8,333 | Fast & high quality (free) |
+| `turbo` | anonymous | 3,333 | Ultra-fast previews (free) |
+| `nanobanana` | seed | 33,333 | Gemini-based, reference images |
+| `gptimage` | flower | 125,000 | OpenAI, best prompt understanding |
+| `seedream` | flower | 33 | ByteDance ARK, complex scenes |
 
-> **Pricing:** 1 pollen = $1 USD
+### Tiers
+
+| Tier | Requirements | Access |
+|------|--------------|--------|
+| `anonymous` | None | `openai`, `openai-fast`, `flux`, `turbo` |
+| `seed` | API key from [auth.pollinations.ai](https://auth.pollinations.ai) | + `gemini*`, `deepseek`, `mistral`, `nanobanana` |
+| `flower` | Premium account | All models (pollen credits) |
 
 ## Debug Command
 
