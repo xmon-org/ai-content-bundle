@@ -18,6 +18,7 @@ use Xmon\AiContentBundle\Service\AiImageService;
 use Xmon\AiContentBundle\Service\AiStyleService;
 use Xmon\AiContentBundle\Service\AiTextService;
 use Xmon\AiContentBundle\Service\ImageOptionsService;
+use Xmon\AiContentBundle\Service\ImageSubjectGenerator;
 use Xmon\AiContentBundle\Service\MediaStorageService;
 use Xmon\AiContentBundle\Service\ModelRegistryService;
 use Xmon\AiContentBundle\Service\PromptBuilder;
@@ -91,6 +92,7 @@ abstract class AbstractAiImageController extends AbstractController
         protected readonly ?AiStyleService $styleService = null,
         protected readonly ?ModelRegistryService $modelRegistry = null,
         protected readonly int $maxHistoryImages = 5,
+        protected readonly ?ImageSubjectGenerator $subjectGenerator = null,
     ) {
     }
 
@@ -338,8 +340,11 @@ abstract class AbstractAiImageController extends AbstractController
     /**
      * Generate a subject (image description) for an entity.
      *
+     * Uses ImageSubjectGenerator if available (two-step anchor extraction).
+     * Falls back to legacy template-based generation if not.
+     *
      * Expects POST request.
-     * Returns JSON: { success: bool, prompt?: string, model?: string, error?: string }
+     * Returns JSON: { success: bool, prompt?: string, model?: string, anchor?: array, error?: string }
      */
     protected function doGenerateSubject(int $id): JsonResponse
     {
@@ -356,18 +361,31 @@ abstract class AbstractAiImageController extends AbstractController
 
         try {
             // Build variables for the template
-            // If entity implements AiPromptVariablesInterface, use its variables
-            // Otherwise, fall back to just {content}
             if ($entity instanceof AiPromptVariablesInterface) {
                 $variables = $entity->getPromptVariables();
             } else {
                 $variables = ['content' => $entity->getContentForImageGeneration()];
             }
 
-            // Render the template with variables (replaces {placeholder} syntax)
+            // Use ImageSubjectGenerator if available (two-step with anchor extraction)
+            if ($this->subjectGenerator !== null) {
+                // Extract title and summary from variables
+                $title = $variables['titulo'] ?? $variables['title'] ?? '';
+                $summary = $variables['resumen'] ?? $variables['summary'] ?? $variables['content'] ?? '';
+
+                $subject = $this->subjectGenerator->generate($title, $summary);
+
+                return new JsonResponse([
+                    'success' => true,
+                    'prompt' => $subject,
+                    'model' => $this->subjectGenerator->getLastModel(),
+                    'anchor' => $this->subjectGenerator->getLastAnchor(),
+                ]);
+            }
+
+            // Legacy fallback: use image_subject template directly
             $prompts = $this->promptTemplateService->render('image_subject', $variables);
 
-            // Generate the subject using TaskType for model selection
             $result = $this->textService->generateForTask(
                 taskType: TaskType::IMAGE_PROMPT,
                 systemPrompt: $prompts['system'],
