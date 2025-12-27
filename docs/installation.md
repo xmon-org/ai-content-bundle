@@ -18,53 +18,67 @@ composer require sonata-project/media-bundle
 ```bash
 # .env
 
-# Text providers
-XMON_AI_GEMINI_API_KEY=AIza...           # Gemini API (recommended)
-XMON_AI_OPENROUTER_API_KEY=sk-or-v1-...  # OpenRouter API (optional)
-XMON_AI_POLLINATIONS_API_KEY=your_key    # Optional: higher rate limits and access to more models
-
-# Image providers (same Pollinations key works for both text and images)
-# XMON_AI_POLLINATIONS_API_KEY=your_key
+# Pollinations API key (optional but recommended)
+# Without key: anonymous tier (rate limited, fewer models)
+# With key: seed/flower tier (higher limits, premium models)
+XMON_AI_POLLINATIONS_API_KEY=your_key_here
 ```
+
+> **Note:** The bundle works without an API key using anonymous tier models. Get an API key from [pollinations.ai](https://pollinations.ai) for access to premium models and higher rate limits.
 
 ## Bundle Configuration
 
-All providers use the same configuration schema:
+### Minimal Configuration (Recommended Start)
 
 ```yaml
 # config/packages/xmon_ai_content.yaml
 xmon_ai_content:
-    # Text providers (priority: higher number = tried first)
     text:
         providers:
-            gemini:
-                enabled: true
-                priority: 100
-                api_key: '%env(XMON_AI_GEMINI_API_KEY)%'
-                model: 'gemini-2.0-flash-lite'
-                fallback_models: []              # Backup models
-                timeout: 30
-            openrouter:
-                enabled: true
-                priority: 50
-                api_key: '%env(XMON_AI_OPENROUTER_API_KEY)%'
-                model: 'google/gemini-2.0-flash-exp:free'
-                fallback_models:                 # If main model fails
-                    - 'meta-llama/llama-3.3-70b-instruct:free'
-                timeout: 90
             pollinations:
                 enabled: true
-                priority: 10
+                model: 'openai-fast'  # GPT-4.1 Nano (anonymous tier)
+    image:
+        providers:
+            pollinations:
+                enabled: true
+                model: 'flux'         # Free image model
+```
+
+### Full Configuration
+
+```yaml
+# config/packages/xmon_ai_content.yaml
+xmon_ai_content:
+    # Task-based model configuration (v1.4.0+)
+    tasks:
+        news_content:
+            default_model: 'gemini'
+            allowed_models: ['gemini', 'deepseek', 'mistral', 'openai']
+        image_prompt:
+            default_model: 'gemini-fast'
+            allowed_models: ['gemini-fast', 'openai-fast', 'mistral']
+        image_generation:
+            default_model: 'flux'
+            allowed_models: ['flux', 'turbo', 'gptimage']
+
+    # Text provider
+    text:
+        providers:
+            pollinations:
+                enabled: true
+                priority: 100
                 api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional
                 model: 'openai-fast'
                 fallback_models:
                     - 'openai'
+                    - 'mistral'
                 timeout: 60
         defaults:
             retries: 2
             retry_delay: 3
 
-    # Image providers
+    # Image provider
     image:
         providers:
             pollinations:
@@ -79,125 +93,125 @@ xmon_ai_content:
             retries: 3
             retry_delay: 5
 
-    # Only if you have SonataMedia installed
+    # SonataMedia integration (optional)
     media:
         default_context: 'default'
         provider: 'sonata.media.provider.image'
 ```
 
-## Unified Provider Schema
+## Provider Configuration Schema
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `enabled` | bool | Enable/disable the provider |
 | `priority` | int | Higher number = tried first |
-| `api_key` | string | API key (if required) |
-| `model` | string | Main model |
-| `fallback_models` | array | Backup models (optional) |
+| `api_key` | string | API key (optional for Pollinations) |
+| `model` | string | Default model to use |
+| `fallback_models` | array | Backup models if main fails |
 | `timeout` | int | Timeout in seconds |
 
-## Enabling/Disabling Providers
+## Available Models
 
-There are several ways to control which providers are active:
+### Text Models (via Pollinations)
 
-### Option 1: `enabled` field (recommended)
+| Tier | Models | API Key Required |
+|------|--------|------------------|
+| Anonymous | `openai`, `openai-fast` | No |
+| Seed | `gemini`, `gemini-fast`, `mistral`, `deepseek`, `grok` | Yes |
+| Flower | `claude`, `claude-large`, `openai-large`, `gemini-large` | Yes |
+
+### Image Models (via Pollinations)
+
+| Tier | Models | API Key Required |
+|------|--------|------------------|
+| Anonymous | `flux`, `turbo` | No |
+| Seed | `nanobanana`, `zimage` | Yes |
+| Flower | `gptimage`, `gptimage-large`, `seedream`, `seedream-pro` | Yes |
+
+For complete model list and pricing, see [Providers Reference](reference/providers.md).
+
+## Budget-Based Configuration Examples
+
+### Free Tier (No API Key)
 
 ```yaml
 xmon_ai_content:
-    text:
-        providers:
-            gemini:
-                enabled: true   # Active
-            openrouter:
-                enabled: false  # Disabled
-            pollinations:
-                enabled: true
-```
-
-### Option 2: Omit the provider
-
-If you don't need a provider, simply don't include it:
-
-```yaml
-xmon_ai_content:
+    tasks:
+        news_content:
+            default_model: 'openai-fast'
+            allowed_models: ['openai-fast', 'openai']
+        image_prompt:
+            default_model: 'openai-fast'
+            allowed_models: ['openai-fast']
+        image_generation:
+            default_model: 'flux'
+            allowed_models: ['flux', 'turbo']
     text:
         providers:
             pollinations:
                 enabled: true
                 model: 'openai-fast'
-            # gemini and openrouter don't appear = disabled
-```
-
-### Option 3: Without API key
-
-Providers that require an API key (gemini, openrouter) report `isAvailable(): false` if they don't have a key configured, and the system automatically skips them:
-
-```yaml
-gemini:
-    enabled: true
-    api_key: null  # No key → isAvailable() = false → skipped
-```
-
-### Fallback System Behavior
-
-| Situation | Registered? | Used? |
-|-----------|-------------|-------|
-| `enabled: false` | No | No |
-| `enabled: true` + no API key | Yes | No (fallback to next) |
-| `enabled: true` + with API key | Yes | Yes (by priority) |
-| Not in YAML | No | No |
-
-The recommended method is to use `enabled: false` because it's explicit and documents the intention.
-
-## Configuration Examples
-
-### Pollinations only (minimal configuration)
-
-```yaml
-xmon_ai_content:
-    text:
-        providers:
-            pollinations:
-                enabled: true
-                model: 'openai-fast'  # GPT-4.1 Nano (anonymous tier)
     image:
         providers:
             pollinations:
                 enabled: true
+                model: 'flux'
 ```
 
-> **Note:** Pollinations works without API key using `openai` or `openai-fast` models (anonymous tier). For access to `mistral`, `gemini`, `deepseek` models, a `seed` tier API key is required.
-
-### Gemini as primary with fallback
+### Low Budget (Seed Tier)
 
 ```yaml
 xmon_ai_content:
+    tasks:
+        news_content:
+            default_model: 'gemini'
+            allowed_models: ['gemini', 'deepseek', 'mistral']
+        image_prompt:
+            default_model: 'gemini-fast'
+            allowed_models: ['gemini-fast', 'mistral']
+        image_generation:
+            default_model: 'flux'
+            allowed_models: ['flux', 'nanobanana']
     text:
         providers:
-            gemini:
-                enabled: true
-                priority: 100
-                api_key: '%env(XMON_AI_GEMINI_API_KEY)%'
             pollinations:
                 enabled: true
-                priority: 10  # Fallback if Gemini fails
+                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
+                model: 'gemini'
+    image:
+        providers:
+            pollinations:
+                enabled: true
+                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
+                model: 'flux'
 ```
 
-### OpenRouter with multiple free models
+### Quality First (Flower Tier)
 
 ```yaml
 xmon_ai_content:
+    tasks:
+        news_content:
+            default_model: 'claude'
+            allowed_models: ['claude', 'gemini-large', 'openai-large']
+        image_prompt:
+            default_model: 'gemini-fast'
+            allowed_models: ['gemini-fast', 'openai-fast']
+        image_generation:
+            default_model: 'gptimage'
+            allowed_models: ['gptimage', 'seedream', 'flux']
     text:
         providers:
-            openrouter:
+            pollinations:
                 enabled: true
-                priority: 100
-                api_key: '%env(XMON_AI_OPENROUTER_API_KEY)%'
-                model: 'google/gemini-2.0-flash-exp:free'
-                fallback_models:
-                    - 'meta-llama/llama-3.3-70b-instruct:free'
-                    - 'qwen/qwen3-235b-a22b:free'
-                    - 'mistralai/mistral-small-3.1-24b-instruct:free'
+                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
+                model: 'claude'
+    image:
+        providers:
+            pollinations:
+                enabled: true
+                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
+                model: 'gptimage'
 ```
 
 ## Sonata Admin Integration (Optional)
@@ -237,8 +251,22 @@ twig:
 
 For complete Sonata Admin integration, see [Admin Integration Guide](guides/admin-integration.md).
 
+## Verify Installation
+
+Run the debug command to verify your configuration:
+
+```bash
+bin/console xmon:ai:debug
+```
+
+This will show:
+- Available providers and their status
+- Configured models
+- Styles, compositions, palettes, and presets
+
 ## Next Steps
 
+- [Task Types Guide](guides/task-types.md) - Configure models per task type
 - [Text Generation Guide](guides/text-generation.md)
 - [Image Generation Guide](guides/image-generation.md)
 - [Admin Integration Guide](guides/admin-integration.md)

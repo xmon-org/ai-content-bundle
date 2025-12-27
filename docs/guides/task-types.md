@@ -116,7 +116,7 @@ class NewsContentGenerator
             "Write an article about: {$title}\n\nSummary: {$summary}",
         );
 
-        return $result->getContent();
+        return $result->getText();
     }
 }
 ```
@@ -134,7 +134,7 @@ public function generateImagePrompt(string $title, string $content): string
         "Title: {$title}\nContent: {$content}",
     );
 
-    return $result->getContent();
+    return $result->getText();
 }
 ```
 

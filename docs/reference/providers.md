@@ -16,6 +16,8 @@ curl -H "Authorization: Bearer YOUR_API_KEY" https://gen.pollinations.ai/models
 curl -H "Authorization: Bearer YOUR_API_KEY" https://gen.pollinations.ai/image/models
 ```
 
+> **API Documentation:** [enter.pollinations.ai/api/docs](https://enter.pollinations.ai/api/docs)
+
 ## Access Tiers
 
 Models are available based on your account tier:

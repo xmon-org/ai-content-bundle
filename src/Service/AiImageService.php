@@ -50,7 +50,7 @@ class AiImageService
         if ($preferredProvider !== null) {
             $provider = $this->findProvider($preferredProvider);
             if ($provider === null) {
-                throw new AiProviderException(\sprintf('Provider "%s" not found', $preferredProvider), $preferredProvider);
+                throw new AiProviderException(message: \sprintf('Provider "%s" not found', $preferredProvider), provider: $preferredProvider);
             }
 
             return $this->generateWithRetries($provider, $prompt, $options);
@@ -87,7 +87,7 @@ class AiImageService
             array_values($errors)
         ));
 
-        throw new AiProviderException(\sprintf('All image providers failed: %s', $errorDetails ?: 'No providers available'), 'all');
+        throw new AiProviderException(message: \sprintf('All image providers failed: %s', $errorDetails ?: 'No providers available'), provider: 'all');
     }
 
     /**
@@ -262,6 +262,6 @@ class AiImageService
             }
         }
 
-        throw $lastException ?? new AiProviderException('Generation failed after retries', $provider->getName());
+        throw $lastException ?? new AiProviderException(message: 'Generation failed after retries', provider: $provider->getName());
     }
 }

@@ -63,10 +63,7 @@ class PollinationsTextProvider implements TextProviderInterface
 
         foreach ($modelsToTry as $model) {
             try {
-                $result = $this->callWithModel($model, $systemPrompt, $userMessage);
-                if ($result !== null) {
-                    return $result;
-                }
+                return $this->callWithModel($model, $systemPrompt, $userMessage);
             } catch (\Exception $e) {
                 $lastError = $e;
                 $this->logger?->warning('Pollinations: Model failed, trying next', [
@@ -80,7 +77,7 @@ class PollinationsTextProvider implements TextProviderInterface
         throw new AiProviderException(message: 'All Pollinations models failed'.($lastError ? ': '.$lastError->getMessage() : ''), provider: $this->getName(), previous: $lastError);
     }
 
-    private function callWithModel(string $model, string $systemPrompt, string $userMessage): ?TextResult
+    private function callWithModel(string $model, string $systemPrompt, string $userMessage): TextResult
     {
         // Note: Pollinations azure-openai backend only supports temperature=1 (default)
         // so we don't send temperature parameter to avoid 400 errors
@@ -135,7 +132,7 @@ class PollinationsTextProvider implements TextProviderInterface
                 'status' => $statusCode,
             ]);
 
-            return null;
+            throw AiProviderException::httpError($this->getName(), $statusCode, "Model {$model} returned HTTP {$statusCode}");
         }
 
         $data = $response->toArray();
@@ -146,7 +143,7 @@ class PollinationsTextProvider implements TextProviderInterface
                 'response' => json_encode($data, \JSON_UNESCAPED_UNICODE | \JSON_PRETTY_PRINT),
             ]);
 
-            return null;
+            throw AiProviderException::invalidResponse($this->getName(), "Model {$model}: Missing content in response");
         }
 
         $text = trim($data['choices'][0]['message']['content']);
@@ -154,7 +151,7 @@ class PollinationsTextProvider implements TextProviderInterface
         if (empty($text)) {
             $this->logger?->warning('Pollinations: Empty response', ['model' => $model]);
 
-            return null;
+            throw AiProviderException::invalidResponse($this->getName(), "Model {$model}: Empty response");
         }
 
         // Pollinations may provide usage info

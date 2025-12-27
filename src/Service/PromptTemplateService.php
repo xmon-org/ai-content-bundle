@@ -132,7 +132,7 @@ class PromptTemplateService
         $template = $this->getUserTemplate($key);
 
         if ($template === null) {
-            throw new AiProviderException(\sprintf('Prompt template not found: %s', $key));
+            throw new AiProviderException(message: \sprintf('Prompt template not found: %s', $key), provider: 'prompt-template');
         }
 
         return $this->replaceVariables($template, $variables);
@@ -154,7 +154,7 @@ class PromptTemplateService
     public function render(string $key, array $variables = []): array
     {
         if (!$this->hasTemplate($key)) {
-            throw new AiProviderException(\sprintf('Prompt template not found: %s', $key));
+            throw new AiProviderException(message: \sprintf('Prompt template not found: %s', $key), provider: 'prompt-template');
         }
 
         $template = $this->templates[$key];
@@ -169,7 +169,7 @@ class PromptTemplateService
 
             foreach ($requiredCategories as $category) {
                 if (!isset($template['variants'][$category])) {
-                    throw new AiProviderException(\sprintf('Template "%s" uses {variant_%s} but no variants defined for category "%s"', $key, $category, $category));
+                    throw new AiProviderException(message: \sprintf('Template "%s" uses {variant_%s} but no variants defined for category "%s"', $key, $category, $category), provider: 'prompt-template');
                 }
             }
 

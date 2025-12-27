@@ -56,7 +56,7 @@ class PromptBuilder
         if (!empty($options['style'])) {
             $prompt = $this->imageOptions->getStylePrompt($options['style']);
             if ($prompt === null) {
-                throw new AiProviderException(\sprintf('Unknown style: %s', $options['style']));
+                throw new AiProviderException(message: \sprintf('Unknown style: %s', $options['style']), provider: 'prompt-builder');
             }
             $parts[] = $prompt;
         }
@@ -65,7 +65,7 @@ class PromptBuilder
         if (!empty($options['composition'])) {
             $prompt = $this->imageOptions->getCompositionPrompt($options['composition']);
             if ($prompt === null) {
-                throw new AiProviderException(\sprintf('Unknown composition: %s', $options['composition']));
+                throw new AiProviderException(message: \sprintf('Unknown composition: %s', $options['composition']), provider: 'prompt-builder');
             }
             $parts[] = $prompt;
         }
@@ -74,7 +74,7 @@ class PromptBuilder
         if (!empty($options['palette'])) {
             $prompt = $this->imageOptions->getPalettePrompt($options['palette']);
             if ($prompt === null) {
-                throw new AiProviderException(\sprintf('Unknown palette: %s', $options['palette']));
+                throw new AiProviderException(message: \sprintf('Unknown palette: %s', $options['palette']), provider: 'prompt-builder');
             }
             $parts[] = $prompt;
         }
@@ -84,7 +84,7 @@ class PromptBuilder
             foreach ($options['extras'] as $extraKey) {
                 $prompt = $this->imageOptions->getExtraPrompt($extraKey);
                 if ($prompt === null) {
-                    throw new AiProviderException(\sprintf('Unknown extra: %s', $extraKey));
+                    throw new AiProviderException(message: \sprintf('Unknown extra: %s', $extraKey), provider: 'prompt-builder');
                 }
                 $parts[] = $prompt;
             }
@@ -157,7 +157,7 @@ class PromptBuilder
         $preset = $this->imageOptions->getPreset($presetKey);
 
         if ($preset === null) {
-            throw new AiProviderException(\sprintf('Unknown preset: %s', $presetKey));
+            throw new AiProviderException(message: \sprintf('Unknown preset: %s', $presetKey), provider: 'prompt-builder');
         }
 
         return $this->buildStyleOnly([
@@ -254,7 +254,7 @@ class PromptBuilder
         $preset = $this->imageOptions->getPreset($presetKey);
 
         if ($preset === null) {
-            throw new AiProviderException(\sprintf('Unknown preset: %s', $presetKey));
+            throw new AiProviderException(message: \sprintf('Unknown preset: %s', $presetKey), provider: 'prompt-builder');
         }
 
         // Start with preset values
