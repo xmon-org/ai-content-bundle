@@ -8,18 +8,9 @@
 
 [![CI](https://github.com/xmon-org/ai-content-bundle/actions/workflows/ci.yml/badge.svg)](https://github.com/xmon-org/ai-content-bundle/actions/workflows/ci.yml)
 [![semantic-release](https://img.shields.io/badge/semantic--release-conventionalcommits-e10079?logo=semantic-release)](https://github.com/semantic-release/semantic-release)
+[![Pollinations.ai](https://img.shields.io/badge/AI%20Gateway-Pollinations.ai-00d4aa?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiLz48L3N2Zz4=)](https://pollinations.ai)
 
----
-
-<div align="center">
-
-**Powered by [Pollinations.ai](https://pollinations.ai)** - Unified access to Claude, GPT, Gemini, Mistral, Flux, and more.
-
-</div>
-
----
-
-Symfony 7 bundle for AI-powered content generation. Access multiple LLMs and image models through a single, consistent API powered by [Pollinations](https://pollinations.ai).
+Symfony 7 bundle for AI-powered content generation. Access multiple LLMs and image models through a single, consistent API powered by [Pollinations.ai](https://pollinations.ai).
 
 ## Why Pollinations?
 
@@ -33,21 +24,30 @@ This bundle uses **Pollinations.ai** as its AI gateway, providing:
 
 ## Features
 
-- **Text generation** with multiple models (Claude, Gemini, GPT, Mistral, DeepSeek)
-- **Image generation** with multiple models (GPTImage, Flux, Seedream, Turbo)
-- **Task Types** - Configure different models for different tasks (content, prompts, images)
-- **Cost tracking** - See estimated costs per model in the UI
+- [**Text generation**](docs/guides/text-generation.md) with multiple models (Claude, Gemini, GPT, Mistral, DeepSeek)
+- [**Image generation**](docs/guides/image-generation.md) with multiple models (GPTImage, Flux, Seedream, Turbo)
+- [**Task Types**](docs/guides/task-types.md) - Configure different models for different tasks (content, prompts, images)
+- **Cost tracking** - See estimated costs per model ([pricing reference](#available-models))
 - **Style presets** for consistent image generation
-- **Configurable prompt templates** with intelligent variant selection
-- **Automatic fallback** between models when one fails
+- [**Configurable prompt templates**](docs/guides/prompt-templates.md) with intelligent variant selection
+- [**Automatic fallback**](docs/reference/fallback-system.md) between models when one fails
 - **SonataMedia integration** (optional)
-- **Sonata Admin integration** with image regeneration UI (optional)
+- [**Sonata Admin integration**](docs/guides/admin-integration.md) with image regeneration UI (optional)
 
 ## Requirements
 
 - PHP >= 8.2
 - Symfony >= 7.0
 - symfony/http-client
+
+### Optional Dependencies
+
+For full functionality, consider these additional bundles:
+
+| Package | Version | Purpose |
+|---------|---------|---------|
+| [sonata-project/admin-bundle](https://github.com/sonata-project/SonataAdminBundle) | ^4.0 | Admin panel with image regeneration UI |
+| [sonata-project/media-bundle](https://github.com/sonata-project/SonataMediaBundle) | ^4.0 | Media storage for generated images |
 
 ## Quick Start
 
@@ -69,7 +69,7 @@ xmon_ai_content:
             allowed_models: ['gemini', 'mistral', 'openai']
         image_prompt:
             default_model: 'gemini-fast'
-            allowed_models: ['gemini-fast', 'openai-fast']
+            allowed_models: ['gemini-fast', 'openai-fast', 'mistral']
         image_generation:
             default_model: 'flux'
             allowed_models: ['flux', 'gptimage', 'turbo']
@@ -159,7 +159,13 @@ class MyService
 
 ## Available Models
 
-All models are accessed through [Pollinations.ai](https://pollinations.ai). Query current models and pricing:
+<div align="center">
+
+**Powered by [Pollinations.ai](https://pollinations.ai)** - Unified access to Claude, GPT, Gemini, Mistral, Flux, and more.
+
+</div>
+
+Query current models and pricing directly from the API:
 
 ```bash
 # Text models with Pollen pricing
@@ -170,31 +176,33 @@ curl https://gen.pollinations.ai/image/models
 ```
 
 > **API Documentation:** [enter.pollinations.ai/api/docs](https://enter.pollinations.ai/api/docs)
->
-> **Note:** Pricing is shown in Pollen credits. See [auth.pollinations.ai](https://auth.pollinations.ai) for current rates.
 
 ### Text Models
 
+> **Prices updated:** 2025-12-27 | These are approximate estimates for reference only. For current pricing, query the endpoints above.
+
 | Model | Tier | ~Resp/$ | Description |
 |-------|------|---------|-------------|
-| `openai-fast` | anonymous | 2,272 | GPT-5 Nano - Ultra fast |
-| `openai` | anonymous | 1,666 | GPT-5 Mini - Balanced |
-| `gemini-fast` | seed | 2,500 | Gemini 2.5 Flash Lite - Fast & cheap |
-| `gemini` | seed | 333 | Gemini 3 Flash - Pro-grade |
-| `gemini-search` | seed | 333 | Gemini 3 Flash with Search |
-| `deepseek` | seed | 595 | DeepSeek V3.2 - Reasoning |
-| `mistral` | seed | 2,857 | Mistral Small 3.2 - Efficient |
-| `claude` | flower | 66 | Claude Sonnet 4.5 - Premium |
+| `openai-fast` | anonymous | ~2,270 | GPT-5 Nano - Ultra fast |
+| `openai` | anonymous | ~1,660 | GPT-5 Mini - Balanced |
+| `gemini-fast` | seed | ~2,500 | Gemini 2.5 Flash - Fast & cheap |
+| `gemini` | seed | ~330 | Gemini 3 Flash - Pro-grade |
+| `gemini-search` | seed | ~330 | Gemini 3 Flash with Search |
+| `deepseek` | seed | ~595 | DeepSeek V3.2 - Reasoning |
+| `mistral` | seed | ~2,850 | Mistral Small 3.2 - Efficient |
+| `claude` | flower | ~65 | Claude Sonnet 4.5 - Premium |
 
 ### Image Models
 
+> **Prices updated:** 2025-12-27 | These are approximate estimates for reference only. For current pricing, query the endpoints above.
+
 | Model | Tier | ~Img/$ | Description |
 |-------|------|--------|-------------|
-| `flux` | anonymous | 8,333 | Fast & high quality (free) |
-| `turbo` | anonymous | 3,333 | Ultra-fast previews (free) |
-| `nanobanana` | seed | 33,333 | Gemini-based, reference images |
-| `gptimage` | flower | 125,000 | OpenAI, best prompt understanding |
-| `seedream` | flower | 33 | ByteDance ARK, complex scenes |
+| `flux` | anonymous | ~8,333 | Fast & high quality |
+| `turbo` | anonymous | ~3,333 | Ultra-fast previews |
+| `nanobanana` | seed | ~33,333 | Gemini-based, reference images |
+| `gptimage` | flower | ~125,000 | OpenAI, best prompt understanding |
+| `seedream` | flower | ~33 | ByteDance ARK, complex scenes |
 
 ### Access Tiers
 

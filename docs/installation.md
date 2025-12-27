@@ -28,22 +28,34 @@ XMON_AI_POLLINATIONS_API_KEY=your_key_here
 
 ## Bundle Configuration
 
-### Minimal Configuration (Recommended Start)
+### Minimal Configuration (v1.4.0+ with TaskTypes)
 
 ```yaml
 # config/packages/xmon_ai_content.yaml
 xmon_ai_content:
+    # Task-based model configuration (recommended)
+    tasks:
+        news_content:
+            default_model: 'openai-fast'
+            allowed_models: ['openai-fast', 'openai']
+        image_prompt:
+            default_model: 'openai-fast'
+            allowed_models: ['openai-fast']
+        image_generation:
+            default_model: 'flux'
+            allowed_models: ['flux', 'turbo']
+
     text:
         providers:
             pollinations:
                 enabled: true
-                model: 'openai-fast'  # GPT-4.1 Nano (anonymous tier)
     image:
         providers:
             pollinations:
                 enabled: true
-                model: 'flux'         # Free image model
 ```
+
+> **Note:** This configuration uses anonymous tier models (no API key required). For premium models, add your API key and update the model lists.
 
 ### Full Configuration
 
@@ -112,13 +124,15 @@ xmon_ai_content:
 
 ## Available Models
 
+> **Note:** For complete model list with pricing, see [Providers Reference](reference/providers.md).
+
 ### Text Models (via Pollinations)
 
 | Tier | Models | API Key Required |
 |------|--------|------------------|
 | Anonymous | `openai`, `openai-fast` | No |
-| Seed | `gemini`, `gemini-fast`, `mistral`, `deepseek`, `grok` | Yes |
-| Flower | `claude`, `claude-large`, `openai-large`, `gemini-large` | Yes |
+| Seed | `gemini`, `gemini-fast`, `gemini-search`, `mistral`, `deepseek`, `grok`, `qwen-coder`, `nova-micro` | Yes |
+| Flower | `claude`, `claude-fast`, `claude-large`, `openai-large`, `gemini-large`, `perplexity-fast` | Yes |
 
 ### Image Models (via Pollinations)
 
@@ -126,9 +140,7 @@ xmon_ai_content:
 |------|--------|------------------|
 | Anonymous | `flux`, `turbo` | No |
 | Seed | `nanobanana`, `zimage` | Yes |
-| Flower | `gptimage`, `gptimage-large`, `seedream`, `seedream-pro` | Yes |
-
-For complete model list and pricing, see [Providers Reference](reference/providers.md).
+| Flower | `gptimage`, `gptimage-large`, `seedream`, `seedream-pro`, `nanobanana-pro`, `kontext` | Yes |
 
 ## Budget-Based Configuration Examples
 

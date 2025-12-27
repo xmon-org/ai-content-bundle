@@ -32,7 +32,8 @@ xmon_ai_content:
                 enabled: true
                 priority: 10
                 api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional for basic use
-                model: 'openai'  # Fallback model (TaskType config takes precedence)
+                model: 'openai'  # Default model (TaskType config takes precedence)
+                fallback_models: ['openai-fast']  # Backup models if main fails
                 timeout: 60
 
         defaults:
@@ -48,7 +49,8 @@ xmon_ai_content:
                 enabled: true
                 priority: 100
                 api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
-                model: 'flux'  # Fallback model (TaskType config takes precedence)
+                model: 'flux'  # Default model (TaskType config takes precedence)
+                fallback_models: ['turbo']  # Backup models if main fails
                 timeout: 120
 
         defaults:

@@ -8,8 +8,8 @@ This bundle provides Form Types and an Admin Extension to add AI image regenerat
 
 ## Requirements
 
-- Sonata Admin Bundle 4.x
-- Sonata Media Bundle (optional, for image storage)
+- Sonata Admin Bundle ^4.0
+- Sonata Media Bundle ^4.0 (optional, for image storage)
 
 ## Setup
 
