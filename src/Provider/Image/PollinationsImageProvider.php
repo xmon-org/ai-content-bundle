@@ -13,7 +13,7 @@ use Xmon\AiContentBundle\Provider\ImageProviderInterface;
 
 class PollinationsImageProvider implements ImageProviderInterface
 {
-    private const BASE_URL = 'https://image.pollinations.ai/prompt/';
+    private const BASE_URL = 'https://gen.pollinations.ai/image/';
     private const PROVIDER_NAME = 'pollinations';
 
     public function __construct(
@@ -67,11 +67,6 @@ class PollinationsImageProvider implements ImageProviderInterface
             $params['seed'] = $seed;
         }
 
-        // Add API key if available
-        if ($this->apiKey !== null) {
-            $params['token'] = $this->apiKey;
-        }
-
         $url .= '?'.http_build_query($params);
 
         $this->logger?->info('[Pollinations] Generating image', [
@@ -83,10 +78,20 @@ class PollinationsImageProvider implements ImageProviderInterface
             'prompt' => $prompt,
         ]);
 
+        // Build request options
+        $requestOptions = [
+            'timeout' => $this->timeout,
+        ];
+
+        // Add Authorization header if API key available (required for premium models)
+        if ($this->apiKey !== null) {
+            $requestOptions['headers'] = [
+                'Authorization' => 'Bearer '.$this->apiKey,
+            ];
+        }
+
         try {
-            $response = $this->httpClient->request('GET', $url, [
-                'timeout' => $this->timeout,
-            ]);
+            $response = $this->httpClient->request('GET', $url, $requestOptions);
 
             $statusCode = $response->getStatusCode();
 

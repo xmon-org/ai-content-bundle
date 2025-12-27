@@ -18,7 +18,7 @@ use Xmon\AiContentBundle\Provider\TextProviderInterface;
  */
 class PollinationsTextProvider implements TextProviderInterface
 {
-    private const API_URL = 'https://text.pollinations.ai/openai';
+    private const API_URL = 'https://gen.pollinations.ai/openai';
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
