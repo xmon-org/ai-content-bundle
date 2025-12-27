@@ -2,6 +2,12 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.6.0](https://github.com/xmon-org/ai-content-bundle/compare/1.5.0...1.6.0) (2025-12-27)
+
+### ✨ Features
+
+* **controller:** integra ImageSubjectGenerator en AbstractAiImageController ([b13b753](https://github.com/xmon-org/ai-content-bundle/commit/b13b7532bb8f0781d62ee2572cec3cb87ef3924c))
+
 ## [1.5.0](https://github.com/xmon-org/ai-content-bundle/compare/1.4.1...1.5.0) (2025-12-27)
 
 ### ✨ Features
