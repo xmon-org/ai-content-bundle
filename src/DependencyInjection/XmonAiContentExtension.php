@@ -137,6 +137,7 @@ class XmonAiContentExtension extends Extension
                 $definition->setArgument('$model', $pollinationsConfig['model'] ?? 'openai');
                 $definition->setArgument('$fallbackModels', $pollinationsConfig['fallback_models'] ?? []);
                 $definition->setArgument('$timeout', $pollinationsConfig['timeout'] ?? 60);
+                $definition->setArgument('$endpointMode', $pollinationsConfig['endpoint_mode'] ?? 'openai');
 
                 $priority = $pollinationsConfig['priority'] ?? 10;
                 $definition->setArgument('$priority', $priority);

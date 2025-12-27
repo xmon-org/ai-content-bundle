@@ -38,7 +38,19 @@ text:
             priority: 10
             api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Required for seed/flower tier
             timeout: 60
+            endpoint_mode: 'openai'  # 'openai' (default) or 'simple'
 ```
+
+### Endpoint Modes
+
+The text provider supports two endpoint modes:
+
+| Mode | Endpoint | Pros | Cons |
+|------|----------|------|------|
+| `openai` | `POST /v1/chat/completions` | No URL limit, token tracking, OpenAI-compatible | More parsing overhead |
+| `simple` | `GET /text/{prompt}` | Simpler, less overhead | URL limit (~2000 chars), no token info |
+
+**Recommendation:** Use `openai` (default) for production. Use `simple` only for debugging or very short prompts.
 
 ### Available Text Models
 
@@ -99,6 +111,30 @@ image:
 - `seed` - For reproducible results
 - `nologo` - Remove watermark
 - `enhance` - AI enhances prompt
+
+### Content Moderation (gptimage)
+
+> **Warning:** The `gptimage` model uses Azure OpenAI as backend, which has strict content moderation.
+
+**Will be rejected (`moderation_blocked`):**
+- Names of real people (artists, photographers, celebrities)
+- References to copyrighted characters or brands
+- Violent, sexual, or harmful content
+
+**Alternatives when blocked:**
+- Use `flux` model (no strict moderation)
+- Describe the style without naming the artist
+  - ❌ `"Hiroshi Sugimoto photography style"`
+  - ✅ `"minimalist long exposure photography, serene ethereal atmosphere"`
+
+### Rate Limits
+
+| Tier | Image | Text |
+|------|-------|------|
+| Anonymous | 1 req / 15s | 1 req / 15s |
+| Seed | 1 req / 5s | 1 req / 3s |
+| Flower | 1 req / 3s | 1 req / 3s |
+| Nectar | No limit | No limit |
 
 ## Cost Estimation
 
