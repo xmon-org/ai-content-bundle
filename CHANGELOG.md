@@ -2,6 +2,12 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.6.2](https://github.com/xmon-org/ai-content-bundle/compare/1.6.1...1.6.2) (2025-12-27)
+
+### 🐛 Bug Fixes
+
+* **pollinations:** actualiza endpoints a gen.pollinations.ai ([408bdcf](https://github.com/xmon-org/ai-content-bundle/commit/408bdcfd8cd7755034ca761867051bdb0dd70173))
+
 ## [1.6.1](https://github.com/xmon-org/ai-content-bundle/compare/1.6.0...1.6.1) (2025-12-27)
 
 ### ♻️ Refactoring
