@@ -298,6 +298,20 @@ class Configuration implements ConfigurationInterface
                         ->end()
                     ->end()
                 ->end()
+                // Image subject generation (two-step anchor system)
+                ->arrayNode('image_subject')
+                    ->addDefaultsIfNotSet()
+                    ->info('Two-step image subject generation with anchor extraction')
+                    ->children()
+                        // Anchor types and their visual guidelines
+                        ->arrayNode('anchor_types')
+                            ->useAttributeAsKey('type')
+                            ->normalizeKeys(false)
+                            ->scalarPrototype()->end()
+                            ->info('Visual guidelines for each anchor type. Keys: PLACE, PERSON, NUMBER, EVENT, ORGANIZATION, MEMORIAL, default')
+                        ->end()
+                    ->end()
+                ->end()
             ->end();
 
         return $treeBuilder;

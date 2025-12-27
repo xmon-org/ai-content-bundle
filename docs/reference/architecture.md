@@ -57,6 +57,7 @@ xmon-org/ai-content-bundle/
     ├── Service/
     │   ├── AiImageService.php       # Image orchestrator with fallback
     │   ├── AiTextService.php        # Text orchestrator with fallback
+    │   ├── ImageSubjectGenerator.php # Two-step anchor extraction
     │   ├── ImageOptionsService.php  # Style/preset management
     │   ├── PromptBuilder.php        # Builds prompts with options
     │   ├── PromptTemplateService.php # Configurable prompt templates
@@ -86,6 +87,7 @@ xmon-org/ai-content-bundle/
 |---------|-------------|
 | `AiTextService` | Main service for text generation with fallback |
 | `AiImageService` | Main service for image generation with fallback |
+| `ImageSubjectGenerator` | Two-step anchor extraction for unique image subjects |
 | `ImageOptionsService` | Manages styles, compositions, palettes, extras, presets |
 | `PromptBuilder` | Combines subject + options into prompts |
 | `PromptTemplateService` | Manages configurable prompt templates |
@@ -196,5 +198,6 @@ if (interface_exists(AdminInterface::class)) {
 ## Related
 
 - [Configuration Reference](configuration.md) - Full YAML options
+- [Image Subject Generator Guide](../guides/image-subject-generator.md) - Two-step anchor system
 - [Custom Providers](../guides/custom-providers.md) - Extend the bundle
 - [Admin Integration](../guides/admin-integration.md) - Sonata Admin integration

@@ -26,6 +26,7 @@ This bundle uses **Pollinations.ai** as its AI gateway, providing:
 
 - [**Text generation**](docs/guides/text-generation.md) with multiple models (Claude, Gemini, GPT, Mistral, DeepSeek)
 - [**Image generation**](docs/guides/image-generation.md) with multiple models (GPTImage, Flux, Seedream, Turbo)
+- [**Image subject generator**](docs/guides/image-subject-generator.md) - Two-step anchor extraction for unique, differentiated images
 - [**Task Types**](docs/guides/task-types.md) - Configure different models for different tasks (content, prompts, images)
 - **Cost tracking** - See estimated costs per model ([pricing reference](#available-models))
 - **Style presets** for consistent image generation
@@ -145,6 +146,7 @@ class MyService
 - [Task Types](docs/guides/task-types.md) - Configure models per task
 - [Text Generation](docs/guides/text-generation.md) - Generate text with AI
 - [Image Generation](docs/guides/image-generation.md) - Generate images with AI
+- [Image Subject Generator](docs/guides/image-subject-generator.md) - Two-step anchor extraction
 - [Prompt Templates](docs/guides/prompt-templates.md) - Configurable prompts with variants
 - [Admin Integration](docs/guides/admin-integration.md) - Sonata Admin integration
 

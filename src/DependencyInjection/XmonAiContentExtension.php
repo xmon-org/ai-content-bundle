@@ -14,6 +14,7 @@ use Xmon\AiContentBundle\Provider\Image\PollinationsImageProvider;
 use Xmon\AiContentBundle\Provider\Text\PollinationsTextProvider;
 use Xmon\AiContentBundle\Service\AiTextService;
 use Xmon\AiContentBundle\Service\ImageOptionsService;
+use Xmon\AiContentBundle\Service\ImageSubjectGenerator;
 use Xmon\AiContentBundle\Service\MediaStorageService;
 use Xmon\AiContentBundle\Service\ModelRegistryService;
 use Xmon\AiContentBundle\Service\PromptTemplateService;
@@ -67,6 +68,9 @@ class XmonAiContentExtension extends Extension
 
         // Configure history settings
         $this->configureHistory($container, $config['history'] ?? []);
+
+        // Configure image subject generator (two-step anchor system)
+        $this->configureImageSubjectGenerator($container, $config['image_subject'] ?? []);
     }
 
     /**
@@ -379,6 +383,90 @@ class XmonAiContentExtension extends Extension
 
         // Bundle default prompts
         $defaultTemplates = [
+            // Two-step image subject generation templates
+            'anchor_extraction' => [
+                'name' => 'Anchor Extraction',
+                'description' => 'Extracts unique visual anchor from content for image differentiation',
+                'system' => <<<'PROMPT'
+You are an expert at identifying unique visual elements in news articles.
+
+TASK: Analyze this content and extract THE SINGLE MOST DISTINCTIVE visual element.
+
+CLASSIFICATION (choose ONE):
+- PLACE: Specific location (city, region, country, venue name)
+- PERSON: Named individual (instructor, master, notable person)
+- NUMBER: Anniversary, edition, year, significant number
+- EVENT: Specific event type (seminar, examination, gala, competition)
+- ORGANIZATION: Federation, association, school, institution
+- MEMORIAL: Death, tribute, homage
+- GENERIC: ONLY if absolutely nothing specific found
+
+OUTPUT FORMAT (exactly 3 lines, no extra text):
+TYPE: [category]
+VALUE: [extracted value in original language]
+VISUAL: [brief visual hint in English, max 10 words]
+
+Example for "50th Anniversary of Aikido in Galicia":
+TYPE: PLACE
+VALUE: Galicia
+VISUAL: rocky Atlantic coastline with Celtic stone monuments
+PROMPT,
+                'user' => "Title: {title}\n\nSummary: {summary}",
+            ],
+            'subject_from_anchor' => [
+                'name' => 'Subject from Anchor',
+                'description' => 'Generates image subject incorporating extracted anchor',
+                'system' => <<<'PROMPT'
+You are an expert in prompts for artistic image generation.
+
+MANDATORY ANCHOR (must be visually present in the scene):
+- Type: {anchor_type}
+- Element: {anchor_value}
+- Visual interpretation: {anchor_visual}
+
+ANCHOR GUIDELINE: {anchor_guideline}
+
+Create ONE SUBJECT (maximum 40 words) that:
+1. MUST incorporate the anchor element prominently and specifically
+2. Combines naturally with martial arts/traditional imagery (silhouettes, traditional clothing)
+3. Creates a UNIQUE scene that could NOT be used for any other content
+
+STRICT RULES:
+- NO text, letters, or words in the image
+- NO detailed faces (use silhouettes, anonymous figures)
+- NO aggressive poses or combat action
+- NO style/lighting/color language (added separately)
+- Use STATIC, contemplative, or ceremonial poses only
+
+RESPOND ONLY with the subject in English, no explanations, quotes, or preamble.
+PROMPT,
+                'user' => "Title: {title}\n\nSummary: {summary}",
+            ],
+            'subject_one_step' => [
+                'name' => 'Subject One-Step (Fallback)',
+                'description' => 'Generates image subject without anchor (fallback)',
+                'system' => <<<'PROMPT'
+You are an expert in prompts for artistic image generation.
+
+Create ONE SUBJECT (maximum 40 words) for an image based on the content below.
+
+REQUIREMENTS:
+- Include appropriate traditional/professional elements
+- Use STATIC or meditative poses
+- Traditional elements that match the content theme
+- Serene, respectful, professional atmosphere
+
+DO NOT include:
+- Text, letters, or words
+- Detailed faces (use silhouettes)
+- Aggressive action poses
+- Style, lighting, or color descriptions
+
+RESPOND ONLY with the subject in English, no explanations.
+PROMPT,
+                'user' => "Title: {title}\n\nSummary: {summary}",
+            ],
+            // Original one-step template (legacy)
             'image_subject' => [
                 'name' => 'Image Subject Generator',
                 'description' => 'Generates a visual subject description for image generation from news/content. Uses two-step classification for accurate categorization.',
@@ -538,5 +626,38 @@ PROMPT,
 
             return true;
         });
+    }
+
+    /**
+     * Configure ImageSubjectGenerator with anchor type guidelines.
+     *
+     * Default guidelines are provided for common anchor types.
+     * Projects can override or add new types via configuration.
+     */
+    private function configureImageSubjectGenerator(ContainerBuilder $container, array $imageSubjectConfig): void
+    {
+        // Default anchor type guidelines (generic, domain-agnostic)
+        $defaultGuidelines = [
+            'PLACE' => 'Include distinctive regional landscape, architecture, or natural elements from this location.',
+            'PERSON' => 'Feature a distinguished silhouette (NEVER detailed face) representing this individual.',
+            'NUMBER' => 'Feature the number prominently - as golden numerals, symbolic element, or visual pattern.',
+            'EVENT' => 'Show specific event atmosphere - gathering energy, formality, celebration mood.',
+            'ORGANIZATION' => 'Include institutional symbols, unity elements, or formal group atmosphere.',
+            'MEMORIAL' => 'Solemn respectful atmosphere, falling petals or leaves, solitary distinguished silhouette.',
+            'default' => 'Incorporate this element visually in the scene.',
+        ];
+
+        // Merge user guidelines (user overrides defaults)
+        $userGuidelines = $imageSubjectConfig['anchor_types'] ?? [];
+        $guidelines = array_merge($defaultGuidelines, $userGuidelines);
+
+        // Configure ImageSubjectGenerator
+        if ($container->hasDefinition(ImageSubjectGenerator::class)) {
+            $definition = $container->getDefinition(ImageSubjectGenerator::class);
+            $definition->setArgument('$anchorGuidelines', $guidelines);
+        }
+
+        // Store parameters for external access
+        $container->setParameter('xmon_ai_content.image_subject.anchor_types', $guidelines);
     }
 }

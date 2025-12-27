@@ -56,6 +56,13 @@ services:
     # Prompt Builder (combines subject with style options)
     Xmon\AiContentBundle\Service\PromptBuilder: ~
 
+    # Image Subject Generator (two-step anchor extraction for unique subjects)
+    Xmon\AiContentBundle\Service\ImageSubjectGenerator:
+        arguments:
+            $anchorGuidelines: []
+        tags:
+            - { name: 'monolog.logger', channel: 'ai' }
+
     # Model Registry (catalog of available models with costs)
     # Contains immutable provider data - model names, costs per response, descriptions.
     # This is the "source of truth" for what models exist and their pricing.

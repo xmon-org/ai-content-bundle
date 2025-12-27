@@ -137,6 +137,19 @@ xmon_ai_content:
     # ============================================
     history:
         max_images: 5
+
+    # ============================================
+    # IMAGE SUBJECT GENERATOR (Two-step anchor)
+    # ============================================
+    image_subject:
+        anchor_types:
+            PLACE: 'Include distinctive regional landscape...'
+            PERSON: 'Feature a distinguished silhouette...'
+            NUMBER: 'Feature the number prominently...'
+            EVENT: 'Show specific event atmosphere...'
+            ORGANIZATION: 'Include institutional symbols...'
+            MEMORIAL: 'Solemn respectful atmosphere...'
+            default: 'Incorporate this element visually...'
 ```
 
 ## Task Types Configuration
@@ -310,9 +323,65 @@ XMON_AI_POLLINATIONS_API_KEY=your_pollinations_api_key
 
 > **Note:** The API key is optional for basic models (openai, openai-fast, flux, turbo) but required for premium models (claude, gptimage, seedream).
 
+## Image Subject Generator
+
+The `image_subject` section configures the two-step anchor extraction system for generating unique, differentiated image subjects.
+
+### How It Works
+
+1. **Step 1 - Anchor Extraction**: Analyzes content to extract a unique visual "anchor" (a distinctive element like a place, person, number, etc.)
+2. **Step 2 - Subject Generation**: If an anchor is found, generates an image subject that prominently incorporates that anchor
+3. **Fallback**: If no usable anchor is found, falls back to one-step generation
+
+This two-step process ensures that images generated for different content are visually distinct, even when the content themes are similar.
+
+### Anchor Types
+
+| Type | Description | Visual Guideline |
+|------|-------------|-----------------|
+| `PLACE` | Specific location (city, venue, region) | Regional landscape, architecture |
+| `PERSON` | Named individual | Distinguished silhouette (no faces) |
+| `NUMBER` | Anniversary, edition, year | Prominent numerals or patterns |
+| `EVENT` | Specific event type | Event atmosphere, formality |
+| `ORGANIZATION` | Institution, federation | Institutional symbols, unity |
+| `MEMORIAL` | Tribute, death | Solemn atmosphere, falling petals |
+| `default` | Fallback for any type | Generic visual incorporation |
+
+### Configuration
+
+```yaml
+xmon_ai_content:
+    image_subject:
+        anchor_types:
+            # Override default guidelines
+            PLACE: 'Include distinctive regional landscape, architecture, or natural elements from this location.'
+            PERSON: 'Feature a distinguished silhouette (NEVER detailed face) representing this individual.'
+            NUMBER: 'Feature the number prominently - as golden numerals, symbolic element, or visual pattern.'
+            EVENT: 'Show specific event atmosphere - gathering energy, formality, celebration mood.'
+            ORGANIZATION: 'Include institutional symbols, unity elements, or formal group atmosphere.'
+            MEMORIAL: 'Solemn respectful atmosphere, falling petals or leaves, solitary distinguished silhouette.'
+            default: 'Incorporate this element visually in the scene.'
+
+            # Add custom anchor types
+            PRODUCT: 'Feature the product prominently in an elegant setting.'
+```
+
+### Default Templates
+
+The bundle includes three default prompt templates for the anchor system:
+
+| Template | Purpose |
+|----------|---------|
+| `anchor_extraction` | Extracts anchor from content (TYPE, VALUE, VISUAL) |
+| `subject_from_anchor` | Generates subject using extracted anchor |
+| `subject_one_step` | Fallback when no anchor is usable |
+
+These templates can be overridden in the `prompts.templates` section. See [Image Subject Generator Guide](../guides/image-subject-generator.md) for usage examples.
+
 ## Related
 
 - [Task Types Guide](../guides/task-types.md) - Detailed TaskType usage
+- [Image Subject Generator Guide](../guides/image-subject-generator.md) - Two-step anchor system
 - [Providers Reference](providers.md) - Available models and costs
 - [Installation](../installation.md) - Setup guide
 - [Architecture](architecture.md) - Bundle structure

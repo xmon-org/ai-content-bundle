@@ -227,6 +227,7 @@ This allows you to:
 
 ## Related
 
+- [Image Subject Generator](image-subject-generator.md) - Generate unique subjects with anchor extraction
 - [Styles & Presets](styles-presets.md) - Control image styles with presets
 - [Style Providers](style-providers.md) - Database-backed style configuration
 - [Providers Reference](../reference/providers.md) - Available image providers
