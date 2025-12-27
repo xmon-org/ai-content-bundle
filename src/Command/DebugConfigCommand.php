@@ -9,10 +9,12 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Xmon\AiContentBundle\Enum\TaskType;
 use Xmon\AiContentBundle\Service\AiImageService;
 use Xmon\AiContentBundle\Service\AiTextService;
 use Xmon\AiContentBundle\Service\ImageOptionsService;
 use Xmon\AiContentBundle\Service\PromptTemplateService;
+use Xmon\AiContentBundle\Service\TaskConfigService;
 
 #[AsCommand(
     name: 'xmon:ai:debug',
@@ -25,6 +27,7 @@ class DebugConfigCommand extends Command
         private readonly AiImageService $imageService,
         private readonly ImageOptionsService $imageOptions,
         private readonly PromptTemplateService $promptTemplates,
+        private readonly TaskConfigService $taskConfig,
     ) {
         parent::__construct();
     }
@@ -35,37 +38,45 @@ class DebugConfigCommand extends Command
 
         $io->title('xmon-org/ai-content-bundle Configuration');
 
-        // Text Providers
-        $io->section('Text Providers');
+        // Provider Status (Pollinations-only architecture since Dec 2025)
+        $io->section('Provider Status');
         $textProviders = $this->textService->getAvailableProviders();
-        if (empty($textProviders)) {
-            $io->warning('No text providers available');
-        } else {
-            $rows = [];
-            foreach ($textProviders as $name) {
-                $rows[] = [
-                    '<info>✓</info>',
-                    $name,
-                ];
-            }
-            $io->table(['', 'Provider'], $rows);
+        $imageProviders = $this->imageService->getAvailableProviders();
+
+        $textOk = \in_array('pollinations', $textProviders, true);
+        $imageOk = \in_array('pollinations', $imageProviders, true);
+
+        $io->table(
+            ['Service', 'Status', 'Provider'],
+            [
+                ['Text Generation', $textOk ? '<info>✓</info>' : '<error>✗</error>', 'Pollinations API'],
+                ['Image Generation', $imageOk ? '<info>✓</info>' : '<error>✗</error>', 'Pollinations API'],
+            ]
+        );
+
+        if (!$textOk || !$imageOk) {
+            $io->warning('Some providers are not available. Check XMON_AI_POLLINATIONS_API_KEY in .env');
         }
 
-        // Image Providers
-        $io->section('Image Providers');
-        $imageProviders = $this->imageService->getAvailableProviders();
-        if (empty($imageProviders)) {
-            $io->warning('No image providers available');
-        } else {
-            $rows = [];
-            foreach ($imageProviders as $name) {
-                $rows[] = [
-                    '<info>✓</info>',
-                    $name,
-                ];
-            }
-            $io->table(['', 'Provider'], $rows);
+        // Task Models Configuration
+        $io->section('Task Models');
+        $taskRows = [];
+        foreach (TaskType::cases() as $taskType) {
+            $defaultModel = $this->taskConfig->getDefaultModel($taskType);
+            $allowedModels = $this->taskConfig->getAllowedModels($taskType);
+            $costEstimate = $this->taskConfig->getDefaultCostEstimate($taskType);
+
+            $taskRows[] = [
+                $taskType->value,
+                $defaultModel,
+                $costEstimate['formattedCost'],
+                implode(', ', $allowedModels),
+            ];
         }
+        $io->table(
+            ['Task', 'Default Model', 'Cost', 'Allowed Models'],
+            $taskRows
+        );
 
         // Styles
         $io->section('Styles');

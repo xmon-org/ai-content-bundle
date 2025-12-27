@@ -272,9 +272,10 @@ bin/console xmon:ai:debug
 ```
 
 This will show:
-- Available providers and their status
-- Configured models
+- Provider status (Pollinations API for text and image)
+- Task models (default, cost, allowed models per task type)
 - Styles, compositions, palettes, and presets
+- Prompt templates
 
 ## Next Steps
 

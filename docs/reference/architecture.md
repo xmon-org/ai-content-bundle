@@ -48,23 +48,32 @@ xmon-org/ai-content-bundle/
     ├── Provider/
     │   ├── ImageProviderInterface.php
     │   ├── TextProviderInterface.php # With #[AutoconfigureTag]
+    │   ├── AiStyleProviderInterface.php
     │   ├── Image/
     │   │   └── PollinationsImageProvider.php
-    │   └── Text/
-    │       ├── GeminiTextProvider.php
-    │       ├── OpenRouterTextProvider.php
-    │       └── PollinationsTextProvider.php
+    │   ├── Text/
+    │   │   └── PollinationsTextProvider.php
+    │   └── Style/
+    │       └── YamlStyleProvider.php
     ├── Service/
-    │   ├── AiImageService.php       # Image orchestrator with fallback
-    │   ├── AiTextService.php        # Text orchestrator with fallback
+    │   ├── AiImageService.php       # Image orchestrator via Pollinations
+    │   ├── AiTextService.php        # Text orchestrator via Pollinations
+    │   ├── TaskConfigService.php    # Task-based model configuration
+    │   ├── ModelRegistryService.php # Model catalog with costs
     │   ├── ImageSubjectGenerator.php # Two-step anchor extraction
     │   ├── ImageOptionsService.php  # Style/preset management
     │   ├── PromptBuilder.php        # Builds prompts with options
     │   ├── PromptTemplateService.php # Configurable prompt templates
+    │   ├── VariantSelector.php      # Intelligent variant selection
+    │   ├── AiStyleService.php       # Style provider aggregator
     │   └── MediaStorageService.php  # SonataMedia (conditional)
     ├── Model/
     │   ├── ImageResult.php          # Immutable DTO
-    │   └── TextResult.php           # Immutable DTO
+    │   ├── TextResult.php           # Immutable DTO
+    │   └── ModelInfo.php            # Model metadata (name, tier, cost)
+    ├── Enum/
+    │   ├── TaskType.php             # Task types (NEWS_CONTENT, IMAGE_PROMPT, IMAGE_GENERATION)
+    │   └── ModelTier.php            # Access tiers (ANONYMOUS, SEED, FLOWER)
     ├── Command/
     │   └── DebugConfigCommand.php   # xmon:ai:debug
     ├── Resources/
@@ -85,12 +94,15 @@ xmon-org/ai-content-bundle/
 
 | Service | Description |
 |---------|-------------|
-| `AiTextService` | Main service for text generation with fallback |
-| `AiImageService` | Main service for image generation with fallback |
+| `AiTextService` | Main service for text generation via Pollinations |
+| `AiImageService` | Main service for image generation via Pollinations |
+| `TaskConfigService` | Task-based model configuration and validation |
+| `ModelRegistryService` | Model catalog with costs and tier information |
 | `ImageSubjectGenerator` | Two-step anchor extraction for unique image subjects |
 | `ImageOptionsService` | Manages styles, compositions, palettes, extras, presets |
 | `PromptBuilder` | Combines subject + options into prompts |
 | `PromptTemplateService` | Manages configurable prompt templates |
+| `AiStyleService` | Aggregates style providers by priority |
 | `MediaStorageService` | Saves images to SonataMedia (conditional) |
 
 ### Form Types (Sonata Admin)
@@ -153,6 +165,13 @@ Immutable data transfer objects:
 - `getWidth()`, `getHeight()` - Dimensions
 - `toBase64()`, `toDataUri()` - Encoding helpers
 
+**ModelInfo:**
+- `name` - Human-readable model name
+- `tier` - Access tier (ModelTier enum)
+- `responsesPerPollen` - Approximate responses per pollen (cost metric)
+- `getFormattedCost()` - Cost as readable string
+- `getCostPerResponseUSD()` - Estimated cost per response in USD
+
 ### Configuration
 
 **Configuration.php** validates YAML structure:
@@ -191,6 +210,7 @@ if (interface_exists(AdminInterface::class)) {
 |-----|---------|
 | `xmon_ai_content.text_provider` | Register text providers |
 | `xmon_ai_content.image_provider` | Register image providers |
+| `xmon_ai_content.style_provider` | Register style providers (for global style) |
 | `console.command` | Register console commands |
 | `form.type` | Register form types |
 | `sonata.admin.extension` | Register admin extensions |

@@ -1,6 +1,6 @@
 # Providers Reference
 
-Available AI providers in xmon-org/ai-content-bundle.
+Available AI models and pricing in xmon-org/ai-content-bundle.
 
 > **Architecture Decision (December 2025):** The bundle uses Pollinations as the sole provider for both text and image generation. Pollinations provides access to multiple AI models (Claude, Gemini, GPT, Mistral, etc.) through a unified API.
 

@@ -38,8 +38,8 @@ bin/console debug:config xmon_ai_content
 
 The bundle includes a diagnostic command that shows:
 
-- Available text providers
-- Available image providers
+- Provider status (Pollinations API for both text and image)
+- Task models configuration (default model, cost, allowed models per task)
 - Configured styles, compositions, palettes, and extras
 - Presets with their options
 - Prompt templates
@@ -48,54 +48,65 @@ The bundle includes a diagnostic command that shows:
 $ bin/console xmon:ai:debug
 
 xmon-org/ai-content-bundle Configuration
-====================================
+========================================
 
-Text Providers
---------------
- ✓   gemini
- ✓   openrouter
- ✓   pollinations
-
-Image Providers
+Provider Status
 ---------------
- ✓   pollinations
+ Service           Status   Provider
+ Text Generation   ✓        Pollinations API
+ Image Generation  ✓        Pollinations API
+
+Task Models
+-----------
+ Task              Default Model   Cost    Allowed Models
+ news_content      openai          FREE    openai, openai-fast
+ image_prompt      openai-fast     FREE    openai-fast
+ image_generation  flux            FREE    flux, turbo
 
 Styles
 ------
+ Key            Label
  sumi-e         Sumi-e (tinta japonesa)
  watercolor     Acuarela
  ...
 
 Compositions
 ------------
+ Key            Label
  centered       Centrada
  rule-of-thirds Regla de tercios
  ...
 
 Palettes
 --------
+ Key            Label
  monochrome     Monocromo
  earth-tones    Tonos tierra
  ...
 
 Extras
 ------
+ Key            Label
  no-text        Sin texto
  atmospheric    Atmosférico
  ...
 
 Presets
 -------
- sumi-e-clasico   Sumi-e Clásico   sumi-e   negative-space   monochrome   ...
+ Key              Name             Style    Composition      Palette      Extras
+ sumi-e-clasico   Sumi-e Clasico   sumi-e   negative-space   monochrome   no-text, silhouettes, atmospheric
 
 Prompt Templates
 ----------------
- image-subject    Image Subject Generator    Generates visual descriptions...
+ Key              Name                       Description
+ image_subject    Image Subject Generator    Generates visual descriptions...
  summarizer       Content Summarizer         Summarizes content...
  ...
 
 Use bin/console debug:config xmon_ai_content for full YAML configuration.
 ```
+
+> **Note:** The output above shows a free-tier configuration. If you have an API key configured, you'll see different models (gemini, claude, gptimage, etc.) with their respective costs.
 
 ## Testing
 

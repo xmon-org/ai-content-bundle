@@ -22,8 +22,8 @@ class MyService
 
         // $result is a TextResult with:
         // - getText(): the generated text
-        // - getProvider(): 'gemini', 'openrouter', 'pollinations'
-        // - getModel(): model used (e.g., 'gemini-2.0-flash-lite')
+        // - getProvider(): 'pollinations'
+        // - getModel(): model used (e.g., 'openai', 'gemini-fast')
         // - getPromptTokens(), getCompletionTokens()
         // - getFinishReason(): 'stop', 'length', etc.
 
@@ -36,10 +36,9 @@ class MyService
 
 ```php
 $result = $this->aiTextService->generate($systemPrompt, $userMessage, [
-    'model' => 'gemini-2.0-flash',  // Specific model
+    'model' => 'gemini-fast',       // Specific model (see Available Models)
     'temperature' => 0.7,           // Creativity (0.0 - 1.0)
     'max_tokens' => 1500,           // Token limit
-    'provider' => 'gemini',         // Force specific provider
 ]);
 ```
 
@@ -47,10 +46,9 @@ $result = $this->aiTextService->generate($systemPrompt, $userMessage, [
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `model` | string | Override the default model |
+| `model` | string | Override the default model (see [Providers Reference](../reference/providers.md)) |
 | `temperature` | float | Creativity level (0.0 = deterministic, 1.0 = creative) |
 | `max_tokens` | int | Maximum tokens in response |
-| `provider` | string | Force a specific provider |
 
 ## TextResult Object
 
@@ -60,8 +58,8 @@ The `generate()` method returns a `TextResult` object with the following methods
 $result = $this->aiTextService->generate($systemPrompt, $userMessage);
 
 $result->getText();            // The generated text
-$result->getProvider();        // 'gemini', 'openrouter', 'pollinations'
-$result->getModel();           // Model used
+$result->getProvider();        // 'pollinations'
+$result->getModel();           // Model used (e.g., 'openai', 'gemini-fast')
 $result->getPromptTokens();    // Input tokens (if available)
 $result->getCompletionTokens(); // Output tokens (if available)
 $result->getFinishReason();    // 'stop', 'length', etc.
@@ -96,24 +94,66 @@ class MyService
 }
 ```
 
+## Using Task Types (Recommended)
+
+For production use, the recommended approach is to use Task Types, which allow you to configure different models for different purposes:
+
+```php
+use Xmon\AiContentBundle\Enum\TaskType;
+use Xmon\AiContentBundle\Service\AiTextService;
+
+class NewsContentGenerator
+{
+    public function __construct(
+        private readonly AiTextService $aiTextService,
+    ) {}
+
+    public function generateContent(string $title, string $summary): string
+    {
+        // Uses the model configured for NEWS_CONTENT task
+        $result = $this->aiTextService->generateForTask(
+            TaskType::NEWS_CONTENT,
+            'You are a professional journalist.',
+            "Write an article about: {$title}\n\nSummary: {$summary}",
+        );
+
+        return $result->getText();
+    }
+
+    public function generateImagePrompt(string $title): string
+    {
+        // Uses the model configured for IMAGE_PROMPT task (typically faster/cheaper)
+        $result = $this->aiTextService->generateForTask(
+            TaskType::IMAGE_PROMPT,
+            'Generate a scene description for image generation.',
+            "Title: {$title}",
+        );
+
+        return $result->getText();
+    }
+}
+```
+
+See [Task Types Guide](task-types.md) for complete configuration and usage examples.
+
 ## Error Handling
 
 ```php
 use Xmon\AiContentBundle\Exception\AiProviderException;
-use Xmon\AiContentBundle\Exception\AllProvidersFailedException;
 
 try {
     $result = $this->aiTextService->generate($systemPrompt, $userMessage);
-} catch (AllProvidersFailedException $e) {
-    // All providers failed
-    $errors = $e->getErrors(); // Array of errors per provider
 } catch (AiProviderException $e) {
-    // Single provider error
+    // Provider error (rate limit, timeout, etc.)
+    $provider = $e->getProvider();        // 'pollinations'
+    $statusCode = $e->getHttpStatusCode(); // 429, 500, etc.
+    $message = $e->getMessage();
 }
 ```
 
 ## Related
 
+- [Task Types](task-types.md) - Configure models per task type
 - [Prompt Templates](prompt-templates.md) - Configurable system/user prompts
-- [Providers Reference](../reference/providers.md) - Available text providers
+- [Providers Reference](../reference/providers.md) - Available text models and costs
 - [Fallback System](../reference/fallback-system.md) - How automatic fallback works

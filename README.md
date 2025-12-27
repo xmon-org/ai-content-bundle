@@ -220,7 +220,13 @@ curl https://gen.pollinations.ai/image/models
 bin/console xmon:ai:debug
 ```
 
-Shows configured providers, styles, presets, and prompt templates.
+Displays current configuration including:
+
+- **Provider Status** - Pollinations API connectivity for text and image generation
+- **Task Models** - Default model, cost estimate, and allowed models per task type
+- **Styles, Compositions, Palettes** - Available image options
+- **Presets** - Pre-configured style combinations
+- **Prompt Templates** - Configured templates for AI prompts
 
 ## Acknowledgments
 

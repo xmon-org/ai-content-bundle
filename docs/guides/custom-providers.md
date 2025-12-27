@@ -1,5 +1,7 @@
 # Custom Providers Guide
 
+> **Note:** Since December 2025, the bundle uses Pollinations as the sole provider for both text and image generation. Pollinations acts as a unified gateway to multiple AI models (Claude, GPT, Gemini, Mistral, etc.). Custom providers are only needed if you want to add a completely different AI service.
+
 You can add your own text providers by implementing `TextProviderInterface`. The bundle automatically detects them thanks to `#[AutoconfigureTag]`.
 
 ## Create a Custom Provider
@@ -17,7 +19,7 @@ class AnthropicTextProvider implements TextProviderInterface
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly ?string $apiKey = null,
-        private readonly int $priority = 80,
+        private readonly int $priority = 50,  // Lower than Pollinations (100)
     ) {}
 
     public function getName(): string
@@ -32,7 +34,7 @@ class AnthropicTextProvider implements TextProviderInterface
 
     public function getPriority(): int
     {
-        return $this->priority; // Between Gemini (100) and OpenRouter (50)
+        return $this->priority;
     }
 
     public function generate(string $systemPrompt, string $userMessage, array $options = []): TextResult
@@ -77,9 +79,9 @@ With `autoconfigure: true` (default in Symfony), the provider is registered auto
 App\Provider\AnthropicTextProvider:
     arguments:
         $apiKey: '%env(XMON_AI_ANTHROPIC_API_KEY)%'
-        $priority: 80
+        $priority: 50
     tags:
-        - { name: 'xmon_ai_content.text_provider', priority: 80 }
+        - { name: 'xmon_ai_content.text_provider', priority: 50 }
 ```
 
 The provider will automatically appear in the fallback chain according to its priority.
@@ -141,15 +143,12 @@ interface ImageProviderInterface
 
 | Priority Range | Use Case |
 |----------------|----------|
-| 100+ | Primary providers (fastest, most reliable) |
-| 50-99 | Secondary providers (good fallback) |
-| 10-49 | Tertiary providers (last resort) |
-| 1-9 | Free/unlimited providers (final fallback) |
+| 100+ | Primary providers (highest priority, tried first) |
+| 50-99 | Secondary providers (fallback if primary fails) |
+| 1-49 | Tertiary providers (last resort) |
 
-Default bundle priorities:
-- Gemini: 100
-- OpenRouter: 50
-- Pollinations: 10
+Default bundle priority:
+- Pollinations: 100 (sole provider)
 
 ## Verify Registration
 
@@ -163,6 +162,6 @@ bin/console xmon:ai:debug
 
 ## Related
 
-- [Providers Reference](../reference/providers.md) - Available providers
+- [Providers Reference](../reference/providers.md) - Available models and costs
 - [Fallback System](../reference/fallback-system.md) - How fallback works
 - [Architecture](../reference/architecture.md) - Bundle structure
