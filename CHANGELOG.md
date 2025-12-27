@@ -2,6 +2,17 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.4.1](https://github.com/xmon-org/ai-content-bundle/compare/1.4.0...1.4.1) (2025-12-27)
+
+### 🐛 Bug Fixes
+
+* **docs:** actualiza docs y excepciones para v1.4 ([c5aec58](https://github.com/xmon-org/ai-content-bundle/commit/c5aec58d65310b14cd55d39a459eff199a5c8f24))
+
+### 📚 Documentation
+
+* corrige inconsistencias entre documentos ([60695f8](https://github.com/xmon-org/ai-content-bundle/commit/60695f86fe4de588cc8dc848e6f0831db49d25be))
+* **readme:** añade presencia de Pollinations.ai como gateway ([e8aa80a](https://github.com/xmon-org/ai-content-bundle/commit/e8aa80a384e2bd7d41d870b8758fea07ebd389ab))
+
 ## [1.4.0](https://github.com/xmon-org/ai-content-bundle/compare/1.3.0...1.4.0) (2025-12-26)
 
 ### ✨ Features
