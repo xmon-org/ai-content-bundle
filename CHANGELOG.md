@@ -2,6 +2,12 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.6.1](https://github.com/xmon-org/ai-content-bundle/compare/1.6.0...1.6.1) (2025-12-27)
+
+### ♻️ Refactoring
+
+* **command:** simplifica debug para arquitectura single-provider ([9c2acf0](https://github.com/xmon-org/ai-content-bundle/commit/9c2acf07ca8f051131ae97c58e075bdc5f84ad30))
+
 ## [1.6.0](https://github.com/xmon-org/ai-content-bundle/compare/1.5.0...1.6.0) (2025-12-27)
 
 ### ✨ Features
