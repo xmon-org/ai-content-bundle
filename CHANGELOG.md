@@ -2,6 +2,12 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.5.0](https://github.com/xmon-org/ai-content-bundle/compare/1.4.1...1.5.0) (2025-12-27)
+
+### ✨ Features
+
+* **image:** añade ImageSubjectGenerator con sistema two-step ([860083e](https://github.com/xmon-org/ai-content-bundle/commit/860083ed7555f240e94e4d30dfc76fb6d2f67fc7))
+
 ## [1.4.1](https://github.com/xmon-org/ai-content-bundle/compare/1.4.0...1.4.1) (2025-12-27)
 
 ### 🐛 Bug Fixes
