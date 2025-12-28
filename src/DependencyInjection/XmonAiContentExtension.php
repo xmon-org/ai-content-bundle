@@ -624,9 +624,11 @@ PROMPT,
     private function configureImageSubjectGenerator(ContainerBuilder $container, array $imageSubjectConfig): void
     {
         // Default anchor type guidelines (generic, domain-agnostic)
+        // IMPORTANT: PERSON type must NEVER include real names or "likeness" phrases
+        // as these trigger content filters (Cloudflare, etc.)
         $defaultGuidelines = [
             'PLACE' => 'Include distinctive regional landscape, architecture, or natural elements from this location.',
-            'PERSON' => 'Feature a distinguished silhouette (NEVER detailed face) representing this individual.',
+            'PERSON' => 'CRITICAL: Do NOT include the person\'s name or any phrase like "exact likeness", "portrait of", "resembling". Instead, show a generic anonymous silhouette of a master/instructor figure. Focus on their role or achievement, NOT their identity.',
             'NUMBER' => 'Feature the number prominently - as golden numerals, symbolic element, or visual pattern.',
             'EVENT' => 'Show specific event atmosphere - gathering energy, formality, celebration mood.',
             'ORGANIZATION' => 'Include institutional symbols, unity elements, or formal group atmosphere.',
