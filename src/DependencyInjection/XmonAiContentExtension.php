@@ -60,7 +60,8 @@ class XmonAiContentExtension extends Extension
             $container,
             $config['image_options'] ?? [],
             $config['presets'] ?? [],
-            $config['disable_preset_defaults'] ?? []
+            $config['disable_preset_defaults'] ?? [],
+            $config['default_preset'] ?? null
         );
 
         // Configure prompt templates
@@ -223,7 +224,7 @@ class XmonAiContentExtension extends Extension
         $container->setParameter('xmon_ai_content.media.provider', $providerName);
     }
 
-    private function configureImageOptions(ContainerBuilder $container, array $imageOptions, array $userPresets, array $disablePresetDefaults): void
+    private function configureImageOptions(ContainerBuilder $container, array $imageOptions, array $userPresets, array $disablePresetDefaults, ?string $defaultPreset = null): void
     {
         // Get disable lists
         $disableDefaults = $imageOptions['disable_defaults'] ?? [];
@@ -379,6 +380,15 @@ class XmonAiContentExtension extends Extension
         $container->setParameter('xmon_ai_content.image_options.palettes', $palettes);
         $container->setParameter('xmon_ai_content.image_options.extras', $extras);
         $container->setParameter('xmon_ai_content.presets', $presets);
+
+        // Default preset: validate it exists, otherwise use first available
+        $resolvedDefaultPreset = null;
+        if ($defaultPreset !== null && isset($presets[$defaultPreset])) {
+            $resolvedDefaultPreset = $defaultPreset;
+        } elseif (!empty($presets)) {
+            $resolvedDefaultPreset = array_key_first($presets);
+        }
+        $container->setParameter('xmon_ai_content.default_preset', $resolvedDefaultPreset);
     }
 
     private function configurePromptTemplates(ContainerBuilder $container, array $promptsConfig): void

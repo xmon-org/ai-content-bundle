@@ -267,6 +267,11 @@ class Configuration implements ConfigurationInterface
                     ->scalarPrototype()->end()
                     ->defaultValue([])
                 ->end()
+                // Default preset when none is selected in admin
+                ->scalarNode('default_preset')
+                    ->defaultNull()
+                    ->info('Preset to use as fallback when no preset is configured. If null, uses first available preset.')
+                ->end()
                 // Configurable prompt templates
                 ->arrayNode('prompts')
                     ->addDefaultsIfNotSet()
