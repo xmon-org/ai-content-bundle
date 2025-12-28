@@ -127,6 +127,9 @@ xmon_ai_content:
     # Default preset when none is selected in admin
     default_preset: 'sumi-e-clasico'  # null = use first available preset
 
+    # Fixed suffix appended to ALL generated styles
+    style_suffix: 'professional artistic quality, negative space'
+
     # ============================================
     # PROMPT TEMPLATES
     # ============================================
@@ -312,6 +315,39 @@ xmon_ai_content:
 4. First available preset (last resort)
 
 If `default_preset` is `null` (default), the bundle uses the first available preset as the fallback.
+
+### Style Suffix
+
+The `style_suffix` option allows you to append fixed text to ALL generated style prompts. This is useful for applying consistent quality modifiers or technical restrictions across all image generations.
+
+```yaml
+xmon_ai_content:
+    style_suffix: 'professional artistic quality, negative space'
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `style_suffix` | string | `''` (empty) | Text appended to all generated style prompts |
+
+**Use cases:**
+
+- **Quality modifiers**: `'professional artistic quality, high detail'`
+- **Technical restrictions**: `'no text, no letters, clean composition'`
+- **Consistent aesthetic**: `'minimalist, elegant, balanced negative space'`
+
+**Example:**
+
+If a style generates the prompt:
+```
+sumi-e ink wash painting with fluid brushstrokes
+```
+
+With `style_suffix: 'professional artistic quality, negative space'`, the final prompt becomes:
+```
+sumi-e ink wash painting with fluid brushstrokes professional artistic quality, negative space
+```
+
+**Service parameter:** The suffix is exposed as `%xmon_ai_content.style_suffix%` for use in custom services.
 
 ## Prompt Template Structure
 
