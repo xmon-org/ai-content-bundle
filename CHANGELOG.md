@@ -2,6 +2,17 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.10.0](https://github.com/xmon-org/ai-content-bundle/compare/1.9.0...1.10.0) (2025-12-28)
+
+### ✨ Features
+
+* **debug:** muestra config de fallback y retries en xmon:ai:debug ([df89096](https://github.com/xmon-org/ai-content-bundle/commit/df89096a3d669987f164a91dd8b5b62f79fefaa5))
+* **defaults:** configura modelos gratuitos por defecto ([efbe51e](https://github.com/xmon-org/ai-content-bundle/commit/efbe51ebb7d34a19a5fd8fd1de82b4fdc3d5fc81))
+
+### ♻️ Refactoring
+
+* **providers:** simplifica arquitectura a single provider con fallback por modelos ([2164829](https://github.com/xmon-org/ai-content-bundle/commit/21648298b285c5f9aeb36ddc7559f0331dd00f3e))
+
 ## [1.9.0](https://github.com/xmon-org/ai-content-bundle/compare/1.8.0...1.9.0) (2025-12-28)
 
 ### ✨ Features
