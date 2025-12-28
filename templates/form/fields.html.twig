@@ -194,7 +194,7 @@
                 <i class="fa fa-bookmark-o me-1"></i> Preset
             </button>
             <button type="button" class="xmon-ai-mode-btn" data-mode="custom">
-                <i class="fa fa-sliders me-1"></i> Personalizado
+                <i class="fa fa-sliders me-1"></i> Custom
             </button>
         </div>
     </div>
@@ -238,24 +238,24 @@
         </label>
         <div class="xmon-ai-preview-box p-3">
             <div class="xmon-ai-preview-content">
-                <div class="xmon-ai-preview-item" data-field="estilo">
-                    <span class="xmon-ai-preview-label">Estilo</span>
+                <div class="xmon-ai-preview-item" data-field="style">
+                    <span class="xmon-ai-preview-label">Style</span>
                     <span class="xmon-ai-preview-value xmon-ai-preview-empty">—</span>
                 </div>
-                <div class="xmon-ai-preview-item" data-field="composicion">
-                    <span class="xmon-ai-preview-label">Composición</span>
+                <div class="xmon-ai-preview-item" data-field="composition">
+                    <span class="xmon-ai-preview-label">Composition</span>
                     <span class="xmon-ai-preview-value xmon-ai-preview-empty">—</span>
                 </div>
-                <div class="xmon-ai-preview-item" data-field="paleta">
-                    <span class="xmon-ai-preview-label">Paleta</span>
+                <div class="xmon-ai-preview-item" data-field="palette">
+                    <span class="xmon-ai-preview-label">Palette</span>
                     <span class="xmon-ai-preview-value xmon-ai-preview-empty">—</span>
                 </div>
-                <div class="xmon-ai-preview-item" data-field="sufijo">
-                    <span class="xmon-ai-preview-label">Restricciones</span>
+                <div class="xmon-ai-preview-item" data-field="suffix">
+                    <span class="xmon-ai-preview-label">Restrictions</span>
                     <span class="xmon-ai-preview-value xmon-ai-preview-empty">—</span>
                 </div>
-                <div class="xmon-ai-preview-item" data-field="adicional">
-                    <span class="xmon-ai-preview-label">Adicional</span>
+                <div class="xmon-ai-preview-item" data-field="additional">
+                    <span class="xmon-ai-preview-label">Additional</span>
                     <span class="xmon-ai-preview-value xmon-ai-preview-empty">—</span>
                 </div>
             </div>
@@ -408,29 +408,29 @@
             const paletteSelect = findSelect('aiStylePalette');
             const additionalInput = findTextarea('aiStyleAdditional');
 
-            let estilo = '', composicion = '', paleta = '';
+            let style = '', composition = '', palette = '';
 
             if (mode === 'preset' && presetSelect && presetSelect.value) {
                 const preset = presets[presetSelect.value];
                 if (preset) {
-                    estilo = preset.style || '';
-                    composicion = preset.composition || '';
-                    paleta = preset.palette || '';
+                    style = preset.style || '';
+                    composition = preset.composition || '';
+                    palette = preset.palette || '';
                 }
             } else if (mode === 'custom') {
-                estilo = artisticSelect?.value || '';
-                composicion = compositionSelect?.value || '';
-                paleta = paletteSelect?.value || '';
+                style = artisticSelect?.value || '';
+                composition = compositionSelect?.value || '';
+                palette = paletteSelect?.value || '';
             }
 
             const additional = additionalInput?.value?.trim() || '';
 
             // Update each preview item
-            updatePreviewItem(previewContent, 'estilo', estilo);
-            updatePreviewItem(previewContent, 'composicion', composicion);
-            updatePreviewItem(previewContent, 'paleta', paleta);
-            updatePreviewItem(previewContent, 'sufijo', suffix);
-            updatePreviewItem(previewContent, 'adicional', additional);
+            updatePreviewItem(previewContent, 'style', style);
+            updatePreviewItem(previewContent, 'composition', composition);
+            updatePreviewItem(previewContent, 'palette', palette);
+            updatePreviewItem(previewContent, 'suffix', suffix);
+            updatePreviewItem(previewContent, 'additional', additional);
         }
 
         function updatePreviewItem(container, field, value) {
