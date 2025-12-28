@@ -162,39 +162,58 @@ trait AiStyleConfigurableTrait
     /**
      * Build the complete style prompt from the configuration.
      *
-     * Override this method to customize how presets are resolved
-     * and how the final style string is composed.
+     * Priority:
+     * 1. Selected preset (if mode is 'preset' and preset exists)
+     * 2. Custom fields (if mode is 'custom' and fields are filled)
+     * 3. Configured default preset (from xmon_ai_content.default_preset)
+     * 4. First available preset as last resort
      *
-     * @param array<string, array{estilo: string, composicion: string, paleta: string}> $presets     Available presets
-     * @param string                                                                    $suffix      Fixed suffix to append
-     * @param string|null                                                               $artDefault  Default artistic style
-     * @param string|null                                                               $compDefault Default composition
-     * @param string|null                                                               $palDefault  Default palette
+     * @param array<string, array{style: string, composition: string, palette: string}> $presets          Available presets (from ImageOptionsService::getPresetsForForm())
+     * @param string                                                                    $suffix           Fixed suffix to append
+     * @param string|null                                                               $defaultPresetKey Default preset key from bundle config
      */
     public function buildStylePreview(
         array $presets = [],
         string $suffix = '',
-        ?string $artDefault = null,
-        ?string $compDefault = null,
-        ?string $palDefault = null,
+        ?string $defaultPresetKey = null,
     ): string {
         $parts = [];
 
         if ($this->aiStyleMode === 'preset' && $this->aiStylePreset !== null) {
-            // Preset mode: use preset values
+            // Preset mode: use selected preset values
             $presetData = $presets[$this->aiStylePreset] ?? null;
             if ($presetData) {
-                $parts[] = $presetData['estilo'];
-                $parts[] = $presetData['composicion'];
-                $parts[] = $presetData['paleta'];
+                $parts[] = $presetData['style'];
+                $parts[] = $presetData['composition'];
+                $parts[] = $presetData['palette'];
             }
         }
 
-        if (empty($parts)) {
-            // Custom mode or preset not found: use individual fields
-            $parts[] = $this->aiStyleArtistic ?? $artDefault ?? '';
-            $parts[] = $this->aiStyleComposition ?? $compDefault ?? '';
-            $parts[] = $this->aiStylePalette ?? $palDefault ?? '';
+        if (empty($parts) && $this->aiStyleMode === 'custom') {
+            // Custom mode: use individual fields if any are set
+            if ($this->aiStyleArtistic !== null || $this->aiStyleComposition !== null || $this->aiStylePalette !== null) {
+                $parts[] = $this->aiStyleArtistic ?? '';
+                $parts[] = $this->aiStyleComposition ?? '';
+                $parts[] = $this->aiStylePalette ?? '';
+            }
+        }
+
+        if (empty($parts) && $defaultPresetKey !== null && isset($presets[$defaultPresetKey])) {
+            // Fallback: use configured default preset
+            $defaultPreset = $presets[$defaultPresetKey];
+            $parts[] = $defaultPreset['style'];
+            $parts[] = $defaultPreset['composition'];
+            $parts[] = $defaultPreset['palette'];
+        }
+
+        if (empty($parts) && !empty($presets)) {
+            // Last resort: use first available preset
+            $firstPreset = reset($presets);
+            if ($firstPreset) {
+                $parts[] = $firstPreset['style'];
+                $parts[] = $firstPreset['composition'];
+                $parts[] = $firstPreset['palette'];
+            }
         }
 
         // Filter empty parts
