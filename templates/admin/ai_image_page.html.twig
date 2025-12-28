@@ -131,18 +131,19 @@
                             </div>
                         </div>
 
+                        {# Prompt status message - shown above button, subtle styling #}
+                        <div id="promptStatusMessage" class="xmon-status-message" style="display: none;">
+                            <div class="xmon-status-content" id="promptStatusContent" role="status">
+                                <i class="xmon-status-icon fa"></i>
+                                <span class="xmon-status-text" id="promptStatusText"></span>
+                            </div>
+                        </div>
+
                         {% if textServiceConfigured %}
                         <button type="button" class="btn btn-default btn-block" id="btnGeneratePrompt" style="font-size: 13px; padding: 8px 12px;">
                             <i class="fa fa-magic"></i> {% block generate_subject_label %}{{ 'Generate description with AI'|trans }}{% endblock %}
                         </button>
                         {% endif %}
-
-                        {# Status message #}
-                        <div id="statusMessage" style="margin-top: 10px; display: none;">
-                            <div class="alert" id="statusAlert" role="status" style="margin-bottom: 0; padding: 10px 12px; font-size: 13px;">
-                                <span id="statusText"></span>
-                            </div>
-                        </div>
                     </div>
 
                     {# 2. Style configuration (HOW) #}
@@ -267,6 +268,14 @@
 
                     {# Main action button #}
                     <div style="margin-top: 20px;">
+                        {# Image status message - shown above button, subtle styling #}
+                        <div id="imageStatusMessage" class="xmon-status-message" style="display: none;">
+                            <div class="xmon-status-content" id="imageStatusContent" role="status">
+                                <i class="xmon-status-icon fa"></i>
+                                <span class="xmon-status-text" id="imageStatusText"></span>
+                            </div>
+                        </div>
+
                         <button type="button" class="btn btn-primary btn-block btn-lg" id="btnRegenerateImage" {% if not imageServiceConfigured %}disabled{% endif %} style="font-size: 14px; font-weight: 600; padding: 12px;">
                             <i class="fa fa-refresh"></i> {% block generate_image_label %}{{ 'Generate image'|trans }}{% endblock %}
                         </button>
@@ -964,6 +973,61 @@
         font-size: 11px;
         line-height: 1.5;
     }
+
+    /* Status messages - subtle, non-button appearance */
+    .xmon-status-message {
+        margin-bottom: 10px;
+    }
+    .xmon-status-content {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        line-height: 1.4;
+        border-left: 3px solid;
+    }
+    .xmon-status-content.status-success {
+        background-color: #f0fff4;
+        border-left-color: #22c55e;
+        color: #166534;
+    }
+    .xmon-status-content.status-success .xmon-status-icon::before {
+        content: "\f00c"; /* fa-check */
+    }
+    .xmon-status-content.status-danger {
+        background-color: #fef2f2;
+        border-left-color: #ef4444;
+        color: #991b1b;
+    }
+    .xmon-status-content.status-danger .xmon-status-icon::before {
+        content: "\f071"; /* fa-exclamation-triangle */
+    }
+    .xmon-status-content.status-warning {
+        background-color: #fffbeb;
+        border-left-color: #f59e0b;
+        color: #92400e;
+    }
+    .xmon-status-content.status-warning .xmon-status-icon::before {
+        content: "\f06a"; /* fa-exclamation-circle */
+    }
+    .xmon-status-content.status-info {
+        background-color: #eff6ff;
+        border-left-color: #3b82f6;
+        color: #1e40af;
+    }
+    .xmon-status-content.status-info .xmon-status-icon::before {
+        content: "\f05a"; /* fa-info-circle */
+    }
+    .xmon-status-icon {
+        flex-shrink: 0;
+        font-size: 14px;
+        margin-top: 1px;
+    }
+    .xmon-status-text {
+        flex: 1;
+    }
 </style>
 {% endblock %}
 
@@ -986,9 +1050,13 @@ document.addEventListener('DOMContentLoaded', function() {
     var subjectField = document.getElementById('subjectField');
     var btnGeneratePrompt = document.getElementById('btnGeneratePrompt');
     var btnRegenerateImage = document.getElementById('btnRegenerateImage');
-    var statusMessage = document.getElementById('statusMessage');
-    var statusAlert = document.getElementById('statusAlert');
-    var statusText = document.getElementById('statusText');
+    // Status message elements - separate for prompt and image areas
+    var promptStatusMessage = document.getElementById('promptStatusMessage');
+    var promptStatusContent = document.getElementById('promptStatusContent');
+    var promptStatusText = document.getElementById('promptStatusText');
+    var imageStatusMessage = document.getElementById('imageStatusMessage');
+    var imageStatusContent = document.getElementById('imageStatusContent');
+    var imageStatusText = document.getElementById('imageStatusText');
     var newImagePlaceholder = document.getElementById('newImagePlaceholder');
     var newImageLoading = document.getElementById('newImageLoading');
     var newImage = document.getElementById('newImage');
@@ -1105,10 +1173,42 @@ document.addEventListener('DOMContentLoaded', function() {
         return checkedNative ? checkedNative.value : 'global';
     }
 
-    function showStatus(message, type) {
-        statusAlert.className = 'alert alert-' + type;
-        statusText.textContent = message;
-        statusMessage.style.display = 'block';
+    /**
+     * Show status message in a specific area
+     * @param {HTMLElement} containerEl - The container (.xmon-status-message)
+     * @param {HTMLElement} contentEl - The content div (.xmon-status-content)
+     * @param {HTMLElement} textEl - The text span (.xmon-status-text)
+     * @param {string} message - Message to display
+     * @param {string} type - 'success', 'danger', 'warning', 'info'
+     */
+    function showStatusMessage(containerEl, contentEl, textEl, message, type) {
+        if (!containerEl || !contentEl || !textEl) return;
+        contentEl.className = 'xmon-status-content status-' + type;
+        textEl.textContent = message;
+        containerEl.style.display = 'block';
+    }
+
+    function hideStatusMessage(containerEl) {
+        if (containerEl) {
+            containerEl.style.display = 'none';
+        }
+    }
+
+    // Convenience functions for prompt and image status
+    function showPromptStatus(message, type) {
+        showStatusMessage(promptStatusMessage, promptStatusContent, promptStatusText, message, type);
+    }
+
+    function hidePromptStatus() {
+        hideStatusMessage(promptStatusMessage);
+    }
+
+    function showImageStatus(message, type) {
+        showStatusMessage(imageStatusMessage, imageStatusContent, imageStatusText, message, type);
+    }
+
+    function hideImageStatus() {
+        hideStatusMessage(imageStatusMessage);
     }
 
     // === History limit modal functions ===
@@ -1216,8 +1316,9 @@ document.addEventListener('DOMContentLoaded', function() {
         historyLimitModal.modal('show');
     }
 
-    function hideStatus() {
-        statusMessage.style.display = 'none';
+    function hideAllStatus() {
+        hidePromptStatus();
+        hideImageStatus();
     }
 
     function startTimer() {
@@ -1552,16 +1653,16 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(function(data) {
                 if (data.success) {
                     subjectField.value = data.prompt || '';
-                    showStatus('{{ "Description generated successfully"|trans }}', 'success');
+                    showPromptStatus('{{ "Description generated successfully"|trans }}', 'success');
                     updateStylePreview();
                     // Note: New prompt is NOT added to history until it's actually used
                     // (either by generating another prompt or by generating an image)
                 } else {
-                    showStatus(data.error || '{{ "Error generating description"|trans }}', 'danger');
+                    showPromptStatus(data.error || '{{ "Error generating description"|trans }}', 'danger');
                 }
             })
             .catch(function(error) {
-                showStatus('{{ "Network error"|trans }}: ' + error.message, 'danger');
+                showPromptStatus('{{ "Network error"|trans }}: ' + error.message, 'danger');
             })
             .finally(function() {
                 btn.disabled = false;
@@ -1575,7 +1676,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function doGenerateImage() {
         var subject = subjectField ? subjectField.value.trim() : '';
         if (!subject) {
-            showStatus('{{ "Please enter a description first"|trans }}', 'warning');
+            showImageStatus('{{ "Please enter a description first"|trans }}', 'warning');
             return;
         }
 
@@ -1586,7 +1687,7 @@ document.addEventListener('DOMContentLoaded', function() {
         newImageLoading.style.display = 'block';
         newImage.style.display = 'none';
         newImageFooter.style.display = 'none';
-        hideStatus();
+        hideImageStatus();
         startTimer();
 
         var formData = new FormData();
@@ -1617,7 +1718,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 newImage.style.display = 'block';
                 newImageLoading.style.display = 'none';
                 newImageFooter.style.display = 'block';
-                showStatus('{{ "Image generated successfully. Click Use to apply it."|trans }}', 'success');
+                showImageStatus('{{ "Image generated successfully. Click Use to apply it."|trans }}', 'success');
 
                 // Add to prompt history
                 addToPromptHistory(subject);
@@ -1634,13 +1735,13 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 newImagePlaceholder.style.display = 'block';
                 newImageLoading.style.display = 'none';
-                showStatus(data.error || '{{ "Error generating image"|trans }}', 'danger');
+                showImageStatus(data.error || '{{ "Error generating image"|trans }}', 'danger');
             }
         })
         .catch(function(error) {
             newImagePlaceholder.style.display = 'block';
             newImageLoading.style.display = 'none';
-            showStatus('{{ "Network error"|trans }}: ' + error.message, 'danger');
+            showImageStatus('{{ "Network error"|trans }}: ' + error.message, 'danger');
         })
         .finally(function() {
             stopTimer();
@@ -1682,7 +1783,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnRegenerateImage.addEventListener('click', function() {
             var subject = subjectField ? subjectField.value.trim() : '';
             if (!subject) {
-                showStatus('{{ "Please enter a description first"|trans }}', 'warning');
+                showImageStatus('{{ "Please enter a description first"|trans }}', 'warning');
                 return;
             }
 
@@ -1734,13 +1835,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         doGenerateImage();
                     }, 300);
                 } else {
-                    showStatus(data.error || '{{ "Error deleting images"|trans }}', 'danger');
+                    showImageStatus(data.error || '{{ "Error deleting images"|trans }}', 'danger');
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fa fa-trash"></i> {{ "Delete and Generate"|trans }}';
                 }
             })
             .catch(function(error) {
-                showStatus('{{ "Network error"|trans }}: ' + error.message, 'danger');
+                showImageStatus('{{ "Network error"|trans }}: ' + error.message, 'danger');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa fa-trash"></i> {{ "Delete and Generate"|trans }}';
             });
@@ -1812,15 +1913,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     currentImage.src = data.imageUrl;
                 }
 
-                showStatus('{{ "Image updated successfully"|trans }}', 'success');
+                showImageStatus('{{ "Image updated successfully"|trans }}', 'success');
             } else {
-                showStatus(data.error || '{{ "Error using image"|trans }}', 'danger');
+                showImageStatus(data.error || '{{ "Error using image"|trans }}', 'danger');
                 button.disabled = false;
                 item.classList.remove('removing');
             }
         })
         .catch(function(error) {
-            showStatus('{{ "Network error"|trans }}: ' + error.message, 'danger');
+            showImageStatus('{{ "Network error"|trans }}: ' + error.message, 'danger');
             button.disabled = false;
             item.classList.remove('removing');
         });
@@ -1865,15 +1966,15 @@ document.addEventListener('DOMContentLoaded', function() {
                             }
                         }
                     }, 300);
-                    showStatus('{{ "Image deleted from history"|trans }}', 'success');
+                    showImageStatus('{{ "Image deleted from history"|trans }}', 'success');
                 } else {
-                    showStatus(data.error || '{{ "Error deleting image"|trans }}', 'danger');
+                    showImageStatus(data.error || '{{ "Error deleting image"|trans }}', 'danger');
                     button.disabled = false;
                     item.classList.remove('removing');
                 }
             })
             .catch(function(error) {
-                showStatus('{{ "Network error"|trans }}: ' + error.message, 'danger');
+                showImageStatus('{{ "Network error"|trans }}: ' + error.message, 'danger');
                 button.disabled = false;
                 item.classList.remove('removing');
             });
