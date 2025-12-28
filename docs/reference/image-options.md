@@ -283,3 +283,46 @@ $prompt = $this->imageOptions->getStylePrompt($selectedKey);
 | `hasStyle($key)` | `bool` | Check if style exists |
 
 Same methods exist for: `Compositions`, `Palettes`, `Extras`, and `Presets`.
+
+### Preset-Specific Methods
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `getPresetsForForm()` | `array` | Presets with resolved prompts for form integration |
+| `getResolvedPreset($key)` | `?array` | Single preset with resolved prompts |
+| `getPresetChoices()` | `array` | Presets as label => key for ChoiceType |
+| `buildStyleFromPreset($key, $suffix, $additional)` | `?string` | Complete style string from preset |
+
+#### getPresetsForForm()
+
+Returns presets with resolved style/composition/palette prompts. Used by `AiStyleConfigType` and `AiStyleConfigurableTrait::buildStylePreview()`.
+
+**Return format (English keys):**
+
+```php
+[
+    'preset-key' => [
+        'name' => 'Preset Name',
+        'description' => 'Optional description',
+        'style' => 'resolved style prompt',
+        'composition' => 'resolved composition prompt',
+        'palette' => 'resolved palette prompt',
+    ],
+]
+```
+
+#### getResolvedPreset()
+
+Returns a single preset with resolved prompts:
+
+```php
+$preset = $imageOptions->getResolvedPreset('sumi-e-clasico');
+// Returns:
+// [
+//     'name' => 'Sumi-e Clasico',
+//     'description' => null,
+//     'style' => 'sumi-e Japanese ink wash painting style',
+//     'composition' => 'minimalist elegant composition',
+//     'palette' => 'black white and dark crimson red color palette',
+// ]
+```

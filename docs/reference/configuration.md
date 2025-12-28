@@ -124,6 +124,9 @@ xmon_ai_content:
 
     disable_preset_defaults: []
 
+    # Default preset when none is selected in admin
+    default_preset: 'sumi-e-clasico'  # null = use first available preset
+
     # ============================================
     # PROMPT TEMPLATES
     # ============================================
@@ -291,6 +294,24 @@ presets:
         palette: 'palette-key'
         extras: ['extra1', 'extra2']
 ```
+
+### Default Preset
+
+The `default_preset` option specifies which preset to use as a fallback when no preset is explicitly selected in the admin interface.
+
+```yaml
+xmon_ai_content:
+    default_preset: 'sumi-e-clasico'
+```
+
+**Fallback priority:**
+
+1. Selected preset (if mode is 'preset' and a preset is selected)
+2. Custom fields (if mode is 'custom' and fields are filled)
+3. Configured `default_preset` (if set)
+4. First available preset (last resort)
+
+If `default_preset` is `null` (default), the bundle uses the first available preset as the fallback.
 
 ## Prompt Template Structure
 

@@ -116,38 +116,25 @@ namespace App\Entity;
 
 use Xmon\AiContentBundle\Entity\AiStyleConfigurableInterface;
 use Xmon\AiContentBundle\Entity\AiStyleConfigurableTrait;
+use Xmon\AiContentBundle\Service\ImageOptionsService;
 
 #[ORM\Entity]
 class Configuracion implements AiStyleConfigurableInterface
 {
     use AiStyleConfigurableTrait;
 
-    // Define your presets as constants
-    public const PRESETS = [
-        'sumi-e-clasico' => [
-            'nombre' => 'Sumi-e Clásico',
-            'estilo' => 'sumi-e Japanese ink wash painting style',
-            'composicion' => 'minimalist elegant composition',
-            'paleta' => 'black white and dark crimson red color palette',
-        ],
-        // ... more presets
-    ];
-
-    public const STYLES = [...];
-    public const COMPOSITIONS = [...];
-    public const PALETTES = [...];
-
     /**
      * Build the complete style from configuration.
+     *
+     * Uses ImageOptionsService::getPresetsForForm() which returns presets
+     * with English keys: name, description, style, composition, palette.
      */
-    public function getBaseStylePreview(): string
+    public function getBaseStylePreview(ImageOptionsService $imageOptions, ?string $defaultPresetKey = null): string
     {
         return $this->buildStylePreview(
-            presets: self::PRESETS,
+            presets: $imageOptions->getPresetsForForm(),
             suffix: 'no text, professional quality',
-            artDefault: 'sumi-e style',
-            compDefault: 'minimalist composition',
-            palDefault: 'monochrome palette',
+            defaultPresetKey: $defaultPresetKey,
         );
     }
 }
@@ -161,6 +148,30 @@ The trait provides:
 - `aiStylePalette`: Custom palette
 - `aiStyleAdditional`: Additional text modifier
 - `buildStylePreview()`: Combines all into a prompt string
+
+**buildStylePreview() signature:**
+
+```php
+public function buildStylePreview(
+    array $presets = [],           // From ImageOptionsService::getPresetsForForm()
+    string $suffix = '',           // Fixed suffix (e.g., "no text, professional quality")
+    ?string $defaultPresetKey = null,  // Default preset from xmon_ai_content.default_preset
+): string
+```
+
+**Preset array format (English keys):**
+
+```php
+[
+    'preset-key' => [
+        'name' => 'Preset Name',
+        'description' => 'Optional description',
+        'style' => 'resolved style prompt',
+        'composition' => 'resolved composition prompt',
+        'palette' => 'resolved palette prompt',
+    ],
+]
+```
 
 ### Step 4: Admin Form (Optional)
 

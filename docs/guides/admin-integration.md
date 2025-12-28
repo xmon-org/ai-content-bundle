@@ -495,32 +495,29 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use Xmon\AiContentBundle\Entity\AiStyleConfigurableInterface;
 use Xmon\AiContentBundle\Entity\AiStyleConfigurableTrait;
+use Xmon\AiContentBundle\Service\ImageOptionsService;
 
 #[ORM\Entity]
 class Configuracion implements AiStyleConfigurableInterface
 {
     use AiStyleConfigurableTrait;  // <-- This adds the 6 fields
 
-    // Your presets, styles, compositions, palettes as constants
-    public const PRESETS = [
-        'sumi-e-classic' => [
-            'nombre' => 'Sumi-e Classic',
-            'estilo' => 'sumi-e Japanese ink wash painting style',
-            'composicion' => 'minimalist composition with flowing lines',
-            'paleta' => 'black white grey and subtle earth tones',
-        ],
-        // More presets...
-    ];
-
-    public const STYLES = [
-        'Traditional' => [
-            'Sumi-e' => 'sumi-e Japanese ink wash painting style',
-            'Ukiyo-e' => 'ukiyo-e woodblock print style',
-        ],
-        // More grouped styles...
-    ];
-
-    // ... other entity fields and methods
+    /**
+     * Build the complete style from configuration.
+     *
+     * @param ImageOptionsService $imageOptions Service to get presets
+     * @param string|null $defaultPresetKey Default preset from bundle config
+     */
+    public function getBaseStylePreview(
+        ImageOptionsService $imageOptions,
+        ?string $defaultPresetKey = null
+    ): string {
+        return $this->buildStylePreview(
+            presets: $imageOptions->getPresetsForForm(),
+            suffix: 'no faces, no text',
+            defaultPresetKey: $defaultPresetKey,
+        );
+    }
 }
 ```
 
@@ -578,7 +575,7 @@ class ConfiguracionAdmin extends AbstractAdmin
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | **Data Options** |
-| `presets` | array | `[]` | Preset configurations `['key' => ['nombre' => '...', 'estilo' => '...', 'composicion' => '...', 'paleta' => '...']]` |
+| `presets` | array | `[]` | Preset configurations `['key' => ['name' => '...', 'style' => '...', 'composition' => '...', 'palette' => '...']]` |
 | `styles` | array | `[]` | Artistic styles (can be grouped) |
 | `compositions` | array | `[]` | Composition options (can be grouped) |
 | `palettes` | array | `[]` | Color palette options (can be grouped) |

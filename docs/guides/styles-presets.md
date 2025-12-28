@@ -60,6 +60,19 @@ Presets combine options into ready-to-use configurations:
 | `zen-contemplativo` | Zen Contemplativo | sumi-e | centered | muted | no-text, atmospheric |
 | `fotografia-aikido` | Fotografía Aikido | photography | rule-of-thirds | muted | dramatic-light |
 
+## Default Preset Configuration
+
+You can configure a default preset that will be used as a fallback when no preset is explicitly selected in the admin interface:
+
+```yaml
+xmon_ai_content:
+    default_preset: 'sumi-e-clasico'  # Use this preset as fallback
+```
+
+When `default_preset` is `null` (the default), the bundle uses the first available preset as the fallback.
+
+See [Configuration Reference](../reference/configuration.md#default-preset) for details on fallback priority.
+
 ## Using PromptBuilder
 
 ### With preset (simple mode)
