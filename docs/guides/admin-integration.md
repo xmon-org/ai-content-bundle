@@ -185,12 +185,43 @@ bin/console doctrine:migrations:migrate
 
 The most powerful feature of this bundle is the **dedicated image generation page**. It provides a full-featured interface for AI image generation with:
 
+- **Simple/Expert mode toggle** for different user experience levels
 - Subject input with AI-powered description generation
 - Style selector (global/preset/custom)
 - **Model selector dropdown** with cost indicator
 - Side-by-side image comparison (current vs new)
 - Complete image history with reuse and delete actions
 - Real-time generation timer
+
+### Simple/Expert Mode Toggle
+
+The page includes a mode toggle in the context banner that adapts the interface complexity:
+
+**Simple Mode** (default for new users):
+- Subject textarea with character counter
+- Generate image button with cost indicator
+- Streamlined history cards (no prompt details)
+- Minimal lightbox (model + date only)
+- Uses global style configuration automatically
+
+**Expert Mode** (for power users):
+- All Simple mode features, plus:
+- AI-powered description generation button
+- Prompt history with reuse functionality
+- Style configuration (global/preset/custom)
+- Full prompt preview
+- Model selector dropdown
+- Detailed history cards with subject and style
+- Full prompt display in lightbox
+
+**Mode Persistence:**
+- Mode preference is saved in `localStorage` (`xmon_ai_image_mode`)
+- Users see their preferred mode on return visits
+- Switching to Simple mode automatically sets `styleMode` to 'global'
+
+**CSS Implementation:**
+- Elements marked with `data-mode="expert"` are hidden in Simple mode
+- Uses `body.mode-simple` selector to affect both page and modal elements
 
 ### Model Selector in AI Image Generator
 
@@ -459,8 +490,8 @@ Available blocks to override:
 - `style_label` - Style section label
 - `generate_subject_label` - AI subject generation button
 - `generate_image_label` - Main action button
-- `xmon_ai_image_styles` - CSS block
-- `xmon_ai_image_scripts` - JavaScript block
+- `xmon_ai_image_styles` - CSS block (includes mode toggle styles)
+- `xmon_ai_image_scripts` - JavaScript block (includes mode toggle logic)
 
 ## Global Style Configuration with AiStyleConfigType
 
