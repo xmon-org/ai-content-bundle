@@ -43,11 +43,31 @@ class MyController
 $result = $this->aiImageService->generate('prompt here', [
     'width' => 1280,           // Width in pixels
     'height' => 720,           // Height in pixels
-    'model' => 'flux',         // AI model
+    'model' => 'flux',         // AI model (overrides all defaults)
     'seed' => 12345,           // Seed for reproducibility
     'nologo' => true,          // No watermark (requires API key)
     'enhance' => false,        // AI enhances the prompt automatically
     'provider' => 'pollinations', // Force specific provider
+]);
+```
+
+### Model Selection
+
+When you pass a `model` option, it takes **highest priority** and overrides all other configurations. If no model is specified, the bundle follows the [model selection hierarchy](../reference/configuration.md#model-selection-priority):
+
+1. Database configuration (via `AiStyleConfigurableTrait`)
+2. YAML configuration (`tasks.image_generation.default_model`)
+3. Bundle default (`'flux'`)
+
+**Using generateForTask()** for task-aware generation:
+
+```php
+// Uses model from hierarchy automatically
+$result = $this->aiImageService->generateForTask('prompt here');
+
+// Override with specific model
+$result = $this->aiImageService->generateForTask('prompt here', [
+    'model' => 'gptimage',  // Use this model instead of default
 ]);
 ```
 

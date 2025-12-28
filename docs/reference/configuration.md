@@ -240,6 +240,36 @@ tasks:
 
 See [Task Types Guide](../guides/task-types.md) for detailed usage examples.
 
+### Model Selection Priority
+
+When generating images, the bundle resolves which model to use following this priority (highest to lowest):
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│  1. PAGE SELECTOR (AI Image Generator page)                    │
+│     └─ User selects model in dropdown for THIS generation      │
+│     └─ Passed via POST request 'model' parameter               │
+├────────────────────────────────────────────────────────────────┤
+│  2. DATABASE (Entity.aiImageModel via AiStyleConfigurableTrait)│
+│     └─ Default model configured via Sonata Admin               │
+│     └─ Stored in entity using the trait                        │
+├────────────────────────────────────────────────────────────────┤
+│  3. YAML (tasks.image_generation.default_model)                │
+│     └─ Project configuration in config/packages/               │
+├────────────────────────────────────────────────────────────────┤
+│  4. BUNDLE DEFAULT ('flux')                                    │
+│     └─ Ultimate fallback if nothing else is configured         │
+└────────────────────────────────────────────────────────────────┘
+```
+
+This hierarchy allows:
+- **End users** to override model per-generation (level 1)
+- **Admins** to set a project-wide default in the UI (level 2)
+- **Developers** to configure defaults in YAML (level 3)
+- **Bundle** to provide sensible fallback (level 4)
+
+See [Admin Integration - Default Image Model Selection](../guides/admin-integration.md#default-image-model-selection) for implementation details.
+
 ## Provider Configuration
 
 ### Pollinations Text Provider

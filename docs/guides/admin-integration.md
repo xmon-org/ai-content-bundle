@@ -187,9 +187,22 @@ The most powerful feature of this bundle is the **dedicated image generation pag
 
 - Subject input with AI-powered description generation
 - Style selector (global/preset/custom)
+- **Model selector dropdown** with cost indicator
 - Side-by-side image comparison (current vs new)
 - Complete image history with reuse and delete actions
 - Real-time generation timer
+
+### Model Selector in AI Image Generator
+
+The page includes a dropdown to select the AI image model for each generation:
+
+- Shows all models from `allowed_models` in YAML configuration
+- Displays model name and cost (e.g., "GPT Image ($0.020)" or "Flux (Free)")
+- Pre-selects the default model based on priority hierarchy (see [Default Image Model Selection](#default-image-model-selection))
+- Updates cost indicator dynamically when changing models
+- Selected model is sent with the generation request
+
+The model selector appears near the "Generate Image" button. Users can override the default for individual generations without changing the global configuration.
 
 ### Controller Implementation
 
@@ -469,6 +482,7 @@ The `AiStyleConfigType` works together with `AiStyleConfigurableTrait`. They for
 │                                     │    - aiStylePalette (?string)
 │                                     │    - aiStyleAdditional (?string)
 │                                     │    - aiStyleSuffix (?string)
+│                                     │    - aiImageModel (?string)  ← NEW
 └─────────────────────────────────────┘
                 ↓ inherit_data=true
 ┌─────────────────────────────────────┐
@@ -482,6 +496,7 @@ The `AiStyleConfigType` works together with `AiStyleConfigurableTrait`. They for
 │                                     │    - aiStylePalette
 │                                     │    - aiStyleAdditional
 │                                     │    - aiStyleSuffix
+│                                     │    - aiImageModel  ← NEW
 └─────────────────────────────────────┘
 ```
 
@@ -581,6 +596,7 @@ class ConfiguracionAdmin extends AbstractAdmin
 | `styles` | array | `[]` | Artistic styles (can be grouped) |
 | `compositions` | array | `[]` | Composition options (can be grouped) |
 | `palettes` | array | `[]` | Color palette options (can be grouped) |
+| `image_models` | array | auto | Image models for dropdown (auto-loaded from YAML `allowed_models`) |
 | **Preview Options** |
 | `show_preview` | bool | `true` | Show dynamic style preview |
 | `preview_label` | string | `'Style Preview'` | Label for preview section |
@@ -598,6 +614,7 @@ class ConfiguracionAdmin extends AbstractAdmin
 | `palette_label` | string | `'Color Palette'` | Palette select label |
 | `additional_label` | string | `'Additional Text'` | Additional textarea label |
 | `suffix_label` | string | `'Technical Restrictions'` | Suffix textarea label |
+| `model_label` | string | `'Default Image Model'` | Model selector label |
 | **Placeholder Options** |
 | `preset_placeholder` | string | `'Select a preset...'` | Preset select placeholder |
 | `artistic_placeholder` | string | `'Select a style...'` | Artistic select placeholder |
@@ -605,11 +622,13 @@ class ConfiguracionAdmin extends AbstractAdmin
 | `palette_placeholder` | string | `'Select a palette...'` | Palette placeholder |
 | `additional_placeholder` | string | `'Additional instructions...'` | Additional textarea placeholder |
 | `suffix_placeholder` | string | `'Fixed technical restrictions...'` | Suffix textarea placeholder |
+| `model_placeholder` | string | `'Use YAML configuration'` | Model selector placeholder |
 | **Help Text Options** |
 | `mode_help` | ?string | `null` | Help text for mode field |
 | `preset_help` | ?string | `null` | Help text for preset field |
 | `additional_help` | ?string | `null` | Help text for additional field |
 | `suffix_help` | ?string | `null` | Help text for suffix field |
+| `model_help` | ?string | `null` | Help text for model field |
 
 ### Dynamic Preview
 
@@ -620,6 +639,43 @@ The FormType includes JavaScript that provides real-time preview:
 - **Both modes**: Adds the fixed suffix and additional text
 
 The preview updates automatically when any field changes - no page reload needed.
+
+### Default Image Model Selection
+
+The `aiImageModel` field allows you to configure a default AI image model from the admin interface. This model will be used for automatic image generation (e.g., RSS aggregation).
+
+**Model Selection Priority (highest to lowest):**
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│  1. PAGE SELECTOR (AI Image Generator page)                    │
+│     └─ User selects model in dropdown for THIS generation      │
+│     └─ Only applies to that specific generation                │
+├────────────────────────────────────────────────────────────────┤
+│  2. DATABASE (Entity.aiImageModel)                             │
+│     └─ Default model configured via Sonata Admin               │
+│     └─ Can be NULL if not configured                           │
+├────────────────────────────────────────────────────────────────┤
+│  3. YAML (xmon_ai_content.tasks.image_generation.default_model)│
+│     └─ Project configuration in config/packages/               │
+├────────────────────────────────────────────────────────────────┤
+│  4. BUNDLE DEFAULT (hardcoded 'flux')                          │
+│     └─ Ultimate fallback if nothing else is configured         │
+└────────────────────────────────────────────────────────────────┘
+```
+
+**Dropdown options** are populated from `xmon_ai_content.tasks.image_generation.allowed_models` in your YAML configuration. Only models listed there will appear in the selector.
+
+**Example configuration with Spanish labels:**
+
+```php
+->add('aiStyleConfig', AiStyleConfigType::class, [
+    // ... other options ...
+    'model_label' => 'Modelo de imagen por defecto',
+    'model_placeholder' => 'Usar configuración YAML',
+    'model_help' => 'Modelo de IA para generar imágenes. Deja vacío para usar la configuración YAML.',
+])
+```
 
 ### Using the Style in Image Generation
 
