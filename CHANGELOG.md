@@ -2,6 +2,35 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.9.0](https://github.com/xmon-org/ai-content-bundle/compare/1.8.0...1.9.0) (2025-12-28)
+
+### ✨ Features
+
+* **admin:** añade lightbox fullscreen con mejoras UX/UI ([6a79b17](https://github.com/xmon-org/ai-content-bundle/commit/6a79b179cb256ff517b9cde27f7f69ec263bb325)), closes [#00a65a](https://github.com/xmon-org/ai-content-bundle/issues/00a65a)
+* **admin:** añade modo sencillo/experto en AI Image Generator ([4d8148e](https://github.com/xmon-org/ai-content-bundle/commit/4d8148e8bfd081083e7b01da72e574841f83efd6))
+* **config:** añade opción style_suffix para sufijo fijo en estilos ([3ce958c](https://github.com/xmon-org/ai-content-bundle/commit/3ce958cf24402c719aa96d025591d6ba3bfe646c))
+* **entity:** añade campo aiStyleSuffix al trait y formulario ([ccb3e15](https://github.com/xmon-org/ai-content-bundle/commit/ccb3e1542b1d4c13d8ba03a3a2360ab98753d3e3))
+* **form:** añade selector de modelo de imagen ([57c40dd](https://github.com/xmon-org/ai-content-bundle/commit/57c40dd20118a7eea5d6feb1423181b5223e66f9))
+* **form:** muestra precio por imagen en vista previa del estilo ([6790806](https://github.com/xmon-org/ai-content-bundle/commit/6790806d5a75b760020dc09016c4caf44c1684f4))
+* **provider:** añade getDefaultImageModel a style providers ([4a4816a](https://github.com/xmon-org/ai-content-bundle/commit/4a4816aaecd814ddad4f4d7d1ea215691dbba749))
+* **service:** expone styleSuffix via ImageOptionsService ([ee0e355](https://github.com/xmon-org/ai-content-bundle/commit/ee0e35526688f950e62dcd852b5865ba7f278c93))
+
+### 🐛 Bug Fixes
+
+* **form:** añade event listener para actualizar preview de suffix en tiempo real ([cf065d5](https://github.com/xmon-org/ai-content-bundle/commit/cf065d541f948a4fddb782465681d03880eb9055))
+* **form:** renderiza campo aiStyleSuffix en template ([4771292](https://github.com/xmon-org/ai-content-bundle/commit/4771292259eab8e26047b8b15108cfda1dc48a92))
+* **models:** corrige precios incorrectos en ModelRegistryService ([476c84b](https://github.com/xmon-org/ai-content-bundle/commit/476c84b7401316732582356642c243411402163c))
+
+### ♻️ Refactoring
+
+* **admin:** separa mensajes de estado en prompt e imagen ([9509d14](https://github.com/xmon-org/ai-content-bundle/commit/9509d1482b85506de391bf7fe667ed2f8b6fd9be)), closes [#statusMessage](https://github.com/xmon-org/ai-content-bundle/issues/statusMessage) [#promptStatusMessage](https://github.com/xmon-org/ai-content-bundle/issues/promptStatusMessage) [#imageStatusMessage](https://github.com/xmon-org/ai-content-bundle/issues/imageStatusMessage)
+
+### 📚 Documentation
+
+* **admin:** documenta modo sencillo/experto en AI Image Generator ([54bfd7b](https://github.com/xmon-org/ai-content-bundle/commit/54bfd7b9da42ad65e816aecc1734cf9bd0196175))
+* **config:** documenta opción style_suffix ([3243de3](https://github.com/xmon-org/ai-content-bundle/commit/3243de35ce817b9bbb958d1feddcb1237b65bec1))
+* documenta selector de modelo de imagen ([92a8251](https://github.com/xmon-org/ai-content-bundle/commit/92a825143288974f002c45c58f5b0525ac26f375))
+
 ## [1.8.0](https://github.com/xmon-org/ai-content-bundle/compare/1.7.0...1.8.0) (2025-12-28)
 
 ### ✨ Features
