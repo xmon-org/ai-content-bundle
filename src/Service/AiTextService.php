@@ -152,4 +152,22 @@ class AiTextService
     {
         return $name === $this->provider->getName() && $this->provider->isAvailable();
     }
+
+    /**
+     * Get the provider configuration for debugging.
+     *
+     * @return array{
+     *     model: string,
+     *     fallback_models: array<string>,
+     *     retries_per_model: int,
+     *     retry_delay: int,
+     *     timeout: int,
+     *     endpoint_mode: string,
+     *     has_api_key: bool
+     * }
+     */
+    public function getProviderConfig(): array
+    {
+        return $this->provider->getConfig();
+    }
 }

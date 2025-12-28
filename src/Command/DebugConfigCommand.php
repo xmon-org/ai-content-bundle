@@ -38,25 +38,41 @@ class DebugConfigCommand extends Command
 
         $io->title('xmon-org/ai-content-bundle Configuration');
 
-        // Provider Status (Pollinations-only architecture since Dec 2025)
-        $io->section('Provider Status');
-        $textProviders = $this->textService->getAvailableProviders();
-        $imageProviders = $this->imageService->getAvailableProviders();
-
-        $textOk = \in_array('pollinations', $textProviders, true);
-        $imageOk = \in_array('pollinations', $imageProviders, true);
-
+        // Text Provider Configuration
+        $io->section('Text Provider (Pollinations)');
+        $textConfig = $this->textService->getProviderConfig();
         $io->table(
-            ['Service', 'Status', 'Provider'],
+            ['Setting', 'Value'],
             [
-                ['Text Generation', $textOk ? '<info>✓</info>' : '<error>✗</error>', 'Pollinations API'],
-                ['Image Generation', $imageOk ? '<info>✓</info>' : '<error>✗</error>', 'Pollinations API'],
+                ['Status', $this->textService->isConfigured() ? '<info>✓ Available</info>' : '<error>✗ Not Available</error>'],
+                ['API Key', $textConfig['has_api_key'] ? '<info>Configured</info>' : '<comment>Not set (free tier)</comment>'],
+                ['Default Model', $textConfig['model']],
+                ['Fallback Models', implode(' → ', $textConfig['fallback_models']) ?: '<comment>None</comment>'],
+                ['Retries per Model', (string) $textConfig['retries_per_model']],
+                ['Retry Delay', $textConfig['retry_delay'].'s'],
+                ['Timeout', $textConfig['timeout'].'s'],
+                ['Endpoint Mode', $textConfig['endpoint_mode']],
             ]
         );
 
-        if (!$textOk || !$imageOk) {
-            $io->warning('Some providers are not available. Check XMON_AI_POLLINATIONS_API_KEY in .env');
-        }
+        // Image Provider Configuration
+        $io->section('Image Provider (Pollinations)');
+        $imageConfig = $this->imageService->getProviderConfig();
+        $io->table(
+            ['Setting', 'Value'],
+            [
+                ['Status', $this->imageService->isConfigured() ? '<info>✓ Available</info>' : '<error>✗ Not Available</error>'],
+                ['API Key', $imageConfig['has_api_key'] ? '<info>Configured</info>' : '<comment>Not set (free tier)</comment>'],
+                ['Default Model', $imageConfig['model']],
+                ['Fallback Models', implode(' → ', $imageConfig['fallback_models']) ?: '<comment>None</comment>'],
+                ['Retries per Model', (string) $imageConfig['retries_per_model']],
+                ['Retry Delay', $imageConfig['retry_delay'].'s'],
+                ['Timeout', $imageConfig['timeout'].'s'],
+                ['Default Size', $imageConfig['width'].'x'.$imageConfig['height']],
+                ['Quality', $imageConfig['quality']],
+                ['Private', $imageConfig['private'] ? 'Yes' : 'No'],
+            ]
+        );
 
         // Task Models Configuration
         $io->section('Task Models');

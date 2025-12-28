@@ -69,6 +69,32 @@ class PollinationsTextProvider
     }
 
     /**
+     * Get the provider configuration for debugging.
+     *
+     * @return array{
+     *     model: string,
+     *     fallback_models: array<string>,
+     *     retries_per_model: int,
+     *     retry_delay: int,
+     *     timeout: int,
+     *     endpoint_mode: string,
+     *     has_api_key: bool
+     * }
+     */
+    public function getConfig(): array
+    {
+        return [
+            'model' => $this->model,
+            'fallback_models' => $this->fallbackModels,
+            'retries_per_model' => $this->retriesPerModel,
+            'retry_delay' => $this->retryDelay,
+            'timeout' => $this->timeout,
+            'endpoint_mode' => $this->endpointMode,
+            'has_api_key' => !empty($this->apiKey),
+        ];
+    }
+
+    /**
      * Generate text with fallback models and per-model retries.
      *
      * @param array{

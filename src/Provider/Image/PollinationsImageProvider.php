@@ -49,6 +49,40 @@ class PollinationsImageProvider
     }
 
     /**
+     * Get the provider configuration for debugging.
+     *
+     * @return array{
+     *     model: string,
+     *     fallback_models: array<string>,
+     *     retries_per_model: int,
+     *     retry_delay: int,
+     *     timeout: int,
+     *     width: int,
+     *     height: int,
+     *     quality: string,
+     *     private: bool,
+     *     nofeed: bool,
+     *     has_api_key: bool
+     * }
+     */
+    public function getConfig(): array
+    {
+        return [
+            'model' => $this->model,
+            'fallback_models' => $this->fallbackModels,
+            'retries_per_model' => $this->retriesPerModel,
+            'retry_delay' => $this->retryDelay,
+            'timeout' => $this->timeout,
+            'width' => $this->defaultWidth,
+            'height' => $this->defaultHeight,
+            'quality' => $this->quality,
+            'private' => $this->private,
+            'nofeed' => $this->nofeed,
+            'has_api_key' => !empty($this->apiKey),
+        ];
+    }
+
+    /**
      * Generate an image with fallback models and per-model retries.
      *
      * @param array{
