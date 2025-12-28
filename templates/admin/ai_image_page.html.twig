@@ -37,7 +37,7 @@
 {% block title %}{% block page_title %}{{ 'AI Image Generation'|trans }} - {{ entityTitle }}{% endblock %}{% endblock %}
 
 {% block sonata_admin_content %}
-<div class="container-fluid xmon-ai-image-page">
+<div class="container-fluid xmon-ai-image-page mode-simple">
     {# Header with Context Banner #}
     <div class="context-banner" style="margin-bottom: 20px;">
         <div class="context-banner-header">
@@ -56,16 +56,29 @@
                 </a>
             </div>
         </div>
-        {% if entityContext is defined and entityContext|length > 0 %}
         <div class="context-banner-content">
-            {% for label, value in entityContext %}
-            <div class="context-item">
-                <span class="context-label">{{ label }}</span>
-                <span class="context-value">{{ value }}</span>
+            {% if entityContext is defined and entityContext|length > 0 %}
+            <div class="context-items">
+                {% for label, value in entityContext %}
+                <div class="context-item">
+                    <span class="context-label">{{ label }}</span>
+                    <span class="context-value">{{ value }}</span>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
+            {% endif %}
+            {# Mode toggle: Simple / Expert #}
+            <div class="mode-toggle" role="radiogroup" aria-label="{{ 'Interface mode'|trans }}">
+                <button type="button" class="mode-btn active" id="btnModeSimple"
+                        aria-pressed="true" title="{{ 'Simplified interface'|trans }}">
+                    <i class="fa fa-bolt"></i> {{ 'Simple'|trans }}
+                </button>
+                <button type="button" class="mode-btn" id="btnModeExpert"
+                        aria-pressed="false" title="{{ 'All options visible'|trans }}">
+                    <i class="fa fa-sliders"></i> {{ 'Expert'|trans }}
+                </button>
+            </div>
         </div>
-        {% endif %}
     </div>
 
     <div class="row" id="mainRow">
@@ -107,7 +120,7 @@
                                 {% block subject_help %}{{ 'Describe the scene, characters and visual elements.'|trans }}{% endblock %}
                             </small>
 
-                            {# Prompt history toggle - always exists, hidden initially if empty #}
+                            {# Prompt history toggle - expert only #}
                             <button
                                 id="promptHistoryToggle"
                                 class="btn btn-link btn-sm text-muted"
@@ -115,14 +128,15 @@
                                 data-toggle="collapse"
                                 data-target="#promptHistoryPanel"
                                 aria-expanded="false"
+                                data-mode="expert"
                                 style="display: none; white-space: nowrap; text-decoration: none; font-size: 11px; margin-left: auto; flex-shrink: 0; padding: 0;"
                             >
                                 <i class="fa fa-history"></i> {{ 'History'|trans }} (<span id="historyCount">0</span>)
                             </button>
                         </div>
 
-                        {# Collapsible prompt history panel - always exists for dynamic updates #}
-                        <div id="promptHistoryPanel" class="collapse" style="margin-bottom: 8px;">
+                        {# Collapsible prompt history panel - expert only #}
+                        <div id="promptHistoryPanel" class="collapse" data-mode="expert" style="margin-bottom: 8px;">
                             <div style="padding: 8px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
                                 <small class="text-muted" style="display: block; margin-bottom: 6px; font-size: 10px;">
                                     <i class="fa fa-info-circle"></i> {{ 'Click on a description to reuse it'|trans }}
@@ -140,14 +154,14 @@
                         </div>
 
                         {% if textServiceConfigured %}
-                        <button type="button" class="btn btn-default btn-block" id="btnGeneratePrompt" style="font-size: 13px; padding: 8px 12px;">
+                        <button type="button" class="btn btn-default btn-block" id="btnGeneratePrompt" data-mode="expert" style="font-size: 13px; padding: 8px 12px;">
                             <i class="fa fa-magic"></i> {% block generate_subject_label %}{{ 'Generate description with AI'|trans }}{% endblock %}
                         </button>
                         {% endif %}
                     </div>
 
-                    {# 2. Style configuration (HOW) #}
-                    <div class="form-group" style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+                    {# 2. Style configuration (HOW) - expert only #}
+                    <div class="form-group" data-mode="expert" style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
                         <label style="font-size: 13px; font-weight: 600; color: #333; margin-bottom: 10px; display: block;">
                             <i class="fa fa-paint-brush"></i> {% block style_label %}2. {{ 'Choose HOW it will look'|trans }}{% endblock %}
                         </label>
@@ -257,8 +271,8 @@
                         </div>
                     </div>
 
-                    {# Prompt preview #}
-                    <div class="form-group">
+                    {# Prompt preview - expert only #}
+                    <div class="form-group" data-mode="expert">
                         <label style="font-size: 13px; font-weight: 600; color: #333; margin-bottom: 8px;">
                             <i class="fa fa-eye"></i> {{ 'Full prompt preview'|trans }}
                         </label>
@@ -285,15 +299,31 @@
                         </small>
                         {% endif %}
 
-                        {# Model selector with cost indicator - compact one-line layout #}
+                        {# Cost indicator - always visible in both modes #}
                         {% if allowedImageModels is defined and allowedImageModels|length > 0 %}
-                        <div id="modelSelector" style="margin-top: 10px; padding: 8px 12px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; display: flex; align-items: center; gap: 12px;">
+                        <div id="costIndicator" class="cost-indicator {% if defaultImageModel is defined and allowedImageModels[defaultImageModel] is defined and allowedImageModels[defaultImageModel].isFree %}cost-free{% else %}cost-paid{% endif %}">
+                            {% if defaultImageModel is defined and allowedImageModels[defaultImageModel] is defined %}
+                                {% if allowedImageModels[defaultImageModel].isFree %}
+                                    <i class="fa fa-check-circle"></i>
+                                    <span>{{ 'Free'|trans }} · <span id="costModelName">{{ allowedImageModels[defaultImageModel].name }}</span></span>
+                                {% else %}
+                                    <i class="fa fa-dollar"></i>
+                                    <span><span id="costPrice">{{ allowedImageModels[defaultImageModel].formattedPrice }}</span> · <span id="costModelName">{{ allowedImageModels[defaultImageModel].name }}</span></span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        {# Model selector - expert only #}
+                        {% if allowedImageModels is defined and allowedImageModels|length > 0 %}
+                        <div id="modelSelector" data-mode="expert" style="margin-top: 10px; padding: 8px 12px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; display: flex; align-items: center; gap: 12px;">
                             <label for="imageModel" style="margin: 0; font-size: 12px; color: #666; font-weight: 500; white-space: nowrap; flex-shrink: 0;">
                                 <i class="fa fa-server"></i> {{ 'Model'|trans }}
                             </label>
                             <select class="form-control" id="imageModel" style="font-size: 13px; flex: 1 1 auto; min-width: 0; width: 100%;">
                                 {% for key, model in allowedImageModels %}
                                 <option value="{{ key }}"
+                                        data-name="{{ model.name }}"
                                         data-price="{{ model.formattedPrice }}"
                                         data-free="{{ model.isFree ? 'true' : 'false' }}"
                                         {% if key == defaultImageModel %}selected{% endif %}>
@@ -431,12 +461,14 @@
                                     {% endif %}
                                 </div>
                                 <div class="caption">
-                                    <p class="historial-subject" title="{{ item.subject }}" style="font-size: 13px; font-weight: 600; color: #333; margin: 8px 0 5px; line-height: 1.4; min-height: 36px;">
+                                    {# Subject - expert only #}
+                                    <p class="historial-subject" data-mode="expert" title="{{ item.subject }}" style="font-size: 13px; font-weight: 600; color: #333; margin: 8px 0 5px; line-height: 1.4; min-height: 36px;">
                                         {{ item.subject|length > 60 ? item.subject|slice(0, 60) ~ '...' : item.subject }}
                                     </p>
 
+                                    {# Style info - expert only #}
                                     {% if item.style %}
-                                    <p class="historial-style" title="{{ item.style }}" style="font-size: 11px; color: #999; margin: 0 0 8px; line-height: 1.3; font-style: italic;">
+                                    <p class="historial-style" data-mode="expert" title="{{ item.style }}" style="font-size: 11px; color: #999; margin: 0 0 8px; line-height: 1.3; font-style: italic;">
                                         <i class="fa fa-paint-brush" style="font-size: 10px;"></i> {{ item.style|length > 80 ? item.style|slice(0, 80) ~ '...' : item.style }}
                                     </p>
                                     {% endif %}
@@ -536,11 +568,12 @@
             {# Footer bar #}
             <div class="lightbox-footer">
                 <div class="lightbox-info">
-                    <div class="lightbox-info-main">
-                        <span id="lightboxCurrentBadge" class="lightbox-current-badge" style="display: none;" role="status">
-                            <i class="fa fa-check" aria-hidden="true"></i> {{ 'Current image'|trans }}
-                        </span>
-                        <p id="lightboxCaption" class="lightbox-caption" role="button" tabindex="0" title="{{ 'Click to expand'|trans }}"></p>
+                    <small style="color: #888; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block;">
+                        <i class="fa fa-file-text-o" aria-hidden="true"></i> {{ 'Full prompt'|trans }}
+                    </small>
+                    <div class="lightbox-info-main"">
+                        <p id="lightboxCaption" class="lightbox-caption" role="button" tabindex="0" title="{{ 'Click to expand'|trans }}" data-mode="expert">
+                        </p>
                     </div>
                     <div class="lightbox-info-meta">
                         <span id="lightboxModel" class="lightbox-meta-item">
@@ -552,6 +585,9 @@
                     </div>
                 </div>
                 <div class="lightbox-actions" role="group" aria-label="{{ 'Image actions'|trans }}">
+                    <span id="lightboxCurrentBadge" class="btn btn-success btn-sm" style="display: none;" role="status">
+                        <i class="fa fa-check" aria-hidden="true"></i> {{ 'Current image'|trans }}
+                    </span>
                     <button type="button" id="lightboxUseBtn" class="btn btn-primary btn-sm" style="display: none;">
                         <i class="fa fa-check" aria-hidden="true"></i> {{ 'Use'|trans }}
                     </button>
@@ -656,9 +692,16 @@
         flex-wrap: wrap;
         gap: 12px 20px;
         align-items: center;
+        justify-content: space-between;
         margin-top: 12px;
         padding-top: 12px;
         border-top: 1px solid #dee2e6;
+    }
+    .context-items {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 20px;
+        align-items: center;
     }
     .context-item {
         display: flex;
@@ -1332,6 +1375,89 @@
             justify-content: flex-end;
         }
     }
+
+    /* ========================================
+       Mode Toggle: Simple / Expert
+       ======================================== */
+
+    /* Toggle button group */
+    .mode-toggle {
+        display: inline-flex;
+        background: #f4f4f4;
+        border-radius: 4px;
+        overflow: hidden;
+        border: 1px solid #ddd;
+        margin-right: 8px;
+    }
+
+    .mode-toggle .mode-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+        border: none;
+        background: transparent;
+        color: #666;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .mode-toggle .mode-btn:hover:not(.active) {
+        background: #e8e8e8;
+    }
+
+    .mode-toggle .mode-btn.active {
+        background: #3c8dbc;
+        color: white;
+    }
+
+    .mode-toggle .mode-btn i {
+        font-size: 10px;
+    }
+
+    /* Visibility control for expert-only elements (on body so it affects modals too) */
+    body.mode-simple [data-mode="expert"] {
+        display: none !important;
+    }
+
+    /* Cost indicator (always visible) */
+    .cost-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #666;
+        margin-top: 8px;
+        width: 100%;
+    }
+
+    .cost-indicator.cost-free {
+        color: #28a745;
+    }
+
+    .cost-indicator.cost-paid {
+        color: #dc3545;
+    }
+
+    .cost-indicator i {
+        font-size: 11px;
+    }
+
+    /* Lightbox footer in Simple mode - compact horizontal layout */
+    body.mode-simple .lightbox-footer {
+        align-items: center;
+        min-height: auto;
+        padding: 12px 24px;
+    }
+    body.mode-simple .lightbox-info {
+        display: flex;
+        align-items: center;
+    }
+    body.mode-simple .lightbox-info-meta {
+        margin-bottom: 0;
+    }
 </style>
 {% endblock %}
 
@@ -1349,6 +1475,65 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // History limit configuration
     var historyLimit = {{ historyLimit|default(5) }};
+
+    // ========================================
+    // Mode Toggle: Simple / Expert
+    // ========================================
+    var STORAGE_KEY_MODE = 'xmon_ai_image_mode';
+    var currentMode = localStorage.getItem(STORAGE_KEY_MODE) || 'simple';
+
+    function initModeToggle() {
+        var btnModeSimple = document.getElementById('btnModeSimple');
+        var btnModeExpert = document.getElementById('btnModeExpert');
+
+        if (!btnModeSimple || !btnModeExpert) return;
+
+        // Set initial mode
+        setMode(currentMode);
+
+        // Event listeners
+        btnModeSimple.addEventListener('click', function() {
+            setMode('simple');
+        });
+
+        btnModeExpert.addEventListener('click', function() {
+            setMode('expert');
+        });
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+
+        // Apply mode class to body (so it affects modals outside .xmon-ai-image-page too)
+        document.body.classList.remove('mode-simple', 'mode-expert');
+        document.body.classList.add('mode-' + mode);
+
+        // Update toggle buttons
+        var btnModeSimple = document.getElementById('btnModeSimple');
+        var btnModeExpert = document.getElementById('btnModeExpert');
+
+        if (btnModeSimple && btnModeExpert) {
+            btnModeSimple.classList.toggle('active', mode === 'simple');
+            btnModeExpert.classList.toggle('active', mode === 'expert');
+            btnModeSimple.setAttribute('aria-pressed', mode === 'simple');
+            btnModeExpert.setAttribute('aria-pressed', mode === 'expert');
+        }
+
+        // Persist
+        localStorage.setItem(STORAGE_KEY_MODE, mode);
+
+        // If switching to simple, force styleMode to 'global'
+        if (mode === 'simple') {
+            var globalRadio = document.getElementById('styleModeGlobal');
+            if (globalRadio && !globalRadio.checked) {
+                globalRadio.checked = true;
+                globalRadio.dispatchEvent(new Event('change'));
+            }
+        }
+    }
+
+    // Initialize mode toggle
+    initModeToggle();
 
     // DOM elements
     var subjectField = document.getElementById('subjectField');
@@ -1776,7 +1961,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     '</div>' +
                 '</div>' +
                 '<div class="caption">' +
-                    '<p class="historial-subject" title="' + escapeHtml(subject) + '" style="font-size: 13px; font-weight: 600; color: #333; margin: 8px 0 5px; line-height: 1.4; min-height: 36px;">' +
+                    '<p class="historial-subject" data-mode="expert" title="' + escapeHtml(subject) + '" style="font-size: 13px; font-weight: 600; color: #333; margin: 8px 0 5px; line-height: 1.4; min-height: 36px;">' +
                         escapeHtml(subjectTruncated) +
                     '</p>' +
                     styleHtml +
@@ -2087,17 +2272,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Model selector - update cost indicator when changed
+    // Model selector - update cost indicators when changed
     var modelSelect = document.getElementById('imageModel');
     var modelCostInfo = document.getElementById('modelCostInfo');
-    if (modelSelect && modelCostInfo) {
-        function updateModelCost() {
-            var selectedOption = modelSelect.options[modelSelect.selectedIndex];
-            if (!selectedOption) return;
+    var costIndicator = document.getElementById('costIndicator');
+    var costModelName = document.getElementById('costModelName');
+    var costPrice = document.getElementById('costPrice');
 
-            var isFree = selectedOption.getAttribute('data-free') === 'true';
-            var price = selectedOption.getAttribute('data-price') || '';
+    function updateModelCost() {
+        if (!modelSelect) return;
+        var selectedOption = modelSelect.options[modelSelect.selectedIndex];
+        if (!selectedOption) return;
 
+        var isFree = selectedOption.getAttribute('data-free') === 'true';
+        var price = selectedOption.getAttribute('data-price') || '';
+        var modelName = selectedOption.getAttribute('data-name') || selectedOption.textContent.trim();
+
+        // Update the expert mode indicator (inside model selector)
+        if (modelCostInfo) {
             if (isFree) {
                 modelCostInfo.innerHTML = '<span class="label label-success">{{ "Free"|trans }}</span>';
             } else {
@@ -2105,6 +2297,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        // Update the always-visible cost indicator
+        if (costIndicator) {
+            costIndicator.classList.remove('cost-free', 'cost-paid');
+            costIndicator.classList.add(isFree ? 'cost-free' : 'cost-paid');
+
+            if (isFree) {
+                costIndicator.innerHTML = '<i class="fa fa-check-circle"></i> ' +
+                    '<span>{{ "Free"|trans }} · <span id="costModelName">' + modelName + '</span></span>';
+            } else {
+                costIndicator.innerHTML = '<i class="fa fa-dollar"></i> ' +
+                    '<span><span id="costPrice">' + price + '</span> · <span id="costModelName">' + modelName + '</span></span>';
+            }
+        }
+    }
+
+    if (modelSelect) {
         // Support both native select and Select2 (Sonata Admin uses Select2)
         if (typeof jQuery !== 'undefined') {
             jQuery(modelSelect).on('change', updateModelCost);
@@ -2330,6 +2538,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update model and date
         lightboxModelText.textContent = current.model || '{{ "Unknown"|trans }}';
         lightboxDateText.textContent = current.date || '';
+
+        // Update full prompt (expert mode only - visibility controlled by CSS)
+        var promptTextEl = document.getElementById('lightboxPromptText');
+        if (promptTextEl) {
+            var fullPromptText = current.subject || '';
+            if (current.style) {
+                fullPromptText += '\n\n' + current.style;
+            }
+            promptTextEl.textContent = fullPromptText;
+        }
 
         // Update current badge and action buttons
         if (current.isActual) {
