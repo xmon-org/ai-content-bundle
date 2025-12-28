@@ -35,6 +35,8 @@ xmon_ai_content:
                 model: 'openai'  # Default model (TaskType config takes precedence)
                 fallback_models: ['openai-fast']  # Backup models if main fails
                 timeout: 60
+                # Endpoint mode: 'openai' (POST, recommended) or 'simple' (GET)
+                endpoint_mode: 'openai'
 
         defaults:
             retries: 2       # Retry attempts per provider
@@ -50,8 +52,14 @@ xmon_ai_content:
                 priority: 100
                 api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
                 model: 'flux'  # Default model (TaskType config takes precedence)
-                fallback_models: ['turbo']  # Backup models if main fails
                 timeout: 120
+                # Quality level: low, medium, high, hd
+                quality: 'high'
+                # What to avoid in generated images
+                negative_prompt: 'worst quality, blurry, text, letters, watermark, human faces, detailed faces'
+                # Privacy settings
+                private: true   # Hide from Pollinations public feeds
+                nofeed: true    # Do not add to public feed
 
         defaults:
             width: 1280
@@ -228,15 +236,36 @@ See [Task Types Guide](../guides/task-types.md) for detailed usage examples.
 
 ## Provider Configuration
 
-### Pollinations (Text & Image)
+### Pollinations Text Provider
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `enabled` | bool | `true` | Enable/disable the provider |
-| `priority` | int | varies | Higher = tried first |
+| `priority` | int | `10` | Higher = tried first |
 | `api_key` | string | `null` | Optional for basic use, required for premium models |
-| `model` | string | varies | Fallback model (TaskType takes precedence) |
-| `timeout` | int | varies | Request timeout (seconds) |
+| `model` | string | `'openai'` | Fallback model (TaskType takes precedence) |
+| `fallback_models` | array | `[]` | Backup models if main fails |
+| `timeout` | int | `60` | Request timeout (seconds) |
+| `endpoint_mode` | enum | `'openai'` | `'openai'` (POST) or `'simple'` (GET) |
+
+### Pollinations Image Provider
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enabled` | bool | `true` | Enable/disable the provider |
+| `priority` | int | `100` | Higher = tried first |
+| `api_key` | string | `null` | Required for premium models |
+| `model` | string | `'flux'` | Fallback model (TaskType takes precedence) |
+| `timeout` | int | `120` | Request timeout (seconds) |
+| `quality` | enum | `'high'` | Image quality: `low`, `medium`, `high`, `hd` |
+| `negative_prompt` | string | *(see below)* | What to avoid in generated images |
+| `private` | bool | `true` | Hide images from Pollinations public feeds |
+| `nofeed` | bool | `true` | Do not add images to public feed |
+
+**Default negative_prompt:**
+```
+worst quality, blurry, text, letters, watermark, human faces, detailed faces
+```
 
 > **Note:** Model selection is now handled by the `tasks` configuration. The `model` field in providers is only used as a fallback if no TaskType is specified.
 

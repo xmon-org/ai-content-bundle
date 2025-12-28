@@ -24,6 +24,10 @@ class PollinationsImageProvider implements ImageProviderInterface
         private readonly int $timeout = 120,
         private readonly int $defaultWidth = 1280,
         private readonly int $defaultHeight = 720,
+        private readonly string $quality = 'high',
+        private readonly string $negativePrompt = 'worst quality, blurry, text, letters, watermark, human faces, detailed faces',
+        private readonly bool $private = true,
+        private readonly bool $nofeed = true,
     ) {
     }
 
@@ -48,6 +52,10 @@ class PollinationsImageProvider implements ImageProviderInterface
         $nologo = $options['nologo'] ?? ($this->apiKey !== null);
         $enhance = $options['enhance'] ?? false;
         $safe = $options['safe'] ?? false;
+        $quality = $options['quality'] ?? $this->quality;
+        $negativePrompt = $options['negative_prompt'] ?? $this->negativePrompt;
+        $private = $options['private'] ?? $this->private;
+        $nofeed = $options['nofeed'] ?? $this->nofeed;
 
         // Build URL with encoded prompt
         $encodedPrompt = $this->encodePrompt($prompt);
@@ -58,13 +66,20 @@ class PollinationsImageProvider implements ImageProviderInterface
             'width' => $width,
             'height' => $height,
             'model' => $model,
+            'quality' => $quality,
             'nologo' => $nologo ? 'true' : 'false',
             'enhance' => $enhance ? 'true' : 'false',
             'safe' => $safe ? 'true' : 'false',
+            'private' => $private ? 'true' : 'false',
+            'nofeed' => $nofeed ? 'true' : 'false',
         ];
 
         if ($seed !== null) {
             $params['seed'] = $seed;
+        }
+
+        if (!empty($negativePrompt)) {
+            $params['negative_prompt'] = $negativePrompt;
         }
 
         $url .= '?'.http_build_query($params);
@@ -73,7 +88,10 @@ class PollinationsImageProvider implements ImageProviderInterface
             'model' => $model,
             'width' => $width,
             'height' => $height,
+            'quality' => $quality,
             'seed' => $seed,
+            'private' => $private,
+            'has_negative_prompt' => !empty($negativePrompt),
             'prompt_length' => \strlen($prompt),
             'prompt' => $prompt,
         ]);

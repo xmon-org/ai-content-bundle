@@ -87,6 +87,46 @@ image:
             priority: 100
             api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Required for premium models
             timeout: 120
+            quality: 'high'              # low, medium, high, hd
+            negative_prompt: 'worst quality, blurry, text, letters, watermark, human faces'
+            private: true                # Hide from Pollinations public feeds
+            nofeed: true                 # Do not add to public feed
+```
+
+### Image Provider Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `enabled` | bool | `true` | Enable/disable provider |
+| `api_key` | string | `null` | Required for premium models |
+| `timeout` | int | `120` | Request timeout in seconds |
+| `quality` | enum | `'high'` | Image quality: `low`, `medium`, `high`, `hd` |
+| `negative_prompt` | string | `'worst quality...'` | What to avoid in generated images |
+| `private` | bool | `true` | Hide images from Pollinations public feeds |
+| `nofeed` | bool | `true` | Do not add images to public feed |
+
+#### Quality Levels
+
+| Level | Description | Use Case |
+|-------|-------------|----------|
+| `low` | Fast, lower quality | Quick previews |
+| `medium` | Balanced (API default) | General use |
+| `high` | Higher quality, slower | Production images (recommended) |
+| `hd` | Maximum quality, slowest | High-resolution outputs |
+
+#### Negative Prompt
+
+The `negative_prompt` parameter tells the AI what to avoid in the image. Common values to exclude:
+
+```yaml
+# Recommended for news/editorial images
+negative_prompt: 'worst quality, blurry, text, letters, watermark, human faces, detailed faces, aggressive poses'
+
+# For artistic styles
+negative_prompt: 'worst quality, blurry, text, watermark, photorealistic'
+
+# Minimal filtering
+negative_prompt: 'worst quality, blurry'
 ```
 
 ### Available Image Models
@@ -106,11 +146,18 @@ image:
 | `seedream-pro` | flower | ~25 | ByteDance 4K, multi-image |
 | `kontext` | flower | ~25 | Context-aware generation |
 
-**Options:**
-- `width`, `height` - Image dimensions
-- `seed` - For reproducible results
-- `nologo` - Remove watermark
-- `enhance` - AI enhances prompt
+#### Runtime Options
+
+These can be passed at runtime via the `generate()` method:
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `width` | int | `1280` | Image width in pixels |
+| `height` | int | `720` | Image height in pixels |
+| `seed` | int | random | For reproducible results (same seed = same image) |
+| `nologo` | bool | `true` if API key | Remove Pollinations watermark |
+| `enhance` | bool | `false` | AI enhances/expands your prompt |
+| `safe` | bool | `false` | Enable content safety filters |
 
 ### Content Moderation (gptimage)
 

@@ -105,6 +105,10 @@ class XmonAiContentExtension extends Extension
                 $definition->setArgument('$timeout', $pollinationsConfig['timeout'] ?? 120);
                 $definition->setArgument('$defaultWidth', $defaults['width'] ?? 1280);
                 $definition->setArgument('$defaultHeight', $defaults['height'] ?? 720);
+                $definition->setArgument('$quality', $pollinationsConfig['quality'] ?? 'high');
+                $definition->setArgument('$negativePrompt', $pollinationsConfig['negative_prompt'] ?? 'worst quality, blurry, text, letters, watermark, human faces, detailed faces');
+                $definition->setArgument('$private', $pollinationsConfig['private'] ?? true);
+                $definition->setArgument('$nofeed', $pollinationsConfig['nofeed'] ?? true);
             }
         }
 
