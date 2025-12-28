@@ -272,6 +272,11 @@ class Configuration implements ConfigurationInterface
                     ->defaultNull()
                     ->info('Preset to use as fallback when no preset is configured. If null, uses first available preset.')
                 ->end()
+                // Fixed suffix appended to all generated styles
+                ->scalarNode('style_suffix')
+                    ->defaultValue('')
+                    ->info('Fixed text appended to all generated style prompts (e.g., quality modifiers, technical restrictions).')
+                ->end()
                 // Configurable prompt templates
                 ->arrayNode('prompts')
                     ->addDefaultsIfNotSet()

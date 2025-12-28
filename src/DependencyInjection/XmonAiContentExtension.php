@@ -61,7 +61,8 @@ class XmonAiContentExtension extends Extension
             $config['image_options'] ?? [],
             $config['presets'] ?? [],
             $config['disable_preset_defaults'] ?? [],
-            $config['default_preset'] ?? null
+            $config['default_preset'] ?? null,
+            $config['style_suffix'] ?? ''
         );
 
         // Configure prompt templates
@@ -224,7 +225,7 @@ class XmonAiContentExtension extends Extension
         $container->setParameter('xmon_ai_content.media.provider', $providerName);
     }
 
-    private function configureImageOptions(ContainerBuilder $container, array $imageOptions, array $userPresets, array $disablePresetDefaults, ?string $defaultPreset = null): void
+    private function configureImageOptions(ContainerBuilder $container, array $imageOptions, array $userPresets, array $disablePresetDefaults, ?string $defaultPreset = null, string $styleSuffix = ''): void
     {
         // Get disable lists
         $disableDefaults = $imageOptions['disable_defaults'] ?? [];
@@ -389,6 +390,7 @@ class XmonAiContentExtension extends Extension
             $resolvedDefaultPreset = array_key_first($presets);
         }
         $container->setParameter('xmon_ai_content.default_preset', $resolvedDefaultPreset);
+        $container->setParameter('xmon_ai_content.style_suffix', $styleSuffix);
     }
 
     private function configurePromptTemplates(ContainerBuilder $container, array $promptsConfig): void
