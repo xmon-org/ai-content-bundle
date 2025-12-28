@@ -1,40 +1,40 @@
 # Contributing to xmon-org/ai-content-bundle
 
-¡Gracias por tu interés en contribuir! 🎉
+Thanks for your interest in contributing!
 
-## Configuración del entorno
+## Environment Setup
 
 ```bash
-# Clonar el repositorio
+# Clone the repository
 git clone https://github.com/xmon-org/ai-content-bundle.git
 cd ai-content-bundle
 
-# Instalar dependencias
+# Install dependencies
 composer install
 
-# Verificar que todo funciona
+# Verify everything works
 composer check
 ```
 
-## Comandos útiles
+## Useful Commands
 
 ```bash
-# Ejecutar tests
+# Run tests
 composer test
 
-# Análisis estático con PHPStan
+# Static analysis with PHPStan
 composer phpstan
 
-# Verificar estilo de código
+# Check code style
 composer cs-check
 
-# Corregir estilo de código automáticamente
+# Fix code style automatically
 composer cs-fix
 
-# Ejecutar todas las verificaciones
+# Run all verifications
 composer check
 
-# Generar baseline de PHPStan (si hay errores legacy)
+# Generate PHPStan baseline (if there are legacy errors)
 composer phpstan:baseline
 ```
 
@@ -67,104 +67,129 @@ If hooks are not working:
 composer setup-hooks
 ```
 
-## Convención de commits
+## Commit Convention
 
-Este proyecto usa [Conventional Commits](https://www.conventionalcommits.org/) para automatizar el versionado y el changelog.
+This project uses [Conventional Commits](https://www.conventionalcommits.org/) for automated versioning and changelog generation.
 
-### Formato
+### Format
 
 ```
-<tipo>(<scope>): <descripción>
+<type>(<scope>): <description>
 
-[cuerpo opcional]
+[optional body]
 
-[footer opcional]
+[optional footer]
 ```
 
-### Tipos permitidos
+### Allowed Types
 
-| Tipo       | Descripción                              | Release   |
+| Type       | Description                              | Release   |
 |------------|------------------------------------------|-----------|
-| `feat`     | Nueva funcionalidad                      | MINOR     |
-| `fix`      | Corrección de bug                        | PATCH     |
-| `docs`     | Solo documentación                       | -         |
-| `style`    | Formato (espacios, comas, etc)           | -         |
-| `refactor` | Refactoring sin cambio de funcionalidad  | PATCH     |
-| `perf`     | Mejora de rendimiento                    | PATCH     |
-| `test`     | Añadir o corregir tests                  | -         |
-| `ci`       | Cambios en CI/CD                         | -         |
-| `chore`    | Mantenimiento                            | -         |
+| `feat`     | New feature                              | MINOR     |
+| `fix`      | Bug fix                                  | PATCH     |
+| `docs`     | Documentation only                       | -         |
+| `style`    | Formatting (spaces, commas, etc)         | -         |
+| `refactor` | Refactoring without functional change    | PATCH     |
+| `perf`     | Performance improvement                  | PATCH     |
+| `test`     | Add or fix tests                         | -         |
+| `ci`       | CI/CD changes                            | -         |
+| `chore`    | Maintenance                              | -         |
 
-### Scopes sugeridos
+### Suggested Scopes
 
-- `text` - Generación de texto
-- `image` - Generación de imágenes
-- `provider` - Proveedores de IA
-- `config` - Configuración del bundle
-- `sonata` - Integración con Sonata
+- `text` - Text generation (AiTextService, PollinationsTextProvider)
+- `image` - Image generation (AiImageService, PollinationsImageProvider)
+- `config` - Bundle YAML configuration
+- `sonata` - Sonata Admin integration
+- `tasks` - TaskTypes system and models per task
+- `models` - Model registry and costs
+- `prompts` - Prompt templates
+- `styles` - Styles, presets and StyleProviders
 
-### Ejemplos
+### Examples
 
 ```bash
-# Nueva funcionalidad
-git commit -m "feat(text): add Claude provider support"
+# New feature
+git commit -m "feat(text): add streaming support for text generation"
 
 # Bug fix
 git commit -m "fix(image): resolve timeout with large prompts"
 
 # Breaking change
-git commit -m "feat(provider)!: change provider interface
+git commit -m "feat(config)!: change YAML structure for image settings
 
-BREAKING CHANGE: ProviderInterface now requires getModel() method"
+BREAKING CHANGE: image.providers.pollinations is now image (flat structure)"
 
-# Documentación
+# Documentation
 git commit -m "docs: add image generation examples"
 
 # Refactoring
 git commit -m "refactor(text): simplify fallback logic"
 ```
 
-## Proceso de Pull Request
+## Pull Request Process
 
-1. **Crea una rama** desde `develop`:
+1. **Create a branch** from `develop`:
    ```bash
    git checkout develop
    git pull origin develop
-   git checkout -b feat/mi-nueva-feature
+   git checkout -b feat/my-new-feature
    ```
 
-2. **Haz tus cambios** siguiendo las convenciones
+2. **Make your changes** following the conventions
 
-3. **Asegúrate de que pasan las verificaciones**:
+3. **Ensure verifications pass**:
    ```bash
    composer check
    ```
 
-4. **Haz commit** con conventional commits
+4. **Commit** using conventional commits
 
-5. **Push** y crea un PR hacia `develop`:
+5. **Push** and create a PR to `develop`:
    ```bash
-   git push -u origin feat/mi-nueva-feature
+   git push -u origin feat/my-new-feature
    ```
 
-## Estructura del proyecto
+## Project Structure
 
 ```
 src/
-├── DependencyInjection/    # Configuración del bundle
-├── Provider/               # Proveedores de IA
-│   ├── Text/               # Proveedores de texto
-│   └── Image/              # Proveedores de imagen
-├── Service/                # Servicios principales
-└── XmonAiContentBundle.php # Bundle principal
+├── DependencyInjection/    # Bundle configuration
+├── Service/                # Main services
+│   ├── AiTextService.php   # Text orchestrator
+│   ├── AiImageService.php  # Image orchestrator
+│   ├── TaskConfigService.php    # Models per TaskType
+│   └── ModelRegistryService.php # Model catalog
+├── Provider/
+│   ├── Image/
+│   │   └── PollinationsImageProvider.php  # Pollinations API (image)
+│   ├── Text/
+│   │   └── PollinationsTextProvider.php   # Pollinations API (text)
+│   └── Style/
+│       └── YamlStyleProvider.php          # Styles from YAML
+├── Model/                  # DTOs (ImageResult, TextResult, ModelInfo)
+├── Enum/                   # TaskType, ModelTier
+└── XmonAiContentBundle.php # Main bundle class
 
 tests/
-└── ...                     # Tests unitarios y funcionales
+└── ...                     # Unit and functional tests
 
 docs/
-└── ...                     # Documentación
+├── installation.md
+├── guides/                 # Usage guides
+└── reference/              # Technical documentation
 ```
 
-## ¿Preguntas?
+## Architecture
 
-Abre un issue si tienes dudas o sugerencias.
+The bundle uses **Pollinations.ai** as the only AI provider. Pollinations provides unified access to multiple models (Claude, GPT, Gemini, Flux, etc.), so there's no need to implement multiple providers.
+
+**Extension points:**
+
+- `AiStyleProviderInterface` - Configure image styles from database
+- Prompt templates - Configurable via YAML
+- TaskTypes - Configure different models per task type
+
+## Questions?
+
+Open an issue if you have questions or suggestions.

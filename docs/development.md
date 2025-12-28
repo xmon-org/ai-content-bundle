@@ -38,7 +38,7 @@ bin/console debug:config xmon_ai_content
 
 The bundle includes a diagnostic command that shows:
 
-- Provider status (Pollinations API for both text and image)
+- Text and image provider configuration (model, fallback_models, retries, timeout)
 - Task models configuration (default model, cost, allowed models per task)
 - Configured styles, compositions, palettes, and extras
 - Presets with their options
@@ -50,63 +50,45 @@ $ bin/console xmon:ai:debug
 xmon-org/ai-content-bundle Configuration
 ========================================
 
-Provider Status
----------------
- Service           Status   Provider
- Text Generation   ✓        Pollinations API
- Image Generation  ✓        Pollinations API
+Text Provider (Pollinations)
+----------------------------
+ Setting            Value
+ Status             ✓ Available
+ API Key            Not set (free tier)
+ Default Model      mistral
+ Fallback Models    nova-micro → gemini-fast → openai-fast
+ Retries per Model  2
+ Retry Delay        3s
+ Timeout            60s
+ Endpoint Mode      openai
+
+Image Provider (Pollinations)
+-----------------------------
+ Setting            Value
+ Status             ✓ Available
+ API Key            Not set (free tier)
+ Default Model      flux
+ Fallback Models    zimage → turbo
+ Retries per Model  2
+ Retry Delay        3s
+ Timeout            120s
+ Default Size       1280x720
+ Quality            high
+ Private            Yes
 
 Task Models
 -----------
  Task              Default Model   Cost    Allowed Models
- news_content      openai          FREE    openai, openai-fast
- image_prompt      openai-fast     FREE    openai-fast
- image_generation  flux            FREE    flux, turbo
+ news_content      mistral         FREE    mistral, nova-micro, openai-fast
+ image_prompt      mistral         FREE    mistral, openai-fast, nova-micro
+ image_generation  flux            FREE    flux, zimage, turbo
 
-Styles
-------
- Key            Label
- sumi-e         Sumi-e (tinta japonesa)
- watercolor     Acuarela
- ...
-
-Compositions
-------------
- Key            Label
- centered       Centrada
- rule-of-thirds Regla de tercios
- ...
-
-Palettes
---------
- Key            Label
- monochrome     Monocromo
- earth-tones    Tonos tierra
- ...
-
-Extras
-------
- Key            Label
- no-text        Sin texto
- atmospheric    Atmosférico
- ...
-
-Presets
--------
- Key              Name             Style    Composition      Palette      Extras
- sumi-e-clasico   Sumi-e Clasico   sumi-e   negative-space   monochrome   no-text, silhouettes, atmospheric
-
-Prompt Templates
-----------------
- Key              Name                       Description
- image_subject    Image Subject Generator    Generates visual descriptions...
- summarizer       Content Summarizer         Summarizes content...
- ...
+Styles, Compositions, Palettes, Extras, Presets...
 
 Use bin/console debug:config xmon_ai_content for full YAML configuration.
 ```
 
-> **Note:** The output above shows a free-tier configuration. If you have an API key configured, you'll see different models (gemini, claude, gptimage, etc.) with their respective costs.
+> **Note:** The output above shows a free-tier configuration. With an API key, you'll see premium models (gemini, claude, gptimage, seedream, etc.) with their costs.
 
 ## Testing
 

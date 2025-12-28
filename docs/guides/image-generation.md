@@ -1,6 +1,6 @@
 # Image Generation Guide
 
-How to generate images using the AI providers.
+How to generate images using Pollinations AI.
 
 ## Basic Usage
 
