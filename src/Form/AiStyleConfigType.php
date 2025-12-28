@@ -118,6 +118,16 @@ class AiStyleConfigType extends AbstractType
                     'class' => 'ai-style-additional-text',
                 ],
                 'help' => $options['additional_help'],
+            ])
+            ->add('aiStyleSuffix', TextareaType::class, [
+                'label' => $options['suffix_label'],
+                'required' => false,
+                'attr' => [
+                    'rows' => 3,
+                    'placeholder' => $options['suffix_placeholder'],
+                    'class' => 'ai-style-suffix-text',
+                ],
+                'help' => $options['suffix_help'],
             ]);
     }
 
@@ -146,6 +156,7 @@ class AiStyleConfigType extends AbstractType
             'composition_label' => 'Composition',
             'palette_label' => 'Color Palette',
             'additional_label' => 'Additional Text',
+            'suffix_label' => 'Technical Restrictions',
 
             // Placeholders
             'preset_placeholder' => 'Select a preset...',
@@ -153,11 +164,13 @@ class AiStyleConfigType extends AbstractType
             'composition_placeholder' => 'Select a composition...',
             'palette_placeholder' => 'Select a palette...',
             'additional_placeholder' => 'Additional instructions for the image generation...',
+            'suffix_placeholder' => 'Fixed technical restrictions appended to all styles...',
 
             // Help texts
             'mode_help' => null,
             'preset_help' => null,
             'additional_help' => null,
+            'suffix_help' => 'Text always appended to generated styles (e.g., uniform rules, quality modifiers). Leave empty to use YAML configuration.',
 
             // Preview options
             'show_preview' => true,

@@ -78,4 +78,15 @@ interface AiStyleConfigurableInterface
      * Set additional text.
      */
     public function setAiStyleAdditional(?string $additional): static;
+
+    /**
+     * Get the fixed suffix for all styles.
+     * If null, falls back to xmon_ai_content.style_suffix parameter.
+     */
+    public function getAiStyleSuffix(): ?string;
+
+    /**
+     * Set the fixed suffix.
+     */
+    public function setAiStyleSuffix(?string $suffix): static;
 }

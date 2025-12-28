@@ -79,6 +79,13 @@ trait AiStyleConfigurableTrait
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     protected ?string $aiStyleAdditional = null;
 
+    /**
+     * Fixed suffix appended to all generated styles (technical restrictions).
+     * If null, falls back to xmon_ai_content.style_suffix parameter.
+     */
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    protected ?string $aiStyleSuffix = null;
+
     // ==========================================
     // GETTERS AND SETTERS
     // ==========================================
@@ -155,6 +162,18 @@ trait AiStyleConfigurableTrait
         return $this;
     }
 
+    public function getAiStyleSuffix(): ?string
+    {
+        return $this->aiStyleSuffix;
+    }
+
+    public function setAiStyleSuffix(?string $suffix): static
+    {
+        $this->aiStyleSuffix = $suffix;
+
+        return $this;
+    }
+
     // ==========================================
     // STYLE BUILDING
     // ==========================================
@@ -219,9 +238,10 @@ trait AiStyleConfigurableTrait
         // Filter empty parts
         $parts = array_filter($parts, static fn ($p) => $p !== '');
 
-        // Add suffix if provided
-        if ($suffix !== '') {
-            $parts[] = $suffix;
+        // Add suffix: BD value takes priority, then parameter fallback
+        $effectiveSuffix = $this->aiStyleSuffix ?? $suffix;
+        if ($effectiveSuffix !== '' && $effectiveSuffix !== null) {
+            $parts[] = $effectiveSuffix;
         }
 
         // Add additional text if provided
