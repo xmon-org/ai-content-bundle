@@ -2,6 +2,12 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.10.2](https://github.com/xmon-org/ai-content-bundle/compare/1.10.1...1.10.2) (2025-12-28)
+
+### 🐛 Bug Fixes
+
+* **task-config:** usa AiStyleService para modelo de imagen por defecto ([25f7183](https://github.com/xmon-org/ai-content-bundle/commit/25f7183b9c2efec30cc2eb86ae098366babb6263))
+
 ## [1.10.1](https://github.com/xmon-org/ai-content-bundle/compare/1.10.0...1.10.1) (2025-12-28)
 
 ### 🐛 Bug Fixes
