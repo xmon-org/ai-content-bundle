@@ -178,29 +178,29 @@ class ModelRegistryService
             'responsesPerPollen' => 5000,
             'description' => 'Fast 6B parameter model (alpha).',
         ],
-        // Mid-tier models
+        // Mid-tier models (seed tier, affordable)
         'nanobanana' => [
             'name' => 'NanoBanana (Gemini 2.5 Flash)',
             'tier' => 'seed',
-            'responsesPerPollen' => 33333,
+            'responsesPerPollen' => 25, // ~$0.04/image - expensive
             'description' => 'Gemini-based, supports reference images.',
         ],
         'nanobanana-pro' => [
             'name' => 'NanoBanana Pro (Gemini 3 Pro)',
             'tier' => 'flower',
-            'responsesPerPollen' => 8333,
+            'responsesPerPollen' => 12, // ~$0.08/image - very expensive
             'description' => '4K resolution with thinking capabilities.',
         ],
         'gptimage' => [
             'name' => 'GPT Image 1 Mini',
             'tier' => 'flower',
-            'responsesPerPollen' => 125000,
+            'responsesPerPollen' => 160, // ~$0.006/image
             'description' => 'OpenAI image model, excellent prompt understanding.',
         ],
         'gptimage-large' => [
             'name' => 'GPT Image 1.5',
             'tier' => 'flower',
-            'responsesPerPollen' => 31250,
+            'responsesPerPollen' => 80, // ~$0.0125/image
             'description' => 'Advanced OpenAI image model.',
         ],
         // Premium models (expensive)
