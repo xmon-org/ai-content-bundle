@@ -2,6 +2,24 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.8.0](https://github.com/xmon-org/ai-content-bundle/compare/1.7.0...1.8.0) (2025-12-28)
+
+### ✨ Features
+
+* **config:** añade opción default_preset para fallback de estilos ([851f256](https://github.com/xmon-org/ai-content-bundle/commit/851f256b47844be39fbae016e5eb9c6702a48a18))
+* **image:** add quality, negative_prompt, private, nofeed options ([9d0968b](https://github.com/xmon-org/ai-content-bundle/commit/9d0968b3738c0ccdeefe07da0226f16742ac238d))
+
+### ♻️ Refactoring
+
+* **api:** cambia claves de presets de español a inglés ([beda137](https://github.com/xmon-org/ai-content-bundle/commit/beda13729a0e16b4e51a281781768bba13c83678))
+* **trait:** añade parámetro defaultPresetKey a buildStylePreview ([09cca0f](https://github.com/xmon-org/ai-content-bundle/commit/09cca0fb215e4daa840e117690f2ec0fa1623963))
+* **ui:** usa etiquetas en inglés en template de configuración de estilos ([ea5b251](https://github.com/xmon-org/ai-content-bundle/commit/ea5b251a99f0e66b2e9e52a49a50a46324242d8f))
+
+### 📚 Documentation
+
+* actualiza documentación para default_preset y claves en inglés ([2dc8d68](https://github.com/xmon-org/ai-content-bundle/commit/2dc8d68e5e74a3a44ef79e22a327581157dbc92e))
+* **pollinations:** añade schema OpenAPI 2025-12-28 ([69feddd](https://github.com/xmon-org/ai-content-bundle/commit/69fedddfecb23f030bca6ebb356be26273889d94))
+
 ## [1.7.0](https://github.com/xmon-org/ai-content-bundle/compare/1.6.1...1.7.0) (2025-12-27)
 
 ### ✨ Features
