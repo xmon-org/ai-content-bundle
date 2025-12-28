@@ -485,7 +485,7 @@ class ImageOptionsService
      * Returns presets with resolved style/composition/palette prompts
      * in the format expected by the form and the trait's buildStylePreview().
      *
-     * @return array<string, array{nombre: string, descripcion: ?string, estilo: string, composicion: string, paleta: string}>
+     * @return array<string, array{name: string, description: ?string, style: string, composition: string, palette: string}>
      */
     public function getPresetsForForm(): array
     {
@@ -509,11 +509,11 @@ class ImageOptionsService
             }
 
             $result[$key] = [
-                'nombre' => $preset['name'],
-                'descripcion' => $preset['description'] ?? null,
-                'estilo' => $stylePrompt,
-                'composicion' => $compositionPrompt,
-                'paleta' => $palettePrompt,
+                'name' => $preset['name'],
+                'description' => $preset['description'] ?? null,
+                'style' => $stylePrompt,
+                'composition' => $compositionPrompt,
+                'palette' => $palettePrompt,
             ];
         }
 
@@ -538,7 +538,7 @@ class ImageOptionsService
     /**
      * Get a resolved preset by key (with prompts, not keys).
      *
-     * @return array{nombre: string, descripcion: ?string, estilo: string, composicion: string, paleta: string}|null
+     * @return array{name: string, description: ?string, style: string, composition: string, palette: string}|null
      */
     public function getResolvedPreset(string $key): ?array
     {
@@ -548,11 +548,11 @@ class ImageOptionsService
         }
 
         return [
-            'nombre' => $preset['name'],
-            'descripcion' => $preset['description'] ?? null,
-            'estilo' => $this->getStylePrompt($preset['style'] ?? '') ?? '',
-            'composicion' => $this->getCompositionPrompt($preset['composition'] ?? '') ?? '',
-            'paleta' => $this->getPalettePrompt($preset['palette'] ?? '') ?? '',
+            'name' => $preset['name'],
+            'description' => $preset['description'] ?? null,
+            'style' => $this->getStylePrompt($preset['style'] ?? '') ?? '',
+            'composition' => $this->getCompositionPrompt($preset['composition'] ?? '') ?? '',
+            'palette' => $this->getPalettePrompt($preset['palette'] ?? '') ?? '',
         ];
     }
 
@@ -573,9 +573,9 @@ class ImageOptionsService
         }
 
         $parts = array_filter([
-            $resolved['estilo'],
-            $resolved['composicion'],
-            $resolved['paleta'],
+            $resolved['style'],
+            $resolved['composition'],
+            $resolved['palette'],
         ], static fn ($p) => $p !== '');
 
         if ($suffix !== '') {
