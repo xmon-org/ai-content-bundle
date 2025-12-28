@@ -53,6 +53,27 @@ final class AiStyleService
     }
 
     /**
+     * Get the default image model from the highest priority provider.
+     *
+     * Returns null if no provider has a configured model (falls back to YAML).
+     */
+    public function getDefaultImageModel(): ?string
+    {
+        foreach ($this->sortedProviders as $provider) {
+            if (!$provider->isAvailable()) {
+                continue;
+            }
+
+            $model = $provider->getDefaultImageModel();
+            if ($model !== null && $model !== '') {
+                return $model;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Get all available providers (for debugging).
      *
      * @return array<array{class: string, priority: int, available: bool}>

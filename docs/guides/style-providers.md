@@ -1,10 +1,10 @@
 # Style Providers
 
-This guide explains how to customize the global/default AI image style using Style Providers.
+This guide explains how to customize the global/default AI image style and model using Style Providers.
 
 ## Overview
 
-Style Providers allow you to dynamically provide the default style for AI image generation. Instead of hardcoding styles in YAML configuration, you can:
+Style Providers allow you to dynamically provide the default style **and image model** for AI image generation. Instead of hardcoding in YAML configuration, you can:
 
 - Store style configuration in a database entity
 - Allow admin users to configure styles via Sonata Admin
@@ -79,6 +79,13 @@ final class ConfiguracionStyleProvider implements AiStyleProviderInterface
         return $config->getBaseStylePreview();
     }
 
+    public function getDefaultImageModel(): ?string
+    {
+        $config = $this->repository->getConfiguracion();
+
+        return $config?->getAiImageModel(); // null = fall back to YAML
+    }
+
     public function getPriority(): int
     {
         return 100; // Higher than YAML (0)
@@ -147,6 +154,8 @@ The trait provides:
 - `aiStyleComposition`: Custom composition
 - `aiStylePalette`: Custom palette
 - `aiStyleAdditional`: Additional text modifier
+- `aiStyleSuffix`: Fixed suffix for all styles (falls back to YAML if null)
+- `aiImageModel`: Default image model (falls back to YAML if null)
 - `buildStylePreview()`: Combines all into a prompt string
 
 **buildStylePreview() signature:**
@@ -228,7 +237,9 @@ $form->add('styleConfig', AiStyleConfigType::class, [
 
 ## How It Works in the Controller
 
-The `AbstractAiImageController` automatically uses `AiStyleService`:
+The `AbstractAiImageController` automatically uses `AiStyleService` for both style and model resolution:
+
+### Style Resolution
 
 ```php
 protected function resolveGlobalStyle(): string
@@ -246,7 +257,34 @@ protected function resolveGlobalStyle(): string
 }
 ```
 
-You can still override `resolveGlobalStyle()` in your controller for custom logic.
+### Model Resolution
+
+```php
+protected function getDefaultImageModelForPage(): string
+{
+    // Try style service provider chain first (allows DB override)
+    if ($this->styleService !== null) {
+        $model = $this->styleService->getDefaultImageModel();
+        if ($model !== null && $model !== '') {
+            return $model;
+        }
+    }
+
+    // Fall back to image service default (YAML or bundle default)
+    return $this->imageService->getDefaultModel();
+}
+```
+
+**Model Resolution Priority:**
+
+| Priority | Source | Description |
+|----------|--------|-------------|
+| 1 | Page selector | User manually selects for single generation |
+| 2 | Database | `ConfiguracionStyleProvider.getDefaultImageModel()` |
+| 3 | YAML | `xmon_ai_content.tasks.image_generation.default_model` |
+| 4 | Bundle default | Hardcoded 'flux' |
+
+You can override `resolveGlobalStyle()` or `getDefaultImageModelForPage()` in your controller for custom logic.
 
 ## Debugging
 

@@ -209,7 +209,7 @@ abstract class AbstractAiImageController extends AbstractController
             'imageModels' => $this->getImageModelsForTemplate(),
             'allowedImageModels' => $this->getAllowedImageModelsForTemplate(),
             'textModels' => $this->getTextModelsForTemplate(),
-            'defaultImageModel' => $this->imageService->getDefaultModel(),
+            'defaultImageModel' => $this->getDefaultImageModelForPage(),
             'defaultTextModel' => $this->textService->getDefaultModelForTask(TaskType::IMAGE_PROMPT),
 
             // Routes for AJAX calls (to be implemented by child)
@@ -252,7 +252,7 @@ abstract class AbstractAiImageController extends AbstractController
      *
      * Only returns models that are in the allowed_models list from configuration.
      *
-     * @return array<string, array{key: string, name: string, formattedCost: string, responsesPerPollen: int, isFree: bool, description: string}>
+     * @return array<string, array{key: string, name: string, formattedCost: string, formattedPrice: string, responsesPerPollen: int, isFree: bool, description: string}>
      */
     protected function getAllowedImageModelsForTemplate(): array
     {
@@ -262,6 +262,7 @@ abstract class AbstractAiImageController extends AbstractController
                 'key' => $modelInfo->key,
                 'name' => $modelInfo->name,
                 'formattedCost' => $modelInfo->getFormattedCost(),
+                'formattedPrice' => $modelInfo->getFormattedPricePerImage(),
                 'responsesPerPollen' => $modelInfo->responsesPerPollen,
                 'isFree' => $modelInfo->isFree(),
                 'description' => $modelInfo->description,
@@ -269,6 +270,30 @@ abstract class AbstractAiImageController extends AbstractController
         }
 
         return $models;
+    }
+
+    /**
+     * Get the default image model for the AI image page.
+     *
+     * Resolution order:
+     * 1. Database (via AiStyleService provider chain - e.g., ConfiguracionStyleProvider)
+     * 2. YAML configuration (xmon_ai_content.tasks.image_generation.default_model)
+     * 3. Bundle default ('flux')
+     *
+     * Override this method for custom resolution logic.
+     */
+    protected function getDefaultImageModelForPage(): string
+    {
+        // Try style service provider chain first (allows DB override)
+        if ($this->styleService !== null) {
+            $model = $this->styleService->getDefaultImageModel();
+            if ($model !== null && $model !== '') {
+                return $model;
+            }
+        }
+
+        // Fall back to image service default (YAML or bundle default)
+        return $this->imageService->getDefaultModel();
     }
 
     /**

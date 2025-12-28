@@ -69,4 +69,14 @@ interface AiStyleProviderInterface
      * (e.g., the configuration entity doesn't exist).
      */
     public function isAvailable(): bool;
+
+    /**
+     * Get the default image model for automatic generation.
+     *
+     * This allows database-backed providers to override the YAML default model.
+     * Return null to fall back to the next provider or YAML configuration.
+     *
+     * Example: 'flux', 'gptimage', 'turbo'
+     */
+    public function getDefaultImageModel(): ?string;
 }

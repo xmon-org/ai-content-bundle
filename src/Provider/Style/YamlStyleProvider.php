@@ -39,4 +39,12 @@ final class YamlStyleProvider implements AiStyleProviderInterface
     {
         return true;
     }
+
+    public function getDefaultImageModel(): ?string
+    {
+        // YAML provider returns null to fall back to service configuration
+        // (xmon_ai_content.tasks.image_generation.default_model)
+        // This allows database-backed providers to override.
+        return null;
+    }
 }
