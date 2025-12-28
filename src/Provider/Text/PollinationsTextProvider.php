@@ -9,6 +9,7 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Xmon\AiContentBundle\Exception\AiProviderException;
 use Xmon\AiContentBundle\Model\TextResult;
+use Xmon\AiContentBundle\Provider\Traits\PollinationsErrorParserTrait;
 
 /**
  * Pollinations Text Provider.
@@ -32,6 +33,8 @@ use Xmon\AiContentBundle\Model\TextResult;
  */
 class PollinationsTextProvider
 {
+    use PollinationsErrorParserTrait;
+
     private const SIMPLE_BASE_URL = 'https://gen.pollinations.ai/text/';
     private const OPENAI_BASE_URL = 'https://gen.pollinations.ai/v1/chat/completions';
     private const PROVIDER_NAME = 'pollinations';
@@ -148,10 +151,19 @@ class PollinationsTextProvider
                         'http_status' => $e->getHttpStatusCode(),
                     ]);
 
-                    // Don't retry on client errors (4xx)
+                    // Don't retry on client errors (4xx) or wrapped rate limits (500 with 429 cause)
                     if ($e->getHttpStatusCode() !== null && $e->getHttpStatusCode() >= 400 && $e->getHttpStatusCode() < 500) {
                         $errors[$model] = $e->getMessage();
                         break; // Skip to next model
+                    }
+
+                    // Check if this is a 500 wrapping a rate limit (429)
+                    if ($e->getHttpStatusCode() === 500 && $this->isWrappedRateLimit($e->getMessage())) {
+                        $this->logger?->warning('[Pollinations] Detected wrapped rate limit (500 with 429 cause)', [
+                            'model' => $model,
+                        ]);
+                        $errors[$model] = $e->getMessage();
+                        break; // Skip to next model instead of retrying
                     }
 
                     // Wait before retry (except on last attempt of this model)
