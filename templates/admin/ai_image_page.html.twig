@@ -415,6 +415,15 @@
                             <div class="thumbnail historial-card {% if item.isActual %}historial-actual{% endif %}">
                                 <div class="historial-image-wrapper">
                                     <img src="{{ item.imageUrl }}" alt="{{ 'Image generated on'|trans }} {{ item.createdAt }}">
+                                    <div class="historial-image-overlay"
+                                         data-image-url="{{ item.imageUrl }}"
+                                         data-image-alt="{{ item.subject|e('html_attr') }}"
+                                         data-image-style="{{ item.style|default('')|e('html_attr') }}"
+                                         data-image-model="{{ item.model|default('')|e('html_attr') }}"
+                                         data-image-date="{{ item.createdAt|e('html_attr') }}"
+                                         title="{{ 'View full size'|trans }}">
+                                        <i class="fa fa-search-plus"></i>
+                                    </div>
                                     {% if item.isActual %}
                                     <span class="historial-badge-actual">
                                         <i class="fa fa-check"></i> {{ 'Current'|trans }}
@@ -488,6 +497,68 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">{{ 'Cancel'|trans }}</button>
                 <button type="button" class="btn btn-primary" id="confirmModalBtn">{{ 'Confirm'|trans }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Image lightbox modal - fullscreen for viewing images #}
+<div class="modal fade" id="imageLightboxModal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="lightboxTitle">
+    <div class="modal-dialog lightbox-fullscreen" role="document">
+        <div class="modal-content">
+            {# Hidden title for screen readers #}
+            <h2 id="lightboxTitle" class="sr-only">{{ 'Image viewer'|trans }}</h2>
+
+            {# Close button - fixed top right #}
+            <button type="button" class="lightbox-close" data-dismiss="modal" aria-label="{{ 'Close image viewer'|trans }}" title="{{ 'Close'|trans }}">
+                <i class="fa fa-times" aria-hidden="true"></i>
+            </button>
+
+            {# Counter - fixed top left #}
+            <span id="lightboxCounter" class="lightbox-counter" aria-live="polite" aria-atomic="true"></span>
+
+            {# Navigation arrows #}
+            <button type="button" id="lightboxPrev" class="lightbox-nav lightbox-nav-prev" aria-label="{{ 'Previous image'|trans }}" title="{{ 'Previous'|trans }}">
+                <i class="fa fa-chevron-left" aria-hidden="true"></i>
+            </button>
+            <button type="button" id="lightboxNext" class="lightbox-nav lightbox-nav-next" aria-label="{{ 'Next image'|trans }}" title="{{ 'Next'|trans }}">
+                <i class="fa fa-chevron-right" aria-hidden="true"></i>
+            </button>
+
+            {# Image container with loading state #}
+            <div class="lightbox-image-container" id="lightboxImageContainer">
+                <div class="lightbox-loading" id="lightboxLoading">
+                    <i class="fa fa-spinner fa-spin fa-2x"></i>
+                </div>
+                <img id="lightboxImage" src="" alt="">
+            </div>
+
+            {# Footer bar #}
+            <div class="lightbox-footer">
+                <div class="lightbox-info">
+                    <div class="lightbox-info-main">
+                        <span id="lightboxCurrentBadge" class="lightbox-current-badge" style="display: none;" role="status">
+                            <i class="fa fa-check" aria-hidden="true"></i> {{ 'Current image'|trans }}
+                        </span>
+                        <p id="lightboxCaption" class="lightbox-caption" role="button" tabindex="0" title="{{ 'Click to expand'|trans }}"></p>
+                    </div>
+                    <div class="lightbox-info-meta">
+                        <span id="lightboxModel" class="lightbox-meta-item">
+                            <i class="fa fa-cog" aria-hidden="true"></i> <span id="lightboxModelText"></span>
+                        </span>
+                        <span id="lightboxDate" class="lightbox-meta-item">
+                            <i class="fa fa-clock-o" aria-hidden="true"></i> <span id="lightboxDateText"></span>
+                        </span>
+                    </div>
+                </div>
+                <div class="lightbox-actions" role="group" aria-label="{{ 'Image actions'|trans }}">
+                    <button type="button" id="lightboxUseBtn" class="btn btn-primary btn-sm" style="display: none;">
+                        <i class="fa fa-check" aria-hidden="true"></i> {{ 'Use'|trans }}
+                    </button>
+                    <button type="button" id="lightboxDeleteBtn" class="btn btn-danger btn-sm">
+                        <i class="fa fa-trash" aria-hidden="true"></i> {{ 'Delete'|trans }}
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -929,6 +1000,28 @@
         max-width: 100%;
         /*max-height: 200px;*/
     }
+    .historial-image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        cursor: pointer;
+    }
+    .historial-image-overlay:hover {
+        opacity: 1;
+    }
+    .historial-image-overlay i {
+        color: white;
+        font-size: 28px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
     .historial-badge-actual {
         position: absolute;
         top: 8px;
@@ -1028,6 +1121,217 @@
     .xmon-status-text {
         flex: 1;
     }
+
+    /* Lightbox fullscreen styles */
+    .lightbox-fullscreen {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    .lightbox-fullscreen .modal-content {
+        background: rgba(0, 0, 0, 0.95);
+        border: none;
+        border-radius: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    .lightbox-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: rgba(0, 0, 0, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+        cursor: pointer;
+        border-radius: 50%;
+        z-index: 20;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .lightbox-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.4);
+        transform: scale(1.05);
+    }
+    .lightbox-counter {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+        font-weight: 500;
+        z-index: 20;
+    }
+    .lightbox-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        width: 56px;
+        height: 100px;
+        font-size: 24px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 15;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+    }
+    .lightbox-nav:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.4);
+    }
+    .lightbox-nav:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        background: rgba(0, 0, 0, 0.3);
+    }
+    .lightbox-nav-prev {
+        left: 0;
+        border-radius: 0 8px 8px 0;
+    }
+    .lightbox-nav-next {
+        right: 0;
+        border-radius: 8px 0 0 8px;
+    }
+    .lightbox-image-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 80px 20px;
+        overflow: hidden;
+        position: relative;
+    }
+    .lightbox-loading {
+        position: absolute;
+        color: white;
+        display: none;
+    }
+    .lightbox-image-container.loading .lightbox-loading {
+        display: block;
+    }
+    .lightbox-image-container img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 4px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+        transition: opacity 0.2s ease;
+    }
+    .lightbox-image-container.loading img {
+        opacity: 0.3;
+    }
+    .lightbox-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 16px 24px;
+        background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 100%);
+        border-top: 1px solid rgba(255,255,255,0.15);
+        gap: 20px;
+        min-height: 80px;
+    }
+    .lightbox-info {
+        flex: 1;
+        min-width: 0;
+    }
+    .lightbox-info-main {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+    .lightbox-current-badge {
+        background: #00a65a; /* AdminLTE green */
+        color: white;
+        padding: 5px 12px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        flex-shrink: 0;
+    }
+    .lightbox-caption {
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.5;
+        cursor: pointer;
+        transition: max-height 0.3s ease;
+        max-height: 3em;
+        overflow: hidden;
+    }
+    .lightbox-caption.expanded {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    .lightbox-caption:not(.expanded):hover {
+        color: white;
+    }
+    .lightbox-info-meta {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .lightbox-meta-item {
+        color: rgba(255, 255, 255, 0.75); /* Improved contrast */
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .lightbox-meta-item i {
+        opacity: 0.8;
+    }
+    .lightbox-actions {
+        display: flex;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+    .lightbox-actions .btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+    /* Focus visible for accessibility */
+    .lightbox-nav:focus,
+    .lightbox-close:focus,
+    .lightbox-actions .btn:focus {
+        outline: 2px solid #3c8dbc;
+        outline-offset: 2px;
+    }
+    /* Responsive */
+    @media (max-width: 768px) {
+        .lightbox-nav {
+            width: 44px;
+            height: 80px;
+            font-size: 20px;
+        }
+        .lightbox-image-container {
+            padding: 50px 50px 16px;
+        }
+        .lightbox-footer {
+            flex-direction: column;
+            padding: 12px 16px;
+            gap: 12px;
+        }
+        .lightbox-actions {
+            width: 100%;
+            justify-content: flex-end;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -1074,6 +1378,23 @@ document.addEventListener('DOMContentLoaded', function() {
     var totalCountSpan = document.getElementById('totalCount');
     var btnDeleteAndGenerate = document.getElementById('btnDeleteAndGenerate');
     var selectedHistoryIds = new Set();
+
+    // Lightbox modal elements
+    var imageLightboxModal = $('#imageLightboxModal');
+    var lightboxImage = document.getElementById('lightboxImage');
+    var lightboxCaption = document.getElementById('lightboxCaption');
+    var lightboxCounter = document.getElementById('lightboxCounter');
+    var lightboxPrev = document.getElementById('lightboxPrev');
+    var lightboxNext = document.getElementById('lightboxNext');
+    var lightboxUseBtn = document.getElementById('lightboxUseBtn');
+    var lightboxDeleteBtn = document.getElementById('lightboxDeleteBtn');
+    var lightboxCurrentBadge = document.getElementById('lightboxCurrentBadge');
+    var lightboxModelText = document.getElementById('lightboxModelText');
+    var lightboxDateText = document.getElementById('lightboxDateText');
+
+    // Lightbox state
+    var lightboxImages = [];
+    var lightboxCurrentIndex = 0;
 
     // Style elements
     var styleModeRadios = document.querySelectorAll('input[name="styleMode"]');
@@ -1442,10 +1763,17 @@ document.addEventListener('DOMContentLoaded', function() {
             '<p class="historial-style" title="' + escapeHtml(style) + '" style="font-size: 11px; color: #999; margin: 0 0 8px; line-height: 1.3; font-style: italic;">' +
             '<i class="fa fa-paint-brush" style="font-size: 10px;"></i> ' + escapeHtml(styleTruncated) + '</p>' : '';
 
+        var modelName = item.model || '';
+        var modelHtml = modelName ?
+            '<br><i class="fa fa-cog"></i> ' + escapeHtml(modelName) : '';
+
         newCard.innerHTML =
             '<div class="thumbnail historial-card">' +
                 '<div class="historial-image-wrapper">' +
                     '<img src="' + item.imageUrl + '" alt="{{ "Image generated on"|trans }} ' + item.createdAt + '">' +
+                    '<div class="historial-image-overlay" data-image-url="' + item.imageUrl + '" data-image-alt="' + escapeHtml(subject) + '" data-image-style="' + escapeHtml(style) + '" data-image-model="' + escapeHtml(modelName) + '" data-image-date="' + escapeHtml(item.createdAt) + '" title="{{ "View full size"|trans }}">' +
+                        '<i class="fa fa-search-plus"></i>' +
+                    '</div>' +
                 '</div>' +
                 '<div class="caption">' +
                     '<p class="historial-subject" title="' + escapeHtml(subject) + '" style="font-size: 13px; font-weight: 600; color: #333; margin: 8px 0 5px; line-height: 1.4; min-height: 36px;">' +
@@ -1453,7 +1781,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     '</p>' +
                     styleHtml +
                     '<div class="historial-meta">' +
-                        '<small class="text-muted"><i class="fa fa-clock-o"></i> ' + item.createdAt + '</small>' +
+                        '<small class="text-muted"><i class="fa fa-clock-o"></i> ' + item.createdAt + modelHtml + '</small>' +
                     '</div>' +
                     '<div class="historial-actions">' +
                         '<button type="button" class="btn btn-sm btn-primary btn-use-image" data-id="' + item.id + '" title="{{ "Use this image"|trans }}">' +
@@ -1482,6 +1810,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (deleteBtn) {
             deleteBtn.addEventListener('click', function() {
                 handleDeleteImage(this);
+            });
+        }
+
+        // Bind overlay click for lightbox
+        var overlay = newCard.querySelector('.historial-image-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', function() {
+                handleImageOverlayClick(this);
             });
         }
 
@@ -1730,6 +2066,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     imageUrl: data.imageUrl + '?' + timestamp,
                     subject: data.subject || subject,
                     style: data.style || '',
+                    model: data.model || '',
                     createdAt: '{{ "Now"|trans }}'
                 });
             } else {
@@ -1927,6 +2264,224 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // === Lightbox functions ===
+
+    function buildLightboxImageList() {
+        lightboxImages = [];
+        document.querySelectorAll('.historial-item').forEach(function(item) {
+            var overlay = item.querySelector('.historial-image-overlay');
+            var subjectEl = item.querySelector('.historial-subject');
+            if (overlay) {
+                var subject = overlay.dataset.imageAlt || (subjectEl ? subjectEl.textContent.trim() : '');
+                var style = overlay.dataset.imageStyle || '';
+                // Build full prompt: subject + style
+                var fullPrompt = subject;
+                if (style) {
+                    fullPrompt += ', ' + style;
+                }
+                lightboxImages.push({
+                    id: item.dataset.id,
+                    imageUrl: overlay.dataset.imageUrl,
+                    subject: subject,
+                    style: style,
+                    caption: fullPrompt,
+                    model: overlay.dataset.imageModel || '',
+                    date: overlay.dataset.imageDate || '',
+                    isActual: item.querySelector('.historial-actual') !== null
+                });
+            }
+        });
+    }
+
+    function updateLightboxDisplay() {
+        if (lightboxImages.length === 0) return;
+
+        var container = document.getElementById('lightboxImageContainer');
+        var current = lightboxImages[lightboxCurrentIndex];
+
+        // Show loading state
+        container.classList.add('loading');
+
+        // Preload image
+        var tempImg = new Image();
+        tempImg.onload = function() {
+            lightboxImage.src = current.imageUrl;
+            container.classList.remove('loading');
+        };
+        tempImg.onerror = function() {
+            container.classList.remove('loading');
+            lightboxImage.alt = '{{ "Error loading image"|trans }}';
+        };
+        tempImg.src = current.imageUrl;
+
+        // Update alt and caption (don't wait for image)
+        lightboxImage.alt = current.caption;
+        lightboxCaption.textContent = current.caption;
+        lightboxCaption.title = current.caption;
+        lightboxCaption.classList.remove('expanded'); // Reset expanded state
+
+        // Update counter
+        lightboxCounter.textContent = (lightboxCurrentIndex + 1) + ' / ' + lightboxImages.length;
+
+        // Update navigation buttons
+        lightboxPrev.disabled = lightboxCurrentIndex === 0;
+        lightboxNext.disabled = lightboxCurrentIndex === lightboxImages.length - 1;
+
+        // Update model and date
+        lightboxModelText.textContent = current.model || '{{ "Unknown"|trans }}';
+        lightboxDateText.textContent = current.date || '';
+
+        // Update current badge and action buttons
+        if (current.isActual) {
+            lightboxCurrentBadge.style.display = '';
+            lightboxUseBtn.style.display = 'none';
+            lightboxDeleteBtn.style.display = 'none';
+        } else {
+            lightboxCurrentBadge.style.display = 'none';
+            lightboxUseBtn.style.display = '';
+            lightboxDeleteBtn.style.display = '';
+        }
+
+        // Store current ID for actions
+        lightboxUseBtn.dataset.id = current.id;
+        lightboxDeleteBtn.dataset.id = current.id;
+    }
+
+    function openImageLightbox(imageUrl, caption) {
+        if (!lightboxImage || !imageLightboxModal) return;
+
+        // Build fresh list of images
+        buildLightboxImageList();
+
+        // Find index of clicked image
+        lightboxCurrentIndex = 0;
+        for (var i = 0; i < lightboxImages.length; i++) {
+            if (lightboxImages[i].imageUrl === imageUrl) {
+                lightboxCurrentIndex = i;
+                break;
+            }
+        }
+
+        updateLightboxDisplay();
+        imageLightboxModal.modal('show');
+    }
+
+    function lightboxNavigate(direction) {
+        var newIndex = lightboxCurrentIndex + direction;
+        if (newIndex >= 0 && newIndex < lightboxImages.length) {
+            lightboxCurrentIndex = newIndex;
+            updateLightboxDisplay();
+        }
+    }
+
+    function handleImageOverlayClick(overlay) {
+        var imageUrl = overlay.dataset.imageUrl;
+        var imageAlt = overlay.dataset.imageAlt || '';
+        openImageLightbox(imageUrl, imageAlt);
+    }
+
+    // Lightbox navigation buttons
+    if (lightboxPrev) {
+        lightboxPrev.addEventListener('click', function() {
+            lightboxNavigate(-1);
+        });
+    }
+    if (lightboxNext) {
+        lightboxNext.addEventListener('click', function() {
+            lightboxNavigate(1);
+        });
+    }
+
+    // Focus management - track last focused element
+    var lastFocusedElement = null;
+
+    // Keyboard navigation and focus management in lightbox
+    imageLightboxModal.on('show.bs.modal', function() {
+        lastFocusedElement = document.activeElement;
+    });
+
+    imageLightboxModal.on('shown.bs.modal', function() {
+        // Focus on close button when opening
+        var closeBtn = document.querySelector('.lightbox-close');
+        if (closeBtn) closeBtn.focus();
+
+        $(document).on('keydown.lightbox', function(e) {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                lightboxNavigate(-1);
+            }
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                lightboxNavigate(1);
+            }
+            if (e.key === 'Escape') {
+                imageLightboxModal.modal('hide');
+            }
+        });
+    });
+
+    imageLightboxModal.on('hidden.bs.modal', function() {
+        $(document).off('keydown.lightbox');
+        // Restore focus to last focused element
+        if (lastFocusedElement) {
+            lastFocusedElement.focus();
+        }
+    });
+
+    // Click on backdrop to close
+    imageLightboxModal.on('click', function(e) {
+        if (e.target === this || $(e.target).hasClass('lightbox-image-container')) {
+            imageLightboxModal.modal('hide');
+        }
+    });
+
+    // Caption expandible
+    if (lightboxCaption) {
+        lightboxCaption.addEventListener('click', function() {
+            this.classList.toggle('expanded');
+        });
+        lightboxCaption.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.classList.toggle('expanded');
+            }
+        });
+    }
+
+    // Lightbox Use button
+    if (lightboxUseBtn) {
+        lightboxUseBtn.addEventListener('click', function() {
+            var id = this.dataset.id;
+            var item = document.querySelector('.historial-item[data-id="' + id + '"]');
+            if (item) {
+                var useBtn = item.querySelector('.btn-use-image');
+                if (useBtn) {
+                    imageLightboxModal.modal('hide');
+                    setTimeout(function() {
+                        handleUseImage(useBtn);
+                    }, 300);
+                }
+            }
+        });
+    }
+
+    // Lightbox Delete button
+    if (lightboxDeleteBtn) {
+        lightboxDeleteBtn.addEventListener('click', function() {
+            var id = this.dataset.id;
+            var item = document.querySelector('.historial-item[data-id="' + id + '"]');
+            if (item) {
+                var deleteBtn = item.querySelector('.btn-delete-image');
+                if (deleteBtn) {
+                    imageLightboxModal.modal('hide');
+                    setTimeout(function() {
+                        handleDeleteImage(deleteBtn);
+                    }, 300);
+                }
+            }
+        });
+    }
+
     function handleDeleteImage(button) {
         var historyId = button.dataset.id;
         var item = button.closest('.historial-item');
@@ -1993,6 +2548,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.btn-delete-image').forEach(function(btn) {
         btn.addEventListener('click', function() {
             handleDeleteImage(this);
+        });
+    });
+
+    // Image overlay click handlers (for viewing full size)
+    document.querySelectorAll('.historial-image-overlay').forEach(function(overlay) {
+        overlay.addEventListener('click', function() {
+            handleImageOverlayClick(this);
         });
     });
 

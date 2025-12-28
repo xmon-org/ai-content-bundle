@@ -509,8 +509,9 @@ abstract class AbstractAiImageController extends AbstractController
                 );
             }
 
-            // Create history entry
-            $historyItem = $this->createHistoryItem($entity, $media, trim($subject), $baseStyle, $imageResult->getProvider());
+            // Create history entry - use model name (or fallback to provider if not available)
+            $modelUsed = $imageResult->getModel() ?? $imageResult->getProvider();
+            $historyItem = $this->createHistoryItem($entity, $media, trim($subject), $baseStyle, $modelUsed);
 
             // Get image URL for response
             $imageUrl = $media ? $this->getMediaUrl($media) : $imageResult->toDataUri();
@@ -524,6 +525,7 @@ abstract class AbstractAiImageController extends AbstractController
                 'subject' => trim($subject),
                 'style' => $baseStyle,
                 'promptUsed' => $fullPrompt,
+                'model' => $modelUsed,
             ]);
         } catch (\Exception $e) {
             return $this->errorResponse('Error: '.$e->getMessage());
