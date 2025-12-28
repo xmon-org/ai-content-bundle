@@ -514,10 +514,17 @@
             }
         });
 
-        // Textarea
+        // Textareas - bind input events for real-time preview
         const additionalInput = findTextarea('aiStyleAdditional');
         if (additionalInput) {
             additionalInput.addEventListener('input', function() {
+                updatePreview();
+            });
+        }
+
+        const suffixInput = findTextarea('aiStyleSuffix');
+        if (suffixInput) {
+            suffixInput.addEventListener('input', function() {
                 updatePreview();
             });
         }
