@@ -47,7 +47,8 @@ $result = $this->aiImageService->generate('prompt here', [
     'seed' => 12345,           // Seed for reproducibility
     'nologo' => true,          // No watermark (requires API key)
     'enhance' => false,        // AI enhances the prompt automatically
-    'provider' => 'pollinations', // Force specific provider
+    'use_fallback' => true,    // Try fallback_models if primary fails
+    'timeout' => 180,          // Custom timeout for this request
 ]);
 ```
 
@@ -81,7 +82,10 @@ $result = $this->aiImageService->generateForTask('prompt here', [
 | `seed` | int | Seed for reproducible results |
 | `nologo` | bool | Remove watermark (requires API key) |
 | `enhance` | bool | Let AI enhance the prompt |
-| `provider` | string | Force a specific provider |
+| `use_fallback` | bool | Try fallback models if primary fails |
+| `timeout` | int | Request timeout in seconds |
+| `retries_per_model` | int | Retries before trying next model |
+| `retry_delay` | int | Seconds between retries |
 
 ## ImageResult Object
 
@@ -188,15 +192,19 @@ class MyService
 
 ```php
 use Xmon\AiContentBundle\Exception\AiProviderException;
-use Xmon\AiContentBundle\Exception\AllProvidersFailedException;
 
 try {
     $result = $this->aiImageService->generate($prompt);
-} catch (AllProvidersFailedException $e) {
-    // All providers failed
-    $errors = $e->getErrors();
 } catch (AiProviderException $e) {
-    // Single provider error
+    // Provider error (all models failed, timeout, rate limit, etc.)
+    $provider = $e->getProvider();        // 'pollinations'
+    $statusCode = $e->getHttpStatusCode(); // 429, 500, etc.
+    $message = $e->getMessage();           // Error details
+
+    // Handle specific cases
+    if ($statusCode === 429) {
+        // Rate limited - wait and retry later
+    }
 }
 ```
 

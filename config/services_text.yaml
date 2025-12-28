@@ -10,7 +10,7 @@ services:
     Xmon\AiContentBundle\Provider\Text\PollinationsTextProvider:
         arguments:
             $apiKey: null
-            $model: 'gemini'
+            $model: 'mistral'
             $fallbackModels: []
             $retriesPerModel: 2
             $retryDelay: 3

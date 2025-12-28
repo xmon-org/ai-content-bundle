@@ -2,6 +2,8 @@
 
 Bundle structure and components.
 
+> **Architecture Decision (December 2025):** The bundle uses a simplified single-provider architecture. Pollinations is the sole provider for both text and image generation, providing unified access to multiple AI models (Claude, GPT, Gemini, Mistral, Flux, etc.). Model fallback happens within the provider, not between providers.
+
 ## Directory Structure
 
 ```
@@ -15,23 +17,22 @@ xmon-org/ai-content-bundle/
 │   │   ├── image-generation.md
 │   │   ├── styles-presets.md
 │   │   ├── prompt-templates.md
-│   │   └── custom-providers.md
-│   ├── reference/
-│   │   ├── configuration.md
-│   │   ├── providers.md
-│   │   ├── fallback-system.md
-│   │   └── architecture.md
-│   └── development.md
+│   │   └── admin-integration.md
+│   └── reference/
+│       ├── configuration.md
+│       ├── providers.md
+│       ├── fallback-system.md
+│       └── architecture.md
 ├── config/
-│   ├── services.yaml                # Core image services (always)
-│   ├── services_text.yaml           # Text providers (always)
+│   ├── services.yaml                # Core services (always)
+│   ├── services_text.yaml           # Text provider (always)
 │   ├── services_media.yaml          # SonataMedia (if installed)
 │   └── services_admin.yaml          # Sonata Admin (if installed)
 └── src/
     ├── XmonAiContentBundle.php      # Bundle class
     ├── DependencyInjection/
     │   ├── Configuration.php        # Validated YAML configuration
-    │   └── XmonAiContentExtension.php # Conditional service loading
+    │   └── XmonAiContentExtension.php # Service loading
     ├── Admin/
     │   └── AiImageAdminExtension.php # Sonata Admin extension
     ├── Controller/
@@ -40,24 +41,25 @@ xmon-org/ai-content-bundle/
     │   ├── AiImageAwareInterface.php     # Interface for entities with AI images
     │   ├── AiImageAwareTrait.php         # Trait with common methods
     │   ├── AiImageHistoryInterface.php   # Interface for image history
-    │   └── AiImageHistoryTrait.php       # Trait for history entities
+    │   ├── AiImageHistoryTrait.php       # Trait for history entities
+    │   ├── AiStyleConfigurableInterface.php # Interface for style config
+    │   └── AiStyleConfigurableTrait.php  # Trait for style configuration
     ├── Form/
     │   ├── AiTextFieldType.php      # Textarea with AI generation
     │   ├── AiImageFieldType.php     # Image with regeneration modal
-    │   └── StyleSelectorType.php    # Style mode selector
+    │   ├── StyleSelectorType.php    # Style mode selector
+    │   └── AiStyleConfigType.php    # Style configuration form
     ├── Provider/
-    │   ├── ImageProviderInterface.php
-    │   ├── TextProviderInterface.php # With #[AutoconfigureTag]
-    │   ├── AiStyleProviderInterface.php
+    │   ├── AiStyleProviderInterface.php  # Style provider interface
     │   ├── Image/
-    │   │   └── PollinationsImageProvider.php
+    │   │   └── PollinationsImageProvider.php  # Single image provider
     │   ├── Text/
-    │   │   └── PollinationsTextProvider.php
+    │   │   └── PollinationsTextProvider.php   # Single text provider
     │   └── Style/
     │       └── YamlStyleProvider.php
     ├── Service/
-    │   ├── AiImageService.php       # Image orchestrator via Pollinations
-    │   ├── AiTextService.php        # Text orchestrator via Pollinations
+    │   ├── AiImageService.php       # Image orchestrator
+    │   ├── AiTextService.php        # Text orchestrator
     │   ├── TaskConfigService.php    # Task-based model configuration
     │   ├── ModelRegistryService.php # Model catalog with costs
     │   ├── ImageSubjectGenerator.php # Two-step anchor extraction
@@ -84,18 +86,54 @@ xmon-org/ai-content-bundle/
     │       ├── form/fields.html.twig # Form theme
     │       └── admin/form/          # Admin templates
     └── Exception/
-        ├── AiProviderException.php
-        └── AllProvidersFailedException.php
+        └── AiProviderException.php
+```
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Your Application                          │
+│                                                                  │
+│  ┌──────────────────┐        ┌──────────────────┐               │
+│  │  AiTextService   │        │  AiImageService  │               │
+│  │                  │        │                  │               │
+│  │  generate()      │        │  generate()      │               │
+│  │  generateForTask()        │  generateForTask()               │
+│  └────────┬─────────┘        └────────┬─────────┘               │
+│           │                           │                          │
+│           ▼                           ▼                          │
+│  ┌──────────────────┐        ┌──────────────────┐               │
+│  │ Pollinations     │        │ Pollinations     │               │
+│  │ TextProvider     │        │ ImageProvider    │               │
+│  │                  │        │                  │               │
+│  │ Model fallback:  │        │ Model fallback:  │               │
+│  │ gemini → mistral │        │ flux → turbo     │               │
+│  │ → deepseek       │        │                  │               │
+│  └────────┬─────────┘        └────────┬─────────┘               │
+│           │                           │                          │
+└───────────┼───────────────────────────┼──────────────────────────┘
+            │                           │
+            ▼                           ▼
+     ┌──────────────────────────────────────────┐
+     │           Pollinations.ai API            │
+     │                                          │
+     │  Text: /v1/chat/completions              │
+     │  Image: /image/{prompt}                  │
+     │                                          │
+     │  Models: Claude, GPT, Gemini, Mistral,   │
+     │          Flux, Turbo, GPTImage, etc.     │
+     └──────────────────────────────────────────┘
 ```
 
 ## Components
 
-### Services
+### Main Services
 
 | Service | Description |
 |---------|-------------|
-| `AiTextService` | Main service for text generation via Pollinations |
-| `AiImageService` | Main service for image generation via Pollinations |
+| `AiTextService` | Main entry point for text generation. Delegates to PollinationsTextProvider |
+| `AiImageService` | Main entry point for image generation. Delegates to PollinationsImageProvider |
 | `TaskConfigService` | Task-based model configuration and validation |
 | `ModelRegistryService` | Model catalog with costs and tier information |
 | `ImageSubjectGenerator` | Two-step anchor extraction for unique image subjects |
@@ -105,6 +143,18 @@ xmon-org/ai-content-bundle/
 | `AiStyleService` | Aggregates style providers by priority |
 | `MediaStorageService` | Saves images to SonataMedia (conditional) |
 
+### Providers
+
+The bundle uses a single-provider architecture per type:
+
+| Provider | Class | Purpose |
+|----------|-------|---------|
+| Text | `PollinationsTextProvider` | Text generation via Pollinations API |
+| Image | `PollinationsImageProvider` | Image generation via Pollinations API |
+| Style | `YamlStyleProvider` | Provides global style from YAML config |
+
+**Key design decision:** Providers handle model fallback internally. If `gemini` fails, the provider tries `mistral`, then `deepseek`, etc. This simplifies the architecture - no need for multiple provider implementations.
+
 ### Form Types (Sonata Admin)
 
 | Form Type | Description |
@@ -112,6 +162,7 @@ xmon-org/ai-content-bundle/
 | `AiTextFieldType` | Textarea with "Generate with AI" button |
 | `AiImageFieldType` | Image field with regeneration modal |
 | `StyleSelectorType` | Style mode selector (Global/Preset/Custom) |
+| `AiStyleConfigType` | Complete style configuration form |
 
 ### Admin Components
 
@@ -126,24 +177,10 @@ xmon-org/ai-content-bundle/
 |-----------|-------------|
 | `AiImageAwareInterface` | For entities that have AI-generated images |
 | `AiImageHistoryInterface` | For image history entities |
+| `AiStyleConfigurableInterface` | For entities with configurable AI style |
 | `AiImageAwareTrait` | Default implementation of AiImageAwareInterface |
 | `AiImageHistoryTrait` | Default implementation of AiImageHistoryInterface |
-
-### Providers
-
-Providers implement `TextProviderInterface` or `ImageProviderInterface`:
-
-```php
-interface TextProviderInterface
-{
-    public function getName(): string;
-    public function isAvailable(): bool;
-    public function getPriority(): int;
-    public function generate(string $systemPrompt, string $userMessage, array $options = []): TextResult;
-}
-```
-
-Tagged with `xmon_ai_content.text_provider` for auto-discovery.
+| `AiStyleConfigurableTrait` | Default implementation of style configuration |
 
 ### Models (DTOs)
 
@@ -151,8 +188,8 @@ Immutable data transfer objects:
 
 **TextResult:**
 - `getText()` - Generated text
-- `getProvider()` - Provider used
-- `getModel()` - Model used
+- `getProvider()` - Provider used ('pollinations')
+- `getModel()` - Model used (e.g., 'gemini', 'openai-fast')
 - `getPromptTokens()` - Input tokens
 - `getCompletionTokens()` - Output tokens
 - `getFinishReason()` - Stop reason
@@ -161,7 +198,8 @@ Immutable data transfer objects:
 - `getBytes()` - Raw image data
 - `getMimeType()` - Content type
 - `getExtension()` - File extension
-- `getProvider()` - Provider used
+- `getProvider()` - Provider used ('pollinations')
+- `getModel()` - Model used (e.g., 'flux', 'gptimage')
 - `getWidth()`, `getHeight()` - Dimensions
 - `toBase64()`, `toDataUri()` - Encoding helpers
 
@@ -175,16 +213,16 @@ Immutable data transfer objects:
 ### Configuration
 
 **Configuration.php** validates YAML structure:
-- Text/image provider settings
+- Text/image provider settings (flat structure)
+- Task types configuration
 - Image options (styles, compositions, etc.)
 - Presets
 - Prompt templates
 
 **XmonAiContentExtension.php** handles:
 - Loading configuration
-- Registering providers
-- Conditional service loading (SonataMedia)
-- Merging defaults with user config
+- Configuring providers with YAML values
+- Conditional service loading (SonataMedia, Sonata Admin)
 
 ### Conditional Loading
 
@@ -208,16 +246,59 @@ if (interface_exists(AdminInterface::class)) {
 
 | Tag | Purpose |
 |-----|---------|
-| `xmon_ai_content.text_provider` | Register text providers |
-| `xmon_ai_content.image_provider` | Register image providers |
 | `xmon_ai_content.style_provider` | Register style providers (for global style) |
 | `console.command` | Register console commands |
 | `form.type` | Register form types |
 | `sonata.admin.extension` | Register admin extensions |
+| `monolog.logger` | Logger channel 'ai' for AI operations |
+
+## Data Flow
+
+### Text Generation
+
+```
+1. Application calls AiTextService->generate($system, $user, $options)
+   or AiTextService->generateForTask(TaskType::NEWS_CONTENT, ...)
+
+2. AiTextService:
+   - If using generateForTask(), resolves model via TaskConfigService
+   - Delegates to PollinationsTextProvider->generate()
+
+3. PollinationsTextProvider:
+   - Builds list of models to try (primary + fallbacks)
+   - For each model, tries up to retries_per_model times
+   - Makes HTTP request to Pollinations API
+   - On success: returns TextResult
+   - On 4xx error: skips to next model
+   - On 5xx/timeout: retries with delay
+
+4. Returns TextResult to application
+```
+
+### Image Generation
+
+```
+1. Application calls AiImageService->generate($prompt, $options)
+   or AiImageService->generateForTask($prompt, $options)
+
+2. AiImageService:
+   - If using generateForTask(), resolves model via TaskConfigService
+   - Delegates to PollinationsImageProvider->generate()
+
+3. PollinationsImageProvider:
+   - Builds list of models to try (primary + fallbacks)
+   - For each model, tries up to retries_per_model times
+   - Builds URL with prompt and parameters
+   - Makes HTTP GET request to Pollinations API
+   - On success: returns ImageResult with bytes
+   - On failure: retries or tries next model
+
+4. Returns ImageResult to application
+```
 
 ## Related
 
 - [Configuration Reference](configuration.md) - Full YAML options
-- [Image Subject Generator Guide](../guides/image-subject-generator.md) - Two-step anchor system
-- [Custom Providers](../guides/custom-providers.md) - Extend the bundle
+- [Fallback System](fallback-system.md) - How model fallback works
+- [Providers Reference](providers.md) - Available models and costs
 - [Admin Integration](../guides/admin-integration.md) - Sonata Admin integration

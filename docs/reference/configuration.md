@@ -12,60 +12,45 @@ xmon_ai_content:
     # ============================================
     tasks:
         news_content:
-            default_model: 'claude'
-            allowed_models: ['claude', 'gemini', 'openai', 'gemini-fast', 'mistral']
+            default_model: 'gemini'
+            allowed_models: ['gemini', 'deepseek', 'mistral', 'openai', 'openai-fast']
 
         image_prompt:
             default_model: 'gemini-fast'
-            allowed_models: ['openai-fast', 'gemini-fast', 'mistral']
+            allowed_models: ['gemini-fast', 'openai-fast', 'mistral']
 
         image_generation:
-            default_model: 'gptimage'
-            allowed_models: ['flux', 'gptimage', 'seedream', 'nanobanana', 'turbo']
+            default_model: 'flux'
+            allowed_models: ['flux', 'turbo']
 
     # ============================================
-    # TEXT PROVIDERS
+    # TEXT GENERATION (Pollinations API)
     # ============================================
     text:
-        providers:
-            pollinations:
-                enabled: true
-                priority: 10
-                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional for basic use
-                model: 'openai'  # Default model (TaskType config takes precedence)
-                fallback_models: ['openai-fast']  # Backup models if main fails
-                timeout: 60
-                # Endpoint mode: 'openai' (POST, recommended) or 'simple' (GET)
-                endpoint_mode: 'openai'
-
-        defaults:
-            retries: 2       # Retry attempts per provider
-            retry_delay: 3   # Seconds between retries
+        api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional - defaults are free tier
+        model: 'mistral'                   # Default model (free tier)
+        fallback_models: ['nova-micro', 'gemini-fast', 'openai-fast']  # Free tier fallbacks
+        retries_per_model: 2               # Retries before trying next model
+        retry_delay: 3                     # Seconds between retries
+        timeout: 60                        # HTTP timeout in seconds
+        endpoint_mode: 'openai'            # 'openai' (POST) or 'simple' (GET)
 
     # ============================================
-    # IMAGE PROVIDERS
+    # IMAGE GENERATION (Pollinations API)
     # ============================================
     image:
-        providers:
-            pollinations:
-                enabled: true
-                priority: 100
-                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
-                model: 'flux'  # Default model (TaskType config takes precedence)
-                timeout: 120
-                # Quality level: low, medium, high, hd
-                quality: 'high'
-                # What to avoid in generated images
-                negative_prompt: 'worst quality, blurry, text, letters, watermark, human faces, detailed faces'
-                # Privacy settings
-                private: true   # Hide from Pollinations public feeds
-                nofeed: true    # Do not add to public feed
-
-        defaults:
-            width: 1280
-            height: 720
-            retries: 3
-            retry_delay: 5
+        api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional - defaults are free tier
+        model: 'flux'                      # Default model (free tier)
+        fallback_models: ['zimage', 'turbo']  # Free tier fallbacks
+        retries_per_model: 2               # Retries before trying next model
+        retry_delay: 3                     # Seconds between retries
+        timeout: 120                       # HTTP timeout in seconds
+        width: 1280                        # Default image width
+        height: 720                        # Default image height
+        quality: 'high'                    # Quality: low, medium, high, hd
+        negative_prompt: 'worst quality, blurry, text, letters, watermark, human faces, detailed faces'
+        private: true                      # Hide from Pollinations public feeds
+        nofeed: true                       # Do not add to public feed
 
     # ============================================
     # ADMIN UI SETTINGS
@@ -223,19 +208,29 @@ tasks:
         allowed_models: ['gptimage', 'seedream', 'flux']
 ```
 
-**Free Configuration (No Cost):**
+**Free Configuration (No Cost) - This is the default:**
 
 ```yaml
+# Just use: xmon_ai_content: ~
+# Which gives you:
 tasks:
     news_content:
-        default_model: 'openai'
-        allowed_models: ['openai', 'openai-fast', 'mistral']
+        default_model: 'mistral'
+        allowed_models: ['mistral', 'nova-micro', 'openai-fast']
     image_prompt:
-        default_model: 'openai-fast'
-        allowed_models: ['openai-fast', 'mistral']
+        default_model: 'mistral'
+        allowed_models: ['mistral', 'openai-fast', 'nova-micro']
     image_generation:
         default_model: 'flux'
-        allowed_models: ['flux', 'turbo']
+        allowed_models: ['flux', 'zimage', 'turbo']
+
+text:
+    model: 'mistral'
+    fallback_models: ['nova-micro', 'gemini-fast', 'openai-fast']
+
+image:
+    model: 'flux'
+    fallback_models: ['zimage', 'turbo']
 ```
 
 See [Task Types Guide](../guides/task-types.md) for detailed usage examples.
@@ -245,21 +240,21 @@ See [Task Types Guide](../guides/task-types.md) for detailed usage examples.
 When generating images, the bundle resolves which model to use following this priority (highest to lowest):
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│  1. PAGE SELECTOR (AI Image Generator page)                    │
-│     └─ User selects model in dropdown for THIS generation      │
-│     └─ Passed via POST request 'model' parameter               │
-├────────────────────────────────────────────────────────────────┤
-│  2. DATABASE (Entity.aiImageModel via AiStyleConfigurableTrait)│
-│     └─ Default model configured via Sonata Admin               │
-│     └─ Stored in entity using the trait                        │
-├────────────────────────────────────────────────────────────────┤
-│  3. YAML (tasks.image_generation.default_model)                │
-│     └─ Project configuration in config/packages/               │
-├────────────────────────────────────────────────────────────────┤
-│  4. BUNDLE DEFAULT ('flux')                                    │
-│     └─ Ultimate fallback if nothing else is configured         │
-└────────────────────────────────────────────────────────────────┘
++----------------------------------------------------------------+
+|  1. PAGE SELECTOR (AI Image Generator page)                    |
+|     - User selects model in dropdown for THIS generation       |
+|     - Passed via POST request 'model' parameter                |
++----------------------------------------------------------------+
+|  2. DATABASE (Entity.aiImageModel via AiStyleConfigurableTrait)|
+|     - Default model configured via Sonata Admin                |
+|     - Stored in entity using the trait                         |
++----------------------------------------------------------------+
+|  3. YAML (tasks.image_generation.default_model)                |
+|     - Project configuration in config/packages/                |
++----------------------------------------------------------------+
+|  4. BUNDLE DEFAULT ('flux')                                    |
+|     - Ultimate fallback if nothing else is configured          |
++----------------------------------------------------------------+
 ```
 
 This hierarchy allows:
@@ -270,29 +265,43 @@ This hierarchy allows:
 
 See [Admin Integration - Default Image Model Selection](../guides/admin-integration.md#default-image-model-selection) for implementation details.
 
-## Provider Configuration
+## Text Configuration
 
-### Pollinations Text Provider
+Direct configuration for the Pollinations text provider.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `enabled` | bool | `true` | Enable/disable the provider |
-| `priority` | int | `10` | Higher = tried first |
-| `api_key` | string | `null` | Optional for basic use, required for premium models |
-| `model` | string | `'openai'` | Fallback model (TaskType takes precedence) |
-| `fallback_models` | array | `[]` | Backup models if main fails |
-| `timeout` | int | `60` | Request timeout (seconds) |
+| `api_key` | string | `null` | Optional - all defaults are free tier |
+| `model` | string | `'mistral'` | Default model (free tier) |
+| `fallback_models` | array | `['nova-micro', 'gemini-fast', 'openai-fast']` | Free tier fallback models |
+| `retries_per_model` | int | `2` | Retries before trying next model (1-10) |
+| `retry_delay` | int | `3` | Seconds between retries (0-60) |
+| `timeout` | int | `60` | Request timeout in seconds |
 | `endpoint_mode` | enum | `'openai'` | `'openai'` (POST) or `'simple'` (GET) |
 
-### Pollinations Image Provider
+### Endpoint Modes
+
+| Mode | Endpoint | Pros | Cons |
+|------|----------|------|------|
+| `openai` | `POST /v1/chat/completions` | No URL limit, token tracking | More parsing overhead |
+| `simple` | `GET /text/{prompt}` | Simpler, less overhead | URL limit (~2000 chars) |
+
+**Recommendation:** Use `openai` (default) for production.
+
+## Image Configuration
+
+Direct configuration for the Pollinations image provider.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `enabled` | bool | `true` | Enable/disable the provider |
-| `priority` | int | `100` | Higher = tried first |
-| `api_key` | string | `null` | Required for premium models |
-| `model` | string | `'flux'` | Fallback model (TaskType takes precedence) |
-| `timeout` | int | `120` | Request timeout (seconds) |
+| `api_key` | string | `null` | Optional - all defaults are free tier |
+| `model` | string | `'flux'` | Default model (free tier) |
+| `fallback_models` | array | `['zimage', 'turbo']` | Free tier fallback models |
+| `retries_per_model` | int | `2` | Retries before trying next model (1-10) |
+| `retry_delay` | int | `3` | Seconds between retries (0-60) |
+| `timeout` | int | `120` | Request timeout in seconds |
+| `width` | int | `1280` | Default image width |
+| `height` | int | `720` | Default image height |
 | `quality` | enum | `'high'` | Image quality: `low`, `medium`, `high`, `hd` |
 | `negative_prompt` | string | *(see below)* | What to avoid in generated images |
 | `private` | bool | `true` | Hide images from Pollinations public feeds |
@@ -303,7 +312,37 @@ See [Admin Integration - Default Image Model Selection](../guides/admin-integrat
 worst quality, blurry, text, letters, watermark, human faces, detailed faces
 ```
 
-> **Note:** Model selection is now handled by the `tasks` configuration. The `model` field in providers is only used as a fallback if no TaskType is specified.
+## Per-Request Options Override
+
+Both text and image generation support per-request override of configuration values:
+
+```php
+// Override timeout and retries for this specific call
+$result = $aiTextService->generate($system, $user, [
+    'model' => 'claude',           // Use specific model
+    'use_fallback' => false,       // Don't try fallback models
+    'timeout' => 120,              // Custom timeout
+    'retries_per_model' => 1,      // Fewer retries
+    'retry_delay' => 1,            // Shorter delay
+]);
+
+// Image generation with custom options
+$result = $aiImageService->generate($prompt, [
+    'model' => 'gptimage',
+    'width' => 1920,
+    'height' => 1080,
+    'quality' => 'hd',
+    'use_fallback' => true,        // Explicitly enable fallback
+]);
+```
+
+### Fallback Behavior
+
+| Scenario | `use_fallback` | Behavior |
+|----------|----------------|----------|
+| No model specified | `true` (default) | Uses configured model + fallback_models |
+| Model specified | `false` (default) | Only tries the specified model |
+| Model + use_fallback: true | `true` | Specified model + fallback_models |
 
 ## Image Options Structure
 

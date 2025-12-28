@@ -123,7 +123,7 @@ class XmonAiContentExtension extends Extension
         if ($container->hasDefinition(PollinationsTextProvider::class)) {
             $definition = $container->getDefinition(PollinationsTextProvider::class);
             $definition->setArgument('$apiKey', $textConfig['api_key'] ?? null);
-            $definition->setArgument('$model', $textConfig['model'] ?? 'gemini');
+            $definition->setArgument('$model', $textConfig['model'] ?? 'mistral');
             $definition->setArgument('$fallbackModels', $textConfig['fallback_models'] ?? []);
             $definition->setArgument('$retriesPerModel', $textConfig['retries_per_model'] ?? 2);
             $definition->setArgument('$retryDelay', $textConfig['retry_delay'] ?? 3);
