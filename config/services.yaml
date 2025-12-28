@@ -31,7 +31,7 @@ services:
         tags:
             - { name: 'monolog.logger', channel: 'ai' }
 
-    # Image Options Service (styles, compositions, palettes, extras, presets)
+    # Image Options Service (styles, compositions, palettes, extras, presets, styleSuffix)
     Xmon\AiContentBundle\Service\ImageOptionsService:
         arguments:
             $styles: []
@@ -39,6 +39,7 @@ services:
             $palettes: []
             $extras: []
             $presets: []
+            $styleSuffix: ''
 
     # Variant Selector (selects variants based on content)
     Xmon\AiContentBundle\Service\VariantSelector:

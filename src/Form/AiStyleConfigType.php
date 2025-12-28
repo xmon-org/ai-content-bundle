@@ -225,6 +225,14 @@ class AiStyleConfigType extends AbstractType
 
             return $value;
         });
+
+        $resolver->setNormalizer('suffix', function ($options, $value) {
+            if ('' === $value) {
+                return $this->imageOptionsService->getStyleSuffix();
+            }
+
+            return $value;
+        });
     }
 
     public function buildView(FormView $view, FormInterface $form, array $options): void

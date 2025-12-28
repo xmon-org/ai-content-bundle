@@ -19,6 +19,7 @@ class ImageOptionsService
      * @param array<string, array{label: string, prompt: string, group?: ?string}>                                         $palettes
      * @param array<string, array{label: string, prompt: string, group?: ?string}>                                         $extras
      * @param array<string, array{name: string, style: ?string, composition: ?string, palette: ?string, extras: string[]}> $presets
+     * @param string                                                                                                       $styleSuffix  Fixed suffix appended to all styles
      */
     public function __construct(
         private readonly array $styles,
@@ -26,6 +27,7 @@ class ImageOptionsService
         private readonly array $palettes,
         private readonly array $extras,
         private readonly array $presets,
+        private readonly string $styleSuffix = '',
     ) {
     }
 
@@ -96,6 +98,16 @@ class ImageOptionsService
     public function getAllPresetsData(): array
     {
         return $this->presets;
+    }
+
+    /**
+     * Get the fixed style suffix from configuration.
+     *
+     * This is the text appended to all generated styles (e.g., technical restrictions).
+     */
+    public function getStyleSuffix(): string
+    {
+        return $this->styleSuffix;
     }
 
     // ==========================================

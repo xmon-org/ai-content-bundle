@@ -373,6 +373,7 @@ class XmonAiContentExtension extends Extension
             $definition->setArgument('$palettes', $palettes);
             $definition->setArgument('$extras', $extras);
             $definition->setArgument('$presets', $presets);
+            $definition->setArgument('$styleSuffix', $styleSuffix);
         }
 
         // Store parameters for external access

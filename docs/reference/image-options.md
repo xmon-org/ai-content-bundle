@@ -281,8 +281,27 @@ $prompt = $this->imageOptions->getStylePrompt($selectedKey);
 | `getStylePrompt($key)` | `?string` | Get prompt for a style |
 | `getStyleData($key)` | `?array` | Get full data for a style |
 | `hasStyle($key)` | `bool` | Check if style exists |
+| `getStyleSuffix()` | `string` | Get the fixed style suffix from configuration |
 
 Same methods exist for: `Compositions`, `Palettes`, `Extras`, and `Presets`.
+
+### Style Suffix
+
+The `style_suffix` configuration option defines fixed restrictions/modifiers appended to ALL generated styles:
+
+```yaml
+xmon_ai_content:
+    style_suffix: 'no text, no letters, silhouette figures only, professional quality'
+```
+
+Access it programmatically:
+
+```php
+$suffix = $this->imageOptions->getStyleSuffix();
+// Returns: "no text, no letters, silhouette figures only, professional quality"
+```
+
+The `AiStyleConfigType` form automatically loads this value via normalizer, so forms using the bundle will have access to the configured suffix without manual injection.
 
 ### Preset-Specific Methods
 

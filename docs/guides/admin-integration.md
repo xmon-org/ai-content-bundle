@@ -468,6 +468,7 @@ The `AiStyleConfigType` works together with `AiStyleConfigurableTrait`. They for
 │                                     │    - aiStyleComposition (?string)
 │                                     │    - aiStylePalette (?string)
 │                                     │    - aiStyleAdditional (?string)
+│                                     │    - aiStyleSuffix (?string)
 └─────────────────────────────────────┘
                 ↓ inherit_data=true
 ┌─────────────────────────────────────┐
@@ -480,6 +481,7 @@ The `AiStyleConfigType` works together with `AiStyleConfigurableTrait`. They for
 │                                     │    - aiStyleComposition
 │                                     │    - aiStylePalette
 │                                     │    - aiStyleAdditional
+│                                     │    - aiStyleSuffix
 └─────────────────────────────────────┘
 ```
 
@@ -530,7 +532,7 @@ bin/console doctrine:migrations:diff
 bin/console doctrine:migrations:migrate
 ```
 
-The migration will add columns: `ai_style_mode`, `ai_style_preset`, `ai_style_artistic`, `ai_style_composition`, `ai_style_palette`, `ai_style_additional`.
+The migration will add columns: `ai_style_mode`, `ai_style_preset`, `ai_style_artistic`, `ai_style_composition`, `ai_style_palette`, `ai_style_additional`, `ai_style_suffix`.
 
 ### Step 3: Use in Sonata Admin
 
@@ -595,16 +597,19 @@ class ConfiguracionAdmin extends AbstractAdmin
 | `composition_label` | string | `'Composition'` | Composition select label |
 | `palette_label` | string | `'Color Palette'` | Palette select label |
 | `additional_label` | string | `'Additional Text'` | Additional textarea label |
+| `suffix_label` | string | `'Technical Restrictions'` | Suffix textarea label |
 | **Placeholder Options** |
 | `preset_placeholder` | string | `'Select a preset...'` | Preset select placeholder |
 | `artistic_placeholder` | string | `'Select a style...'` | Artistic select placeholder |
 | `composition_placeholder` | string | `'Select a composition...'` | Composition placeholder |
 | `palette_placeholder` | string | `'Select a palette...'` | Palette placeholder |
 | `additional_placeholder` | string | `'Additional instructions...'` | Additional textarea placeholder |
+| `suffix_placeholder` | string | `'Fixed technical restrictions...'` | Suffix textarea placeholder |
 | **Help Text Options** |
 | `mode_help` | ?string | `null` | Help text for mode field |
 | `preset_help` | ?string | `null` | Help text for preset field |
 | `additional_help` | ?string | `null` | Help text for additional field |
+| `suffix_help` | ?string | `null` | Help text for suffix field |
 
 ### Dynamic Preview
 
