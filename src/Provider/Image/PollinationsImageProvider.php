@@ -215,6 +215,12 @@ class PollinationsImageProvider
 
         $url .= '?'.http_build_query($params);
 
+        // Log the EXACT request URL for debugging
+        $this->logger?->info('[Pollinations] REQUEST URL', [
+            'url' => $url,
+            'has_api_key' => $this->apiKey !== null,
+        ]);
+
         $this->logger?->debug('[Pollinations] Generating image', [
             'model' => $model,
             'width' => $width,
@@ -285,11 +291,17 @@ class PollinationsImageProvider
 
     /**
      * Encode prompt for URL (spaces as %20, handle special characters).
+     *
+     * Sanitizes problematic characters that trigger Cloudflare WAF:
+     * - % sign: blocked when URL-encoded as %25 (looks like injection attack)
      */
     private function encodePrompt(string $prompt): string
     {
         // Replace multiple spaces with single space
         $prompt = preg_replace('/\s+/', ' ', trim($prompt));
+
+        // Sanitize % sign to avoid Cloudflare WAF blocking %25
+        $prompt = str_replace('%', ' percent', $prompt);
 
         // URL encode the entire prompt
         return rawurlencode($prompt);
