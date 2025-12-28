@@ -28,41 +28,27 @@ XMON_AI_POLLINATIONS_API_KEY=your_key_here
 
 ## Bundle Configuration
 
-### Minimal Configuration (v1.4.0+ with TaskTypes)
+### Minimal Configuration (Zero Config)
+
+The bundle works **out of the box** with free-tier models:
 
 ```yaml
 # config/packages/xmon_ai_content.yaml
-xmon_ai_content:
-    # Task-based model configuration (recommended)
-    tasks:
-        news_content:
-            default_model: 'openai-fast'
-            allowed_models: ['openai-fast', 'openai']
-        image_prompt:
-            default_model: 'openai-fast'
-            allowed_models: ['openai-fast']
-        image_generation:
-            default_model: 'flux'
-            allowed_models: ['flux', 'turbo']
-
-    text:
-        providers:
-            pollinations:
-                enabled: true
-    image:
-        providers:
-            pollinations:
-                enabled: true
+xmon_ai_content: ~  # That's it! Uses free-tier defaults
 ```
 
-> **Note:** This configuration uses anonymous tier models (no API key required). For premium models, add your API key and update the model lists.
+**Default models (no API key required):**
+- **Text:** `mistral` → `nova-micro` → `gemini-fast` → `openai-fast`
+- **Image:** `flux` → `zimage` → `turbo`
+
+> **Note:** All default models work without an API key. Get a free API key from [enter.pollinations.ai](https://enter.pollinations.ai) for premium models.
 
 ### Full Configuration
 
 ```yaml
 # config/packages/xmon_ai_content.yaml
 xmon_ai_content:
-    # Task-based model configuration (v1.4.0+)
+    # Task-based model configuration
     tasks:
         news_content:
             default_model: 'gemini'
@@ -74,36 +60,30 @@ xmon_ai_content:
             default_model: 'flux'
             allowed_models: ['flux', 'turbo', 'gptimage']
 
-    # Text provider
+    # Text generation (Pollinations API)
     text:
-        providers:
-            pollinations:
-                enabled: true
-                priority: 100
-                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional
-                model: 'openai-fast'
-                fallback_models:
-                    - 'openai'
-                    - 'mistral'
-                timeout: 60
-        defaults:
-            retries: 2
-            retry_delay: 3
+        api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
+        model: 'gemini'
+        fallback_models: ['mistral', 'deepseek']
+        retries_per_model: 2
+        retry_delay: 3
+        timeout: 60
+        endpoint_mode: 'openai'
 
-    # Image provider
+    # Image generation (Pollinations API)
     image:
-        providers:
-            pollinations:
-                enabled: true
-                priority: 100
-                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
-                model: 'flux'
-                timeout: 120
-        defaults:
-            width: 1280
-            height: 720
-            retries: 3
-            retry_delay: 5
+        api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
+        model: 'flux'
+        fallback_models: ['turbo']
+        retries_per_model: 2
+        retry_delay: 3
+        timeout: 120
+        width: 1280
+        height: 720
+        quality: 'high'
+        negative_prompt: 'worst quality, blurry, text, letters, watermark'
+        private: true
+        nofeed: true
 
     # SonataMedia integration (optional)
     media:
@@ -111,16 +91,36 @@ xmon_ai_content:
         provider: 'sonata.media.provider.image'
 ```
 
-## Provider Configuration Schema
+## Configuration Schema
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `enabled` | bool | Enable/disable the provider |
-| `priority` | int | Higher number = tried first |
-| `api_key` | string | API key (optional for Pollinations) |
-| `model` | string | Default model to use |
-| `fallback_models` | array | Backup models if main fails |
-| `timeout` | int | Timeout in seconds |
+### Text Configuration
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `api_key` | string | `null` | API key (optional - all defaults are free) |
+| `model` | string | `'mistral'` | Default model (free tier) |
+| `fallback_models` | array | `['nova-micro', 'gemini-fast', 'openai-fast']` | Backup models (free tier) |
+| `retries_per_model` | int | `2` | Retries before next model |
+| `retry_delay` | int | `3` | Seconds between retries |
+| `timeout` | int | `60` | HTTP timeout |
+| `endpoint_mode` | string | `'openai'` | `'openai'` or `'simple'` |
+
+### Image Configuration
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `api_key` | string | `null` | API key (optional - all defaults are free) |
+| `model` | string | `'flux'` | Default model (free tier) |
+| `fallback_models` | array | `['zimage', 'turbo']` | Backup models (free tier) |
+| `retries_per_model` | int | `2` | Retries before next model |
+| `retry_delay` | int | `3` | Seconds between retries |
+| `timeout` | int | `120` | HTTP timeout |
+| `width` | int | `1280` | Default width |
+| `height` | int | `720` | Default height |
+| `quality` | string | `'high'` | `low`, `medium`, `high`, `hd` |
+| `negative_prompt` | string | *(see below)* | What to avoid |
+| `private` | bool | `true` | Hide from public feeds |
+| `nofeed` | bool | `true` | Don't add to feed |
 
 ## Available Models
 
@@ -144,30 +144,32 @@ xmon_ai_content:
 
 ## Budget-Based Configuration Examples
 
-### Free Tier (No API Key)
+### Free Tier (No API Key) - Default Configuration
 
 ```yaml
+# This is the default! Just use:
+xmon_ai_content: ~
+
+# Which is equivalent to:
 xmon_ai_content:
     tasks:
         news_content:
-            default_model: 'openai-fast'
-            allowed_models: ['openai-fast', 'openai']
+            default_model: 'mistral'
+            allowed_models: ['mistral', 'nova-micro', 'openai-fast']
         image_prompt:
-            default_model: 'openai-fast'
-            allowed_models: ['openai-fast']
+            default_model: 'mistral'
+            allowed_models: ['mistral', 'openai-fast', 'nova-micro']
         image_generation:
             default_model: 'flux'
-            allowed_models: ['flux', 'turbo']
+            allowed_models: ['flux', 'zimage', 'turbo']
+
     text:
-        providers:
-            pollinations:
-                enabled: true
-                model: 'openai-fast'
+        model: 'mistral'
+        fallback_models: ['nova-micro', 'gemini-fast', 'openai-fast']
+
     image:
-        providers:
-            pollinations:
-                enabled: true
-                model: 'flux'
+        model: 'flux'
+        fallback_models: ['zimage', 'turbo']
 ```
 
 ### Low Budget (Seed Tier)
@@ -184,18 +186,16 @@ xmon_ai_content:
         image_generation:
             default_model: 'flux'
             allowed_models: ['flux', 'nanobanana']
+
     text:
-        providers:
-            pollinations:
-                enabled: true
-                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
-                model: 'gemini'
+        api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
+        model: 'gemini'
+        fallback_models: ['mistral', 'deepseek']
+
     image:
-        providers:
-            pollinations:
-                enabled: true
-                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
-                model: 'flux'
+        api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
+        model: 'flux'
+        fallback_models: ['turbo']
 ```
 
 ### Quality First (Flower Tier)
@@ -212,18 +212,16 @@ xmon_ai_content:
         image_generation:
             default_model: 'gptimage'
             allowed_models: ['gptimage', 'seedream', 'flux']
+
     text:
-        providers:
-            pollinations:
-                enabled: true
-                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
-                model: 'claude'
+        api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
+        model: 'claude'
+        fallback_models: ['gemini']
+
     image:
-        providers:
-            pollinations:
-                enabled: true
-                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
-                model: 'gptimage'
+        api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'
+        model: 'gptimage'
+        fallback_models: ['flux']
 ```
 
 ## Sonata Admin Integration (Optional)

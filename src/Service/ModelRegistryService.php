@@ -20,7 +20,7 @@ use Xmon\AiContentBundle\Model\ModelInfo;
  *
  * Tiers determine access based on your account:
  * - anonymous: Free, no API key required (limited models)
- * - seed: Free with API key from auth.pollinations.ai
+ * - seed: Free with API key from enter.pollinations.ai
  * - flower: Premium tier (all models, paid with pollen credits)
  *
  * Pricing: 1 pollen = $1 USD

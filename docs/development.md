@@ -27,8 +27,8 @@ bin/console xmon:ai:debug
 # Clear cache after bundle changes
 bin/console cache:clear
 
-# View registered providers
-bin/console debug:container --tag=xmon_ai_content.text_provider
+# View provider service
+bin/console debug:container PollinationsTextProvider
 
 # View full YAML configuration
 bin/console debug:config xmon_ai_content
@@ -135,11 +135,11 @@ vendor/bin/phpunit
 2. Check YAML syntax: `bin/console debug:config xmon_ai_content`
 3. Check merge behavior (your config merges with defaults)
 
-### Custom provider not detected
+### Model not working
 
-1. Ensure it implements `TextProviderInterface`
-2. Check `autoconfigure: true` in services.yaml
-3. Verify tag: `bin/console debug:container --tag=xmon_ai_content.text_provider`
+1. Check if the model is in your tier (anonymous, seed, flower)
+2. Check API key is set if using premium models
+3. Check fallback configuration in `text.fallback_models` or `image.fallback_models`
 
 ## Related
 

@@ -2,7 +2,7 @@
 
 Available AI models and pricing in xmon-org/ai-content-bundle.
 
-> **Architecture Decision (December 2025):** The bundle uses Pollinations as the sole provider for both text and image generation. Pollinations provides access to multiple AI models (Claude, Gemini, GPT, Mistral, etc.) through a unified API.
+> **Architecture (December 2025):** The bundle uses Pollinations as the sole provider for both text and image generation. Pollinations provides access to multiple AI models (Claude, GPT, Gemini, Mistral, etc.) through a unified API. Model fallback happens within the provider, between models - not between different providers.
 
 ## Query Available Models
 
@@ -25,20 +25,21 @@ Models are available based on your account tier:
 | Tier | Requirements | Access |
 |------|--------------|--------|
 | `anonymous` | None | Basic models (`openai`, `openai-fast`, `flux`, `turbo`) |
-| `seed` | API key from [auth.pollinations.ai](https://auth.pollinations.ai) | + `gemini*`, `deepseek`, `mistral`, `nanobanana` |
+| `seed` | API key from [enter.pollinations.ai](https://enter.pollinations.ai) | + `gemini*`, `deepseek`, `mistral`, `nanobanana` |
 | `flower` | Premium account | All models (pollen credits) |
 
-## Text Provider
+## Text Configuration
 
 ```yaml
-text:
-    providers:
-        pollinations:
-            enabled: true
-            priority: 10
-            api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Required for seed/flower tier
-            timeout: 60
-            endpoint_mode: 'openai'  # 'openai' (default) or 'simple'
+xmon_ai_content:
+    text:
+        api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional - defaults are free tier
+        model: 'mistral'                   # Default model (free tier)
+        fallback_models: ['nova-micro', 'gemini-fast', 'openai-fast']  # Free tier fallbacks
+        retries_per_model: 2               # Retries before next model
+        retry_delay: 3                     # Seconds between retries
+        timeout: 60
+        endpoint_mode: 'openai'            # 'openai' (default) or 'simple'
 ```
 
 ### Endpoint Modes
@@ -75,31 +76,37 @@ The text provider supports two endpoint modes:
 | `gemini-large` | flower | ~85 | Gemini 3 Pro - 1M context |
 | `claude-large` | flower | ~40 | Claude Opus 4.5 - Most intelligent |
 
-> **Pricing formula:** 1 pollen ≈ $1 USD. ~Resp/$ = approximate responses per dollar (assuming ~1K tokens/response).
+> **Pricing formula:** 1 pollen = $1 USD. ~Resp/$ = approximate responses per dollar (assuming ~1K tokens/response).
 
-## Image Provider
+## Image Configuration
 
 ```yaml
-image:
-    providers:
-        pollinations:
-            enabled: true
-            priority: 100
-            api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Required for premium models
-            timeout: 120
-            quality: 'high'              # low, medium, high, hd
-            negative_prompt: 'worst quality, blurry, text, letters, watermark, human faces'
-            private: true                # Hide from Pollinations public feeds
-            nofeed: true                 # Do not add to public feed
+xmon_ai_content:
+    image:
+        api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional - defaults are free tier
+        model: 'flux'                      # Default model (free tier)
+        fallback_models: ['zimage', 'turbo']  # Free tier fallbacks
+        retries_per_model: 2               # Retries before next model
+        retry_delay: 3                     # Seconds between retries
+        timeout: 120
+        width: 1280                        # Default width
+        height: 720                        # Default height
+        quality: 'high'                    # low, medium, high, hd
+        negative_prompt: 'worst quality, blurry, text, letters, watermark, human faces'
+        private: true                      # Hide from Pollinations public feeds
+        nofeed: true                       # Do not add to public feed
 ```
 
-### Image Provider Options
+### Image Configuration Options
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `enabled` | bool | `true` | Enable/disable provider |
-| `api_key` | string | `null` | Required for premium models |
+| `api_key` | string | `null` | Optional - all defaults are free tier |
+| `model` | string | `'flux'` | Default model (free tier) |
+| `fallback_models` | array | `['zimage', 'turbo']` | Free tier fallback models |
 | `timeout` | int | `120` | Request timeout in seconds |
+| `width` | int | `1280` | Default image width |
+| `height` | int | `720` | Default image height |
 | `quality` | enum | `'high'` | Image quality: `low`, `medium`, `high`, `hd` |
 | `negative_prompt` | string | `'worst quality...'` | What to avoid in generated images |
 | `private` | bool | `true` | Hide images from Pollinations public feeds |
@@ -171,8 +178,8 @@ These can be passed at runtime via the `generate()` method:
 **Alternatives when blocked:**
 - Use `flux` model (no strict moderation)
 - Describe the style without naming the artist
-  - ❌ `"Hiroshi Sugimoto photography style"`
-  - ✅ `"minimalist long exposure photography, serene ethereal atmosphere"`
+  - "Hiroshi Sugimoto photography style"
+  - "minimalist long exposure photography, serene ethereal atmosphere"
 
 ### Rate Limits
 
@@ -196,7 +203,7 @@ With seed tier (gemini + flux):
 | Image generation | flux | ~FREE (anonymous) |
 | **Total per article** | | **~$0.004** |
 
-> 250 complete articles (with images) ≈ $1 USD
+> 250 complete articles (with images) = $1 USD
 
 With flower tier (claude + gptimage):
 
@@ -209,5 +216,6 @@ With flower tier (claude + gptimage):
 
 ## Related
 
+- [Configuration Reference](configuration.md) - Full YAML reference
+- [Fallback System](fallback-system.md) - How model fallback works
 - [Task Types Guide](../guides/task-types.md) - Configure models per task
-- [Configuration](configuration.md) - Full YAML reference

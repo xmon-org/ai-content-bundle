@@ -9,25 +9,29 @@ services:
             $imageOptionsService: '@Xmon\AiContentBundle\Service\ImageOptionsService'
         tags: ['form.type']
 
-    # Image Providers
+    # Image Provider (Pollinations)
     Xmon\AiContentBundle\Provider\Image\PollinationsImageProvider:
         arguments:
             $apiKey: null
             $model: 'flux'
+            $fallbackModels: []
+            $retriesPerModel: 2
+            $retryDelay: 3
             $timeout: 120
             $defaultWidth: 1280
             $defaultHeight: 720
+            $quality: 'high'
+            $negativePrompt: 'worst quality, blurry, text, letters, watermark, human faces, detailed faces'
+            $private: true
+            $nofeed: true
         tags:
-            - { name: 'xmon_ai_content.image_provider', priority: 1 }
             - { name: 'monolog.logger', channel: 'ai' }
 
     # Main Image Service
     Xmon\AiContentBundle\Service\AiImageService:
         arguments:
-            $providers: !tagged_iterator { tag: 'xmon_ai_content.image_provider', default_priority_method: 'getPriority' }
+            $provider: '@Xmon\AiContentBundle\Provider\Image\PollinationsImageProvider'
             $taskConfigService: '@Xmon\AiContentBundle\Service\TaskConfigService'
-            $retries: 3
-            $retryDelay: 5
         tags:
             - { name: 'monolog.logger', channel: 'ai' }
 

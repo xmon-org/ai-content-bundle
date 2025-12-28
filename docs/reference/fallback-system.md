@@ -1,115 +1,123 @@
 # Fallback System
 
-The bundle implements an automatic fallback and retry system for AI operations.
+The bundle implements automatic fallback between models when one fails.
+
+> **Architecture (December 2025):** Fallback happens at the MODEL level, not the provider level. Pollinations is the sole provider, but if one model fails, the system tries alternative models configured in `fallback_models`.
 
 ## How It Works
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    AiTextService / AiImageService               │
-│                                                                 │
-│  generate(prompt, options)                                      │
-│         │                                                       │
-│         ▼                                                       │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │              PollinationsProvider                        │   │
-│  │                                                          │   │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐  │   │
-│  │  │ Main     │─▶│ Fallback │─▶│ Fallback │─▶│ Error  │  │   │
-│  │  │ Model    │  │ Model 1  │  │ Model 2  │  │        │  │   │
-│  │  │(gemini)  │  │(mistral) │  │(openai)  │  │        │  │   │
-│  │  └──────────┘  └──────────┘  └──────────┘  └────────┘  │   │
-│  │       │             │             │             │       │   │
-│  │   Success?      Success?      Success?      Retry?     │   │
-│  │   Yes──▶Result  Yes──▶Result  Yes──▶Result  Yes──▶Loop │   │
-│  │   No ──▶Next    No ──▶Next    No ──▶Retry   No ──▶Fail │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                              │                                  │
-│                              ▼                                  │
-│                    Result or AiProviderException                │
+│                         AiTextService                            │
+│                                                                  │
+│  generate(prompt, options)                                       │
+│         │                                                        │
+│         ▼                                                        │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │              PollinationsTextProvider                    │    │
+│  │                                                          │    │
+│  │  Model sequence: gemini → mistral → deepseek             │    │
+│  │                                                          │    │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐               │    │
+│  │  │ gemini   │──│ mistral  │──│ deepseek │               │    │
+│  │  │ (retry 2)│  │ (retry 2)│  │ (retry 2)│               │    │
+│  │  └──────────┘  └──────────┘  └──────────┘               │    │
+│  │       │             │             │                      │    │
+│  │   Fail? ──────▶ Fail? ──────▶ Fail? ──────▶ Exception   │    │
+│  │   OK ──▶ Return   OK ──▶ Return   OK ──▶ Return         │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                              │                                   │
+│                              ▼                                   │
+│                    Result or AiProviderException                 │
 └─────────────────────────────────────────────────────────────────┘
+```
+
+## Configuration
+
+```yaml
+xmon_ai_content:
+    text:
+        model: 'gemini'                    # Primary model
+        fallback_models: ['mistral', 'deepseek']  # Backup models
+        retries_per_model: 2               # Retries per model before next
+        retry_delay: 3                     # Seconds between retries
+        timeout: 60
+
+    image:
+        model: 'flux'
+        fallback_models: ['turbo']
+        retries_per_model: 2
+        retry_delay: 3
+        timeout: 120
 ```
 
 ## Fallback Flow
 
-The fallback system operates at two levels:
-
-### 1. Model Fallback (within provider)
-
-If the main model fails, the provider tries configured fallback models:
-
-```yaml
-xmon_ai_content:
-    text:
-        providers:
-            pollinations:
-                enabled: true
-                model: 'gemini'           # Primary model
-                fallback_models:          # Backup models
-                    - 'mistral'
-                    - 'openai'
-```
-
-Flow:
-1. Try `gemini` model
-2. If fails, try `mistral`
-3. If fails, try `openai`
-4. If all fail, enter retry logic
-
-### 2. Retry Logic
-
-After exhausting all models, the system retries the entire sequence:
-
-```yaml
-xmon_ai_content:
-    text:
-        defaults:
-            retries: 2        # Number of retry attempts
-            retry_delay: 3    # Seconds between retries
-```
-
-Full example flow with `retries: 2`:
+When a model fails, the provider follows this sequence:
 
 ```
-Attempt 1:
-  gemini → fails
-  mistral → fails
-  openai → fails
+Attempt 1 - gemini:
+  Request 1 → fails (5xx)
+  Wait 3 seconds
+  Request 2 → fails (timeout)
 
-Wait 3 seconds
+Move to next model - mistral:
+  Request 1 → fails (5xx)
+  Wait 3 seconds
+  Request 2 → success! → Return result
 
-Attempt 2:
-  gemini → fails
-  mistral → fails
-  openai → fails
-
-Wait 3 seconds
-
-Attempt 3:
-  gemini → fails
-  mistral → fails
-  openai → fails
-
-→ AiProviderException (all attempts exhausted)
+(If all models fail after all retries → AiProviderException)
 ```
 
-## Error Handling
+## Per-Request Override
 
-### Smart Error Classification
+You can override fallback behavior on each call:
+
+```php
+// Use specific model WITHOUT fallback
+$result = $aiTextService->generate($system, $user, [
+    'model' => 'claude',           // Use this model only
+    'use_fallback' => false,       // Don't try fallback_models
+]);
+
+// Use specific model WITH fallback
+$result = $aiTextService->generate($system, $user, [
+    'model' => 'claude',           // Try this first
+    'use_fallback' => true,        // Then try fallback_models
+]);
+
+// Override retry settings
+$result = $aiTextService->generate($system, $user, [
+    'retries_per_model' => 1,      // Fewer retries (faster failure)
+    'retry_delay' => 1,            // Shorter delay
+    'timeout' => 30,               // Custom timeout
+]);
+```
+
+### Fallback Behavior Matrix
+
+| Scenario | `use_fallback` Default | Behavior |
+|----------|------------------------|----------|
+| No model specified | `true` | Uses config `model` + `fallback_models` |
+| Model specified | `false` | Only tries the specified model |
+| Model + `use_fallback: true` | `true` | Specified model + `fallback_models` |
+| Model + `use_fallback: false` | `false` | Only the specified model |
+
+## Smart Error Classification
 
 The system distinguishes between retryable and non-retryable errors:
 
-| Error Type | Retried? | Example |
-|------------|----------|---------|
-| HTTP 5xx | Yes | Server error |
-| Timeout | Yes | Network timeout |
-| Connection error | Yes | DNS failure |
-| HTTP 4xx | **No** | Bad request, authentication error |
-| Invalid response | Yes | Malformed JSON |
+| Error Type | Retried? | Reason |
+|------------|----------|--------|
+| HTTP 5xx | Yes | Server error, might recover |
+| Timeout | Yes | Network issue, might succeed |
+| Connection error | Yes | Temporary network issue |
+| HTTP 4xx | **No** | Client error, won't succeed on retry |
+| Invalid response | Yes | Might be temporary |
 
-**Why skip 4xx errors?** Client errors (authentication, bad request) won't succeed on retry. The system fails fast instead of wasting time.
+**Why skip 4xx errors?** Client errors (authentication, bad request, moderation_blocked) won't succeed on retry. The system fails fast and moves to the next model instead of wasting retries.
 
-### Exception Handling
+## Exception Handling
 
 ```php
 use Xmon\AiContentBundle\Exception\AiProviderException;
@@ -129,7 +137,7 @@ try {
 }
 ```
 
-### Factory Methods for Exceptions
+### Exception Factory Methods
 
 ```php
 // Specific error types
@@ -141,87 +149,102 @@ AiProviderException::invalidResponse('pollinations', 'Missing content field');
 
 ## Provider Availability
 
-A provider is considered available when:
-- `enabled: true` in configuration
-- `isAvailable()` returns `true`
+A provider is considered available when `isAvailable()` returns `true`.
 
 For Pollinations:
-- **Without API key**: Available for anonymous tier models (`openai`, `openai-fast`, `flux`, `turbo`)
-- **With API key**: Available for all tier models
+- **Always available**: Works without API key for anonymous tier
+- **With API key**: Unlocks premium models
 
-| Configuration | Available? | Models |
-|---------------|------------|--------|
-| `enabled: false` | No | None |
-| `enabled: true`, no API key | Yes | Anonymous tier only |
-| `enabled: true`, with API key | Yes | All tiers |
+| Configuration | Available? | Accessible Models |
+|---------------|------------|-------------------|
+| No API key | Yes | Anonymous tier (`openai`, `openai-fast`, `flux`, `turbo`) |
+| With API key | Yes | All tiers (seed + flower models) |
 
 ## Configuration Examples
 
-### Conservative (more retries, longer waits)
+### Conservative (More Resilience)
 
 ```yaml
 xmon_ai_content:
     text:
-        providers:
-            pollinations:
-                enabled: true
-                model: 'gemini'
-                fallback_models: ['mistral', 'openai-fast', 'openai']
-                timeout: 90
-        defaults:
-            retries: 3
-            retry_delay: 5
+        model: 'gemini'
+        fallback_models: ['mistral', 'openai-fast', 'openai']
+        retries_per_model: 3
+        retry_delay: 5
+        timeout: 90
 ```
 
-### Fast-fail (minimal retries)
+### Fast-Fail (Minimal Latency)
 
 ```yaml
 xmon_ai_content:
     text:
-        providers:
-            pollinations:
-                enabled: true
-                model: 'openai-fast'
-                fallback_models: []  # No fallback
-                timeout: 30
-        defaults:
-            retries: 1
-            retry_delay: 1
+        model: 'openai-fast'
+        fallback_models: []  # No fallback
+        retries_per_model: 1
+        retry_delay: 1
+        timeout: 30
 ```
 
-### Image Generation (longer timeouts)
+### Image Generation (Longer Timeouts)
 
 ```yaml
 xmon_ai_content:
     image:
-        providers:
-            pollinations:
-                enabled: true
-                model: 'flux'
-                timeout: 120      # Images take longer
-        defaults:
-            retries: 3
-            retry_delay: 5
+        model: 'flux'
+        fallback_models: ['turbo']
+        retries_per_model: 3
+        retry_delay: 5
+        timeout: 180  # Images take longer
 ```
 
 ## Task Types Integration
 
-With TaskTypes (v1.4.0+), the model is selected based on task type before entering the fallback system:
+With TaskTypes, the model is resolved based on task type before entering the fallback system:
 
 ```php
-// TaskConfigService resolves model first
-$model = $taskConfigService->resolveModel(TaskType::NEWS_CONTENT, $requestedModel);
-
-// Then AiTextService uses resolved model with fallback
-$result = $aiTextService->generateForTask(TaskType::NEWS_CONTENT, $system, $user, [
-    'model' => $model,
-]);
+// TaskConfigService resolves model from task configuration
+$result = $aiTextService->generateForTask(
+    TaskType::NEWS_CONTENT,
+    $system,
+    $user,
+    ['model' => 'claude']  // Can still override
+);
 ```
+
+The resolved model becomes the primary model, and `fallback_models` from config are used as backups.
 
 See [Task Types Guide](../guides/task-types.md) for more details.
 
+## Logging
+
+The bundle logs fallback activity to the `ai` channel:
+
+```
+[info] [Pollinations] Trying model {"model":"gemini","attempt":1,"max_attempts":2}
+[warning] [Pollinations] Attempt failed {"model":"gemini","attempt":1,"error":"timeout","http_status":null}
+[info] [Pollinations] Trying model {"model":"gemini","attempt":2,"max_attempts":2}
+[warning] [Pollinations] Attempt failed {"model":"gemini","attempt":2,"error":"500","http_status":500}
+[info] [Pollinations] Trying model {"model":"mistral","attempt":1,"max_attempts":2}
+[info] [Pollinations] OpenAI POST response OK {"model":"mistral","response_length":1234}
+```
+
+Configure logging in your project:
+
+```yaml
+# config/packages/monolog.yaml
+monolog:
+    channels: ['ai']
+    handlers:
+        ai:
+            type: stream
+            path: '%kernel.logs_dir%/ai.log'
+            level: debug
+            channels: ['ai']
+```
+
 ## Related
 
-- [Providers Reference](providers.md) - Available models and tiers
 - [Configuration Reference](configuration.md) - Full YAML options
+- [Providers Reference](providers.md) - Available models and tiers
 - [Task Types Guide](../guides/task-types.md) - Model configuration per task

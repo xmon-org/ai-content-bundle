@@ -1,6 +1,6 @@
 # Text Generation Guide
 
-How to generate text content using the AI providers.
+How to generate text content using the AI provider.
 
 ## Basic Usage
 
@@ -16,14 +16,14 @@ class MyService
     public function summarize(string $content): string
     {
         $result = $this->aiTextService->generate(
-            systemPrompt: 'Eres un asistente que resume contenido. Responde en español.',
+            systemPrompt: 'Eres un asistente que resume contenido. Responde en espanol.',
             userMessage: "Resume este texto: {$content}",
         );
 
         // $result is a TextResult with:
         // - getText(): the generated text
         // - getProvider(): 'pollinations'
-        // - getModel(): model used (e.g., 'openai', 'gemini-fast')
+        // - getModel(): model used (e.g., 'gemini', 'openai-fast')
         // - getPromptTokens(), getCompletionTokens()
         // - getFinishReason(): 'stop', 'length', etc.
 
@@ -34,32 +34,48 @@ class MyService
 
 ## Generation Options
 
+You can customize behavior per-request:
+
 ```php
 $result = $this->aiTextService->generate($systemPrompt, $userMessage, [
-    'model' => 'gemini-fast',       // Specific model (see Available Models)
-    'temperature' => 0.7,           // Creativity (0.0 - 1.0)
-    'max_tokens' => 1500,           // Token limit
+    'model' => 'claude',              // Specific model (see Providers Reference)
+    'use_fallback' => false,          // Don't try fallback models
+    'timeout' => 120,                 // Custom timeout (seconds)
+    'retries_per_model' => 1,         // Fewer retries
+    'retry_delay' => 1,               // Shorter delay between retries
 ]);
 ```
 
 ### Available Options
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `model` | string | Override the default model (see [Providers Reference](../reference/providers.md)) |
-| `temperature` | float | Creativity level (0.0 = deterministic, 1.0 = creative) |
-| `max_tokens` | int | Maximum tokens in response |
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `model` | string | from config | Override the default model |
+| `use_fallback` | bool | * | Whether to try fallback models on failure |
+| `timeout` | int | from config | Request timeout in seconds |
+| `retries_per_model` | int | from config | Retries before trying next model |
+| `retry_delay` | int | from config | Seconds between retries |
+
+\* `use_fallback` defaults to `true` if no model specified, `false` if model is specified.
+
+### Fallback Behavior
+
+| Scenario | `use_fallback` | Behavior |
+|----------|----------------|----------|
+| No model specified | `true` (default) | Uses config model + fallback_models |
+| Model specified | `false` (default) | Only tries the specified model |
+| Model + use_fallback: true | `true` | Specified model + fallback_models |
 
 ## TextResult Object
 
-The `generate()` method returns a `TextResult` object with the following methods:
+The `generate()` method returns a `TextResult` object:
 
 ```php
 $result = $this->aiTextService->generate($systemPrompt, $userMessage);
 
 $result->getText();            // The generated text
 $result->getProvider();        // 'pollinations'
-$result->getModel();           // Model used (e.g., 'openai', 'gemini-fast')
+$result->getModel();           // Model used (e.g., 'gemini', 'openai-fast')
 $result->getPromptTokens();    // Input tokens (if available)
 $result->getCompletionTokens(); // Output tokens (if available)
 $result->getFinishReason();    // 'stop', 'length', etc.
@@ -136,6 +152,36 @@ class NewsContentGenerator
 
 See [Task Types Guide](task-types.md) for complete configuration and usage examples.
 
+## Overriding Model in Task Types
+
+Even when using Task Types, you can override the model per-request:
+
+```php
+// Use a specific model for this call (must be in allowed_models for the task)
+$result = $this->aiTextService->generateForTask(
+    TaskType::NEWS_CONTENT,
+    $systemPrompt,
+    $userMessage,
+    ['model' => 'claude']  // Override default model
+);
+```
+
+## Getting Available Models
+
+```php
+// Get models allowed for a task type
+$models = $this->aiTextService->getAllowedModelsForTask(TaskType::NEWS_CONTENT);
+// Returns: ['claude' => ModelInfo, 'gemini' => ModelInfo, ...]
+
+// Get models formatted for UI select
+$options = $this->aiTextService->getAllowedModelsForSelect(TaskType::NEWS_CONTENT);
+// Returns: ['claude' => 'Claude Sonnet 4.5 (~65 resp/$)', 'gemini' => 'Gemini 3 Flash (~330 resp/$)']
+
+// Get default model for a task
+$default = $this->aiTextService->getDefaultModelForTask(TaskType::NEWS_CONTENT);
+// Returns: 'gemini' (or whatever is configured)
+```
+
 ## Error Handling
 
 ```php
@@ -144,11 +190,29 @@ use Xmon\AiContentBundle\Exception\AiProviderException;
 try {
     $result = $this->aiTextService->generate($systemPrompt, $userMessage);
 } catch (AiProviderException $e) {
-    // Provider error (rate limit, timeout, etc.)
+    // Provider error (rate limit, timeout, all models failed, etc.)
     $provider = $e->getProvider();        // 'pollinations'
-    $statusCode = $e->getHttpStatusCode(); // 429, 500, etc.
+    $statusCode = $e->getHttpStatusCode(); // 429, 500, null (timeout), etc.
     $message = $e->getMessage();
+
+    // Handle specific cases
+    if ($statusCode === 429) {
+        // Rate limited - wait and retry later
+    }
 }
+```
+
+## Checking Provider Status
+
+```php
+// Check if the text provider is configured and available
+if ($this->aiTextService->isConfigured()) {
+    // Ready to generate
+}
+
+// Get list of available providers
+$providers = $this->aiTextService->getAvailableProviders();
+// Returns: ['pollinations']
 ```
 
 ## Related
@@ -156,4 +220,5 @@ try {
 - [Task Types](task-types.md) - Configure models per task type
 - [Prompt Templates](prompt-templates.md) - Configurable system/user prompts
 - [Providers Reference](../reference/providers.md) - Available text models and costs
-- [Fallback System](../reference/fallback-system.md) - How automatic fallback works
+- [Fallback System](../reference/fallback-system.md) - How model fallback works
+- [Configuration Reference](../reference/configuration.md) - Full YAML options

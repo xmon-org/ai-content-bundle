@@ -60,33 +60,45 @@ composer require xmon-org/ai-content-bundle
 
 ### 2. Configuration
 
+The bundle works **out of the box with zero configuration** using free-tier models:
+
 ```yaml
 # config/packages/xmon_ai_content.yaml
+xmon_ai_content: ~  # That's it! Uses free-tier defaults
+```
+
+**Default models (no API key required):**
+- **Text:** `mistral` → `nova-micro` → `gemini-fast` → `openai-fast`
+- **Image:** `flux` → `zimage` → `turbo`
+
+For custom configuration:
+
+```yaml
 xmon_ai_content:
     # Configure models per task type
     tasks:
         news_content:
-            default_model: 'gemini'
-            allowed_models: ['gemini', 'mistral', 'openai']
+            default_model: 'mistral'
+            allowed_models: ['mistral', 'openai-fast', 'gemini-fast']
         image_prompt:
-            default_model: 'gemini-fast'
-            allowed_models: ['gemini-fast', 'openai-fast', 'mistral']
+            default_model: 'openai-fast'
+            allowed_models: ['openai-fast', 'mistral', 'nova-micro']
         image_generation:
             default_model: 'flux'
-            allowed_models: ['flux', 'gptimage', 'turbo']
+            allowed_models: ['flux', 'zimage', 'turbo']
 
+    # Text generation (optional - these are the defaults)
     text:
-        providers:
-            pollinations:
-                enabled: true
-                api_key: '%env(XMON_AI_POLLINATIONS_API_KEY)%'  # Optional for anonymous tier
+        model: 'mistral'
+        fallback_models: ['nova-micro', 'gemini-fast', 'openai-fast']
+
+    # Image generation (optional - these are the defaults)
     image:
-        providers:
-            pollinations:
-                enabled: true
+        model: 'flux'
+        fallback_models: ['zimage', 'turbo']
 ```
 
-> **Tip:** Works without API key for `openai`, `openai-fast`, `flux`, and `turbo` models. Get a free API key at [auth.pollinations.ai](https://auth.pollinations.ai) for access to premium models.
+> **Tip:** Get a free API key at [enter.pollinations.ai](https://enter.pollinations.ai) to unlock premium models like `claude`, `gemini`, and `gptimage`.
 
 ### 3. Generate Text
 
@@ -135,6 +147,23 @@ class MyService
         file_put_contents('image.png', $result->getBytes());
     }
 }
+```
+
+### 5. Override Options Per-Request
+
+```php
+// Use specific model without fallback
+$result = $this->aiTextService->generate($system, $user, [
+    'model' => 'claude',
+    'use_fallback' => false,
+    'timeout' => 120,
+]);
+
+// Use specific model with fallback to configured fallback_models
+$result = $this->aiTextService->generate($system, $user, [
+    'model' => 'claude',
+    'use_fallback' => true,
+]);
 ```
 
 ## Documentation
@@ -211,7 +240,7 @@ curl https://gen.pollinations.ai/image/models
 | Tier | Requirements | Access |
 |------|--------------|--------|
 | `anonymous` | None | `openai`, `openai-fast`, `flux`, `turbo` |
-| `seed` | Free API key from [auth.pollinations.ai](https://auth.pollinations.ai) | + `gemini*`, `deepseek`, `mistral`, `nanobanana` |
+| `seed` | Free API key from [enter.pollinations.ai](https://enter.pollinations.ai) | + `gemini*`, `deepseek`, `mistral`, `nanobanana` |
 | `flower` | Pollen credits | All models including `claude`, `gptimage`, `seedream` |
 
 ## Debug Command
