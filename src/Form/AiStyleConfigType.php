@@ -11,7 +11,9 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Xmon\AiContentBundle\Enum\TaskType;
 use Xmon\AiContentBundle\Service\ImageOptionsService;
+use Xmon\AiContentBundle\Service\TaskConfigService;
 
 /**
  * Form type for AI style configuration.
@@ -53,6 +55,7 @@ class AiStyleConfigType extends AbstractType
 {
     public function __construct(
         private readonly ImageOptionsService $imageOptionsService,
+        private readonly ?TaskConfigService $taskConfigService = null,
     ) {
     }
 
@@ -128,6 +131,16 @@ class AiStyleConfigType extends AbstractType
                     'class' => 'ai-style-suffix-text',
                 ],
                 'help' => $options['suffix_help'],
+            ])
+            ->add('aiImageModel', ChoiceType::class, [
+                'label' => $options['model_label'],
+                'choices' => $this->formatModelChoices($options['image_models']),
+                'required' => false,
+                'placeholder' => $options['model_placeholder'],
+                'attr' => [
+                    'class' => 'ai-image-model-selector',
+                ],
+                'help' => $options['model_help'],
             ]);
     }
 
@@ -147,6 +160,9 @@ class AiStyleConfigType extends AbstractType
             'compositions' => null,
             'palettes' => null,
 
+            // Image models - null means "use service defaults"
+            'image_models' => null,
+
             // Labels
             'mode_label' => 'Configuration Mode',
             'preset_mode_label' => 'Use Preset',
@@ -157,6 +173,7 @@ class AiStyleConfigType extends AbstractType
             'palette_label' => 'Color Palette',
             'additional_label' => 'Additional Text',
             'suffix_label' => 'Technical Restrictions',
+            'model_label' => 'Default Image Model',
 
             // Placeholders
             'preset_placeholder' => 'Select a preset...',
@@ -165,12 +182,14 @@ class AiStyleConfigType extends AbstractType
             'palette_placeholder' => 'Select a palette...',
             'additional_placeholder' => 'Additional instructions for the image generation...',
             'suffix_placeholder' => 'Fixed technical restrictions appended to all styles...',
+            'model_placeholder' => 'Use YAML configuration',
 
             // Help texts
             'mode_help' => null,
             'preset_help' => null,
             'additional_help' => null,
             'suffix_help' => 'Text always appended to generated styles (e.g., uniform rules, quality modifiers). Leave empty to use YAML configuration.',
+            'model_help' => 'Default model for automatic image generation. Leave empty to use YAML config (xmon_ai_content.image_generation.default_model).',
 
             // Preview options
             'show_preview' => true,
@@ -185,6 +204,7 @@ class AiStyleConfigType extends AbstractType
         $resolver->setAllowedTypes('styles', ['null', 'array']);
         $resolver->setAllowedTypes('compositions', ['null', 'array']);
         $resolver->setAllowedTypes('palettes', ['null', 'array']);
+        $resolver->setAllowedTypes('image_models', ['null', 'array']);
         $resolver->setAllowedTypes('show_preview', 'bool');
         $resolver->setAllowedTypes('preview_label', 'string');
         $resolver->setAllowedTypes('suffix', 'string');
@@ -229,6 +249,18 @@ class AiStyleConfigType extends AbstractType
         $resolver->setNormalizer('suffix', function ($options, $value) {
             if ('' === $value) {
                 return $this->imageOptionsService->getStyleSuffix();
+            }
+
+            return $value;
+        });
+
+        $resolver->setNormalizer('image_models', function ($options, $value) {
+            if (null === $value || [] === $value) {
+                if ($this->taskConfigService !== null) {
+                    return $this->taskConfigService->getAllowedModelsForSelect(TaskType::IMAGE_GENERATION);
+                }
+
+                return [];
             }
 
             return $value;
@@ -315,5 +347,23 @@ class AiStyleConfigType extends AbstractType
 
         // Flat format, return as-is
         return $options;
+    }
+
+    /**
+     * Format model choices for ChoiceType.
+     *
+     * Input format from TaskConfigService::getAllowedModelsForSelect():
+     *     ['model-key' => 'Model Name (cost)', ...]
+     *
+     * Output format for ChoiceType:
+     *     ['Model Name (cost)' => 'model-key', ...]
+     *
+     * @param array<string, string> $models
+     *
+     * @return array<string, string>
+     */
+    private function formatModelChoices(array $models): array
+    {
+        return array_flip($models);
     }
 }

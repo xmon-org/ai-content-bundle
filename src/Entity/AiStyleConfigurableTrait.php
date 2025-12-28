@@ -86,6 +86,13 @@ trait AiStyleConfigurableTrait
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     protected ?string $aiStyleSuffix = null;
 
+    /**
+     * Default image model for AI generation.
+     * If null, falls back to xmon_ai_content.image_generation.default_model.
+     */
+    #[ORM\Column(length: 50, nullable: true)]
+    protected ?string $aiImageModel = null;
+
     // ==========================================
     // GETTERS AND SETTERS
     // ==========================================
@@ -170,6 +177,18 @@ trait AiStyleConfigurableTrait
     public function setAiStyleSuffix(?string $suffix): static
     {
         $this->aiStyleSuffix = $suffix;
+
+        return $this;
+    }
+
+    public function getAiImageModel(): ?string
+    {
+        return $this->aiImageModel;
+    }
+
+    public function setAiImageModel(?string $model): static
+    {
+        $this->aiImageModel = $model;
 
         return $this;
     }

@@ -207,6 +207,7 @@ abstract class AbstractAiImageController extends AbstractController
 
             // Model information with costs (for UI cost display)
             'imageModels' => $this->getImageModelsForTemplate(),
+            'allowedImageModels' => $this->getAllowedImageModelsForTemplate(),
             'textModels' => $this->getTextModelsForTemplate(),
             'defaultImageModel' => $this->imageService->getDefaultModel(),
             'defaultTextModel' => $this->textService->getDefaultModelForTask(TaskType::IMAGE_PROMPT),
@@ -233,6 +234,30 @@ abstract class AbstractAiImageController extends AbstractController
 
         $models = [];
         foreach ($this->modelRegistry->getAllImageModels() as $key => $modelInfo) {
+            $models[$key] = [
+                'key' => $modelInfo->key,
+                'name' => $modelInfo->name,
+                'formattedCost' => $modelInfo->getFormattedCost(),
+                'responsesPerPollen' => $modelInfo->responsesPerPollen,
+                'isFree' => $modelInfo->isFree(),
+                'description' => $modelInfo->description,
+            ];
+        }
+
+        return $models;
+    }
+
+    /**
+     * Get allowed image models for the template dropdown.
+     *
+     * Only returns models that are in the allowed_models list from configuration.
+     *
+     * @return array<string, array{key: string, name: string, formattedCost: string, responsesPerPollen: int, isFree: bool, description: string}>
+     */
+    protected function getAllowedImageModelsForTemplate(): array
+    {
+        $models = [];
+        foreach ($this->imageService->getAllowedModelsForTask() as $key => $modelInfo) {
             $models[$key] = [
                 'key' => $modelInfo->key,
                 'name' => $modelInfo->name,
@@ -439,8 +464,15 @@ abstract class AbstractAiImageController extends AbstractController
             // Build full prompt: subject + style
             $fullPrompt = trim($subject).($baseStyle ? ', '.$baseStyle : '');
 
+            // Get model from request (empty = use default from hierarchy)
+            $requestedModel = $request->request->get('model');
+            $options = [];
+            if (!empty($requestedModel)) {
+                $options['model'] = $requestedModel;
+            }
+
             // Generate the image using TaskType for model selection
-            $imageResult = $this->imageService->generateForTask($fullPrompt);
+            $imageResult = $this->imageService->generateForTask($fullPrompt, $options);
 
             // Store the image (if MediaStorageService is available)
             $media = null;

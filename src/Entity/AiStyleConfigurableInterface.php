@@ -89,4 +89,15 @@ interface AiStyleConfigurableInterface
      * Set the fixed suffix.
      */
     public function setAiStyleSuffix(?string $suffix): static;
+
+    /**
+     * Get the default image model for AI generation.
+     * If null, falls back to xmon_ai_content.image_generation.default_model.
+     */
+    public function getAiImageModel(): ?string;
+
+    /**
+     * Set the default image model.
+     */
+    public function setAiImageModel(?string $model): static;
 }

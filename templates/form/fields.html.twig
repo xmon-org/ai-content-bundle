@@ -131,6 +131,14 @@
     padding: 16px;
 }
 
+{# Model selector section - prominent container #}
+.xmon-ai-style-config .xmon-ai-model-row {
+    background: var(--color-bg-dark);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 16px;
+}
+
 {# Improved help text contrast #}
 .xmon-ai-style-config .form-text,
 .xmon-ai-style-config .help-block {
@@ -242,6 +250,13 @@
     <div class="xmon-ai-suffix-row mb-3">
         {{ form_row(form.aiStyleSuffix) }}
     </div>
+
+    {# Image model selector - always visible #}
+    {% if form.aiImageModel is defined %}
+    <div class="xmon-ai-model-row mb-3">
+        {{ form_row(form.aiImageModel) }}
+    </div>
+    {% endif %}
 
     {# Humanized preview section #}
     {% if show_preview %}

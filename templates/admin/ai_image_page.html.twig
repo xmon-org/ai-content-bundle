@@ -276,18 +276,35 @@
                         </small>
                         {% endif %}
 
-                        {# Cost indicator #}
-                        {% if imageModels is defined and defaultImageModel is defined and imageModels[defaultImageModel] is defined %}
-                        <div id="costIndicator" style="margin-top: 10px; padding: 8px 12px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; text-align: center;">
-                            <small style="color: #666;">
-                                <i class="fa fa-info-circle"></i>
-                                {{ 'Model'|trans }}: <strong>{{ imageModels[defaultImageModel].name }}</strong>
-                                {% if imageModels[defaultImageModel].isFree %}
-                                    <span class="label label-success" style="margin-left: 5px;">{{ 'Free'|trans }}</span>
-                                {% else %}
-                                    <span style="margin-left: 5px; color: #888;">({{ imageModels[defaultImageModel].formattedCost }})</span>
-                                {% endif %}
-                            </small>
+                        {# Model selector with cost indicator #}
+                        {% if allowedImageModels is defined and allowedImageModels|length > 0 %}
+                        <div id="modelSelector" style="margin-top: 10px; padding: 12px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px;">
+                            <label for="imageModel" style="display: block; margin-bottom: 6px; font-size: 12px; color: #666; font-weight: 500;">
+                                <i class="fa fa-server"></i> {{ 'AI Model'|trans }}
+                            </label>
+                            <select class="form-control" id="imageModel" style="font-size: 13px;">
+                                {% for key, model in allowedImageModels %}
+                                <option value="{{ key }}"
+                                        data-cost="{{ model.formattedCost }}"
+                                        data-free="{{ model.isFree ? 'true' : 'false' }}"
+                                        data-name="{{ model.name }}"
+                                        {% if key == defaultImageModel %}selected{% endif %}>
+                                    {{ model.name }}
+                                    {% if model.isFree %}({{ 'Free'|trans }}){% else %}({{ model.formattedCost }}){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div id="modelCostInfo" style="margin-top: 8px; text-align: center;">
+                                <small style="color: #666;">
+                                    {% if defaultImageModel is defined and allowedImageModels[defaultImageModel] is defined %}
+                                        {% if allowedImageModels[defaultImageModel].isFree %}
+                                            <span class="label label-success">{{ 'Free'|trans }}</span>
+                                        {% else %}
+                                            <i class="fa fa-info-circle"></i> {{ 'Est. cost'|trans }}: <strong>{{ allowedImageModels[defaultImageModel].formattedCost }}</strong>
+                                        {% endif %}
+                                    {% endif %}
+                                </small>
+                            </div>
                         </div>
                         {% endif %}
                     </div>
@@ -1579,6 +1596,12 @@ document.addEventListener('DOMContentLoaded', function() {
         var formData = new FormData();
         formData.append('prompt', subject);
 
+        // Add selected model (if model selector exists)
+        var modelSelect = document.getElementById('imageModel');
+        if (modelSelect) {
+            formData.append('model', modelSelect.value);
+        }
+
         var styleConfig = getStyleConfig();
         Object.keys(styleConfig).forEach(function(key) {
             formData.append(key, styleConfig[key]);
@@ -1627,6 +1650,24 @@ document.addEventListener('DOMContentLoaded', function() {
             stopTimer();
             btnRegenerateImage.disabled = false;
             btnRegenerateImage.innerHTML = '<i class="fa fa-refresh"></i> {{ "Generate image"|trans }}';
+        });
+    }
+
+    // Model selector - update cost indicator when changed
+    var modelSelect = document.getElementById('imageModel');
+    var modelCostInfo = document.getElementById('modelCostInfo');
+    if (modelSelect && modelCostInfo) {
+        modelSelect.addEventListener('change', function() {
+            var selectedOption = this.options[this.selectedIndex];
+            var isFree = selectedOption.dataset.free === 'true';
+            var cost = selectedOption.dataset.cost;
+            var name = selectedOption.dataset.name;
+
+            if (isFree) {
+                modelCostInfo.innerHTML = '<small style="color: #666;"><span class="label label-success">{{ "Free"|trans }}</span></small>';
+            } else {
+                modelCostInfo.innerHTML = '<small style="color: #666;"><i class="fa fa-info-circle"></i> {{ "Est. cost"|trans }}: <strong>' + cost + '</strong></small>';
+            }
         });
     }
 
