@@ -198,6 +198,7 @@
 
 <div class="xmon-ai-style-config" id="{{ id }}"
      data-presets="{{ presets_json }}"
+     data-models="{{ models_json }}"
      data-suffix="{{ suffix }}"
      data-default-artistic="{{ default_artistic }}"
      data-default-composition="{{ default_composition }}"
@@ -266,6 +267,10 @@
         </label>
         <div class="xmon-ai-preview-box p-3">
             <div class="xmon-ai-preview-content">
+                <div class="xmon-ai-preview-item" data-field="model">
+                    <span class="xmon-ai-preview-label">Image Cost</span>
+                    <span class="xmon-ai-preview-value xmon-ai-preview-empty">—</span>
+                </div>
                 <div class="xmon-ai-preview-item" data-field="style">
                     <span class="xmon-ai-preview-label">Style</span>
                     <span class="xmon-ai-preview-value xmon-ai-preview-empty">—</span>
@@ -302,6 +307,7 @@
         container.dataset.initialized = 'true';
 
         const presets = JSON.parse(container.dataset.presets || '{}');
+        const models = JSON.parse(container.dataset.models || '{}');
         const suffix = container.dataset.suffix || '';
 
         const presetPanel = container.querySelector('.xmon-ai-preset-panel');
@@ -436,6 +442,7 @@
             const paletteSelect = findSelect('aiStylePalette');
             const additionalInput = findTextarea('aiStyleAdditional');
             const suffixInput = findTextarea('aiStyleSuffix');
+            const modelSelect = findSelect('aiImageModel');
 
             let style = '', composition = '', palette = '';
 
@@ -456,7 +463,19 @@
             // Use BD value if filled, otherwise fall back to YAML value
             const effectiveSuffix = suffixInput?.value?.trim() || suffix;
 
+            // Get model price from models data (proper lookup, no string parsing)
+            let modelPrice = '';
+            if (modelSelect && modelSelect.value) {
+                const modelData = models[modelSelect.value];
+                if (modelData) {
+                    modelPrice = modelData.formattedPrice || '';
+                }
+            } else {
+                modelPrice = 'YAML default';
+            }
+
             // Update each preview item
+            updatePreviewItem(previewContent, 'model', modelPrice);
             updatePreviewItem(previewContent, 'style', style);
             updatePreviewItem(previewContent, 'composition', composition);
             updatePreviewItem(previewContent, 'palette', palette);
@@ -509,7 +528,7 @@
         });
 
         // Bind to selects
-        ['aiStylePreset', 'aiStyleArtistic', 'aiStyleComposition', 'aiStylePalette'].forEach(function(name) {
+        ['aiStylePreset', 'aiStyleArtistic', 'aiStyleComposition', 'aiStylePalette', 'aiImageModel'].forEach(function(name) {
             const select = findSelect(name);
             if (select) {
                 select.addEventListener('change', function() {

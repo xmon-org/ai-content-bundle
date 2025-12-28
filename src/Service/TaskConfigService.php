@@ -144,6 +144,24 @@ class TaskConfigService
     }
 
     /**
+     * Get allowed models as arrays for JavaScript/templates.
+     *
+     * Each model includes: key, name, formattedCost, formattedPrice, isFree, etc.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function getAllowedModelsAsArray(TaskType $taskType): array
+    {
+        $result = [];
+
+        foreach ($this->getAllowedModelsWithInfo($taskType) as $key => $model) {
+            $result[$key] = $model->toArray();
+        }
+
+        return $result;
+    }
+
+    /**
      * Resolve the model to use for a task.
      *
      * If $requestedModel is null, returns the default.

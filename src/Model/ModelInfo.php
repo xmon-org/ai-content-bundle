@@ -83,6 +83,33 @@ readonly class ModelInfo
     }
 
     /**
+     * Get formatted price per image for UI display.
+     *
+     * Example: "$0.006/img" or "Free"
+     */
+    public function getFormattedPricePerImage(): string
+    {
+        if ($this->isFree()) {
+            return 'Free';
+        }
+
+        $priceUSD = $this->getCostPerResponseUSD();
+
+        if ($priceUSD < 0.001) {
+            // Very cheap, show as fraction of cent
+            return \sprintf('$%.4f/img', $priceUSD);
+        }
+
+        if ($priceUSD < 0.01) {
+            // Show 3 decimals
+            return \sprintf('$%.3f/img', $priceUSD);
+        }
+
+        // Show 2 decimals
+        return \sprintf('$%.2f/img', $priceUSD);
+    }
+
+    /**
      * Check if this is a free model.
      *
      * Free models have responsesPerPollen = 0 (unlimited) or tier = anonymous.
@@ -133,6 +160,7 @@ readonly class ModelInfo
             'description' => $this->description,
             'costPerResponse' => $this->getCostPerResponse(),
             'formattedCost' => $this->getFormattedCost(),
+            'formattedPrice' => $this->getFormattedPricePerImage(),
             'isFree' => $this->isFree(),
             'requiresApiKey' => $this->requiresApiKey(),
         ];

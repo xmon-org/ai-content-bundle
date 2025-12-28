@@ -134,7 +134,7 @@ class AiStyleConfigType extends AbstractType
             ])
             ->add('aiImageModel', ChoiceType::class, [
                 'label' => $options['model_label'],
-                'choices' => $this->formatModelChoices($options['image_models']),
+                'choices' => $this->formatModelChoicesFromData($options['image_models_data']),
                 'required' => false,
                 'placeholder' => $options['model_placeholder'],
                 'attr' => [
@@ -159,9 +159,6 @@ class AiStyleConfigType extends AbstractType
             'styles' => null,
             'compositions' => null,
             'palettes' => null,
-
-            // Image models - null means "use service defaults"
-            'image_models' => null,
 
             // Labels
             'mode_label' => 'Configuration Mode',
@@ -189,7 +186,7 @@ class AiStyleConfigType extends AbstractType
             'preset_help' => null,
             'additional_help' => null,
             'suffix_help' => 'Text always appended to generated styles (e.g., uniform rules, quality modifiers). Leave empty to use YAML configuration.',
-            'model_help' => 'Default model for automatic image generation. Leave empty to use YAML config (xmon_ai_content.image_generation.default_model).',
+            'model_help' => 'Default model for automatic generation. Dropdown shows images per $1 (higher = cheaper). Preview shows price per image.',
 
             // Preview options
             'show_preview' => true,
@@ -204,7 +201,6 @@ class AiStyleConfigType extends AbstractType
         $resolver->setAllowedTypes('styles', ['null', 'array']);
         $resolver->setAllowedTypes('compositions', ['null', 'array']);
         $resolver->setAllowedTypes('palettes', ['null', 'array']);
-        $resolver->setAllowedTypes('image_models', ['null', 'array']);
         $resolver->setAllowedTypes('show_preview', 'bool');
         $resolver->setAllowedTypes('preview_label', 'string');
         $resolver->setAllowedTypes('suffix', 'string');
@@ -254,10 +250,13 @@ class AiStyleConfigType extends AbstractType
             return $value;
         });
 
-        $resolver->setNormalizer('image_models', function ($options, $value) {
+        // Full model data for ChoiceType and JavaScript (includes formattedPrice for preview)
+        $resolver->setDefault('image_models_data', null);
+        $resolver->setAllowedTypes('image_models_data', ['null', 'array']);
+        $resolver->setNormalizer('image_models_data', function ($options, $value) {
             if (null === $value || [] === $value) {
                 if ($this->taskConfigService !== null) {
-                    return $this->taskConfigService->getAllowedModelsForSelect(TaskType::IMAGE_GENERATION);
+                    return $this->taskConfigService->getAllowedModelsAsArray(TaskType::IMAGE_GENERATION);
                 }
 
                 return [];
@@ -289,6 +288,7 @@ class AiStyleConfigType extends AbstractType
         $view->vars['default_composition'] = $options['default_composition'] ?? '';
         $view->vars['default_palette'] = $options['default_palette'] ?? '';
         $view->vars['presets_json'] = json_encode($presetsData, \JSON_THROW_ON_ERROR);
+        $view->vars['models_json'] = json_encode($options['image_models_data'], \JSON_THROW_ON_ERROR);
     }
 
     public function getBlockPrefix(): string
@@ -350,20 +350,23 @@ class AiStyleConfigType extends AbstractType
     }
 
     /**
-     * Format model choices for ChoiceType.
+     * Format model choices for ChoiceType from full model data.
      *
-     * Input format from TaskConfigService::getAllowedModelsForSelect():
-     *     ['model-key' => 'Model Name (cost)', ...]
+     * Input: ['model-key' => ['name' => '...', 'formattedCost' => '...', ...], ...]
+     * Output: ['Model Name (~X per pollen)' => 'model-key', ...]
      *
-     * Output format for ChoiceType:
-     *     ['Model Name (cost)' => 'model-key', ...]
-     *
-     * @param array<string, string> $models
+     * @param array<string, array<string, mixed>> $modelsData
      *
      * @return array<string, string>
      */
-    private function formatModelChoices(array $models): array
+    private function formatModelChoicesFromData(array $modelsData): array
     {
-        return array_flip($models);
+        $choices = [];
+        foreach ($modelsData as $key => $model) {
+            $label = \sprintf('%s (%s)', $model['name'], $model['formattedCost']);
+            $choices[$label] = $key;
+        }
+
+        return $choices;
     }
 }
