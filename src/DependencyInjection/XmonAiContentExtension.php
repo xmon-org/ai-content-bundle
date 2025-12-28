@@ -12,7 +12,6 @@ use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Xmon\AiContentBundle\Provider\Image\PollinationsImageProvider;
 use Xmon\AiContentBundle\Provider\Text\PollinationsTextProvider;
-use Xmon\AiContentBundle\Service\AiTextService;
 use Xmon\AiContentBundle\Service\ImageOptionsService;
 use Xmon\AiContentBundle\Service\ImageSubjectGenerator;
 use Xmon\AiContentBundle\Service\MediaStorageService;
@@ -93,77 +92,47 @@ class XmonAiContentExtension extends Extension
 
     private function configureImageProviders(ContainerBuilder $container, array $imageConfig): void
     {
-        $providers = $imageConfig['providers'] ?? [];
-        $defaults = $imageConfig['defaults'] ?? [];
-
-        // Configure Pollinations image provider if enabled
-        if (isset($providers['pollinations']) && $providers['pollinations']['enabled']) {
-            $pollinationsConfig = $providers['pollinations'];
-
-            if ($container->hasDefinition(PollinationsImageProvider::class)) {
-                $definition = $container->getDefinition(PollinationsImageProvider::class);
-                $definition->setArgument('$apiKey', $pollinationsConfig['api_key'] ?? null);
-                $definition->setArgument('$model', $pollinationsConfig['model'] ?? 'flux');
-                $definition->setArgument('$timeout', $pollinationsConfig['timeout'] ?? 120);
-                $definition->setArgument('$defaultWidth', $defaults['width'] ?? 1280);
-                $definition->setArgument('$defaultHeight', $defaults['height'] ?? 720);
-                $definition->setArgument('$quality', $pollinationsConfig['quality'] ?? 'high');
-                $definition->setArgument('$negativePrompt', $pollinationsConfig['negative_prompt'] ?? 'worst quality, blurry, text, letters, watermark, human faces, detailed faces');
-                $definition->setArgument('$private', $pollinationsConfig['private'] ?? true);
-                $definition->setArgument('$nofeed', $pollinationsConfig['nofeed'] ?? true);
-            }
+        if ($container->hasDefinition(PollinationsImageProvider::class)) {
+            $definition = $container->getDefinition(PollinationsImageProvider::class);
+            $definition->setArgument('$apiKey', $imageConfig['api_key'] ?? null);
+            $definition->setArgument('$model', $imageConfig['model'] ?? 'flux');
+            $definition->setArgument('$fallbackModels', $imageConfig['fallback_models'] ?? []);
+            $definition->setArgument('$retriesPerModel', $imageConfig['retries_per_model'] ?? 2);
+            $definition->setArgument('$retryDelay', $imageConfig['retry_delay'] ?? 3);
+            $definition->setArgument('$timeout', $imageConfig['timeout'] ?? 120);
+            $definition->setArgument('$defaultWidth', $imageConfig['width'] ?? 1280);
+            $definition->setArgument('$defaultHeight', $imageConfig['height'] ?? 720);
+            $definition->setArgument('$quality', $imageConfig['quality'] ?? 'high');
+            $definition->setArgument('$negativePrompt', $imageConfig['negative_prompt'] ?? 'worst quality, blurry, text, letters, watermark, human faces, detailed faces');
+            $definition->setArgument('$private', $imageConfig['private'] ?? true);
+            $definition->setArgument('$nofeed', $imageConfig['nofeed'] ?? true);
         }
 
-        // Store config
-        $container->setParameter('xmon_ai_content.image.providers', $providers);
-        $container->setParameter('xmon_ai_content.image.defaults', $defaults);
+        // Store config for external access
+        $container->setParameter('xmon_ai_content.image', $imageConfig);
     }
 
     /**
-     * Configure text providers (Pollinations only - simplified architecture Dec 2025).
+     * Configure text provider (Pollinations only - simplified architecture Dec 2025).
      *
      * Model selection is now handled by TaskConfigService based on TaskType.
-     * The provider just needs to be enabled; the model is passed at runtime.
+     * The provider handles fallback between models.
      */
     private function configureTextProviders(ContainerBuilder $container, array $textConfig): void
     {
-        $providers = $textConfig['providers'] ?? [];
-        $defaults = $textConfig['defaults'] ?? [];
-
-        // Configure Pollinations text provider if enabled
-        if (isset($providers['pollinations']) && $providers['pollinations']['enabled']) {
-            $pollinationsConfig = $providers['pollinations'];
-
-            if ($container->hasDefinition(PollinationsTextProvider::class)) {
-                $definition = $container->getDefinition(PollinationsTextProvider::class);
-
-                if (isset($pollinationsConfig['api_key'])) {
-                    $definition->setArgument('$apiKey', $pollinationsConfig['api_key']);
-                }
-                $definition->setArgument('$model', $pollinationsConfig['model'] ?? 'openai');
-                $definition->setArgument('$fallbackModels', $pollinationsConfig['fallback_models'] ?? []);
-                $definition->setArgument('$timeout', $pollinationsConfig['timeout'] ?? 60);
-                $definition->setArgument('$endpointMode', $pollinationsConfig['endpoint_mode'] ?? 'openai');
-
-                $priority = $pollinationsConfig['priority'] ?? 10;
-                $definition->setArgument('$priority', $priority);
-
-                // Update tag priority
-                $definition->clearTag('xmon_ai_content.text_provider');
-                $definition->addTag('xmon_ai_content.text_provider', ['priority' => $priority]);
-            }
+        if ($container->hasDefinition(PollinationsTextProvider::class)) {
+            $definition = $container->getDefinition(PollinationsTextProvider::class);
+            $definition->setArgument('$apiKey', $textConfig['api_key'] ?? null);
+            $definition->setArgument('$model', $textConfig['model'] ?? 'gemini');
+            $definition->setArgument('$fallbackModels', $textConfig['fallback_models'] ?? []);
+            $definition->setArgument('$retriesPerModel', $textConfig['retries_per_model'] ?? 2);
+            $definition->setArgument('$retryDelay', $textConfig['retry_delay'] ?? 3);
+            $definition->setArgument('$timeout', $textConfig['timeout'] ?? 60);
+            $definition->setArgument('$endpointMode', $textConfig['endpoint_mode'] ?? 'openai');
         }
 
-        // Configure AiTextService with defaults
-        if ($container->hasDefinition(AiTextService::class)) {
-            $definition = $container->getDefinition(AiTextService::class);
-            $definition->setArgument('$retries', $defaults['retries'] ?? 2);
-            $definition->setArgument('$retryDelay', $defaults['retry_delay'] ?? 3);
-        }
-
-        // Store config
-        $container->setParameter('xmon_ai_content.text.providers', $providers);
-        $container->setParameter('xmon_ai_content.text.defaults', $defaults);
+        // Store config for external access
+        $container->setParameter('xmon_ai_content.text', $textConfig);
     }
 
     /**

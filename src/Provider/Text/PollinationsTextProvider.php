@@ -9,7 +9,6 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Xmon\AiContentBundle\Exception\AiProviderException;
 use Xmon\AiContentBundle\Model\TextResult;
-use Xmon\AiContentBundle\Provider\TextProviderInterface;
 
 /**
  * Pollinations Text Provider.
@@ -31,7 +30,7 @@ use Xmon\AiContentBundle\Provider\TextProviderInterface;
  * Works without API key (free tier with rate limits).
  * With API key: higher rate limits and priority access.
  */
-class PollinationsTextProvider implements TextProviderInterface
+class PollinationsTextProvider
 {
     private const SIMPLE_BASE_URL = 'https://gen.pollinations.ai/text/';
     private const OPENAI_BASE_URL = 'https://gen.pollinations.ai/v1/chat/completions';
@@ -40,14 +39,18 @@ class PollinationsTextProvider implements TextProviderInterface
     public const MODE_SIMPLE = 'simple';
     public const MODE_OPENAI = 'openai';
 
+    /**
+     * @param array<string> $fallbackModels
+     */
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly ?LoggerInterface $logger = null,
         private readonly ?string $apiKey = null,
-        private readonly string $model = 'openai',
+        private readonly string $model = 'gemini',
         private readonly array $fallbackModels = [],
+        private readonly int $retriesPerModel = 2,
+        private readonly int $retryDelay = 3,
         private readonly int $timeout = 60,
-        private readonly int $priority = 10,
         private readonly string $endpointMode = self::MODE_OPENAI,
     ) {
     }
@@ -65,44 +68,91 @@ class PollinationsTextProvider implements TextProviderInterface
         return true;
     }
 
-    public function getPriority(): int
-    {
-        return $this->priority;
-    }
-
+    /**
+     * Generate text with fallback models and per-model retries.
+     *
+     * @param array{
+     *     model?: string,
+     *     use_fallback?: bool,
+     *     timeout?: int,
+     *     retries_per_model?: int,
+     *     retry_delay?: int
+     * } $options
+     *
+     * @throws AiProviderException When all models fail after retries
+     */
     public function generate(string $systemPrompt, string $userMessage, array $options = []): TextResult
     {
         $specificModel = $options['model'] ?? null;
 
-        // If a specific model is requested, only try that one
-        // Otherwise, try primary model first, then fallbacks
-        $modelsToTry = $specificModel
-            ? [$specificModel]
-            : array_merge([$this->model], $this->fallbackModels);
+        // Determine if fallback should be used:
+        // - If no model specified: use fallback (default behavior)
+        // - If model specified: don't use fallback unless explicitly requested
+        $useFallback = $options['use_fallback'] ?? ($specificModel === null);
 
-        $lastError = null;
+        // Build list of models to try
+        $primaryModel = $specificModel ?? $this->model;
+        $modelsToTry = $useFallback
+            ? array_unique(array_merge([$primaryModel], $this->fallbackModels))
+            : [$primaryModel];
+
+        // Allow per-request override of retry settings
+        $retriesPerModel = $options['retries_per_model'] ?? $this->retriesPerModel;
+        $retryDelay = $options['retry_delay'] ?? $this->retryDelay;
+        $timeout = $options['timeout'] ?? $this->timeout;
+
+        $errors = [];
 
         foreach ($modelsToTry as $model) {
-            try {
-                return $this->callWithModel($model, $systemPrompt, $userMessage);
-            } catch (\Exception $e) {
-                $lastError = $e;
-                $this->logger?->warning('[Pollinations] Model failed, trying next', [
-                    'model' => $model,
-                    'error' => $e->getMessage(),
-                ]);
-                continue;
+            for ($attempt = 1; $attempt <= $retriesPerModel; ++$attempt) {
+                try {
+                    $this->logger?->info('[Pollinations] Trying model', [
+                        'model' => $model,
+                        'attempt' => $attempt,
+                        'max_attempts' => $retriesPerModel,
+                    ]);
+
+                    return $this->callWithModel($model, $systemPrompt, $userMessage, $timeout);
+                } catch (AiProviderException $e) {
+                    $this->logger?->warning('[Pollinations] Attempt failed', [
+                        'model' => $model,
+                        'attempt' => $attempt,
+                        'max_attempts' => $retriesPerModel,
+                        'error' => $e->getMessage(),
+                        'http_status' => $e->getHttpStatusCode(),
+                    ]);
+
+                    // Don't retry on client errors (4xx)
+                    if ($e->getHttpStatusCode() !== null && $e->getHttpStatusCode() >= 400 && $e->getHttpStatusCode() < 500) {
+                        $errors[$model] = $e->getMessage();
+                        break; // Skip to next model
+                    }
+
+                    // Wait before retry (except on last attempt of this model)
+                    if ($attempt < $retriesPerModel) {
+                        sleep($retryDelay);
+                    } else {
+                        $errors[$model] = $e->getMessage();
+                    }
+                }
             }
         }
 
-        throw new AiProviderException(message: 'All Pollinations models failed'.($lastError ? ': '.$lastError->getMessage() : ''), provider: $this->getName(), previous: $lastError);
+        // All models exhausted
+        $errorDetails = implode('; ', array_map(
+            fn (string $model, string $error) => \sprintf('%s: %s', $model, $error),
+            array_keys($errors),
+            array_values($errors)
+        ));
+
+        throw new AiProviderException(message: \sprintf('All text models failed: %s', $errorDetails ?: 'No models available'), provider: self::PROVIDER_NAME);
     }
 
-    private function callWithModel(string $model, string $systemPrompt, string $userMessage): TextResult
+    private function callWithModel(string $model, string $systemPrompt, string $userMessage, int $timeout): TextResult
     {
         return match ($this->endpointMode) {
-            self::MODE_SIMPLE => $this->callWithSimpleEndpoint($model, $systemPrompt, $userMessage),
-            self::MODE_OPENAI => $this->callWithOpenAIEndpoint($model, $systemPrompt, $userMessage),
+            self::MODE_SIMPLE => $this->callWithSimpleEndpoint($model, $systemPrompt, $userMessage, $timeout),
+            self::MODE_OPENAI => $this->callWithOpenAIEndpoint($model, $systemPrompt, $userMessage, $timeout),
             default => throw new \InvalidArgumentException("Invalid endpoint mode: {$this->endpointMode}"),
         };
     }
@@ -115,7 +165,7 @@ class PollinationsTextProvider implements TextProviderInterface
      * - Response: plain text
      * - Limit: ~2000 chars URL length
      */
-    private function callWithSimpleEndpoint(string $model, string $systemPrompt, string $userMessage): TextResult
+    private function callWithSimpleEndpoint(string $model, string $systemPrompt, string $userMessage, int $timeout): TextResult
     {
         $encodedPrompt = $this->encodePrompt($userMessage);
         $url = self::SIMPLE_BASE_URL.$encodedPrompt;
@@ -144,7 +194,7 @@ class PollinationsTextProvider implements TextProviderInterface
         ]);
 
         $requestOptions = [
-            'timeout' => $this->timeout,
+            'timeout' => $timeout,
         ];
 
         if (!empty($this->apiKey)) {
@@ -187,7 +237,7 @@ class PollinationsTextProvider implements TextProviderInterface
             ]);
 
             if (str_contains($e->getMessage(), 'timeout')) {
-                throw AiProviderException::timeout(self::PROVIDER_NAME, $this->timeout);
+                throw AiProviderException::timeout(self::PROVIDER_NAME, $timeout);
             }
 
             throw AiProviderException::connectionError(self::PROVIDER_NAME, $e->getMessage());
@@ -202,7 +252,7 @@ class PollinationsTextProvider implements TextProviderInterface
      * - No URL length limit
      * - Native system prompt support
      */
-    private function callWithOpenAIEndpoint(string $model, string $systemPrompt, string $userMessage): TextResult
+    private function callWithOpenAIEndpoint(string $model, string $systemPrompt, string $userMessage, int $timeout): TextResult
     {
         $messages = [];
         if (!empty($systemPrompt)) {
@@ -238,7 +288,7 @@ class PollinationsTextProvider implements TextProviderInterface
             $response = $this->httpClient->request('POST', self::OPENAI_BASE_URL, [
                 'headers' => $headers,
                 'json' => $payload,
-                'timeout' => $this->timeout,
+                'timeout' => $timeout,
             ]);
 
             $statusCode = $response->getStatusCode();
@@ -284,7 +334,7 @@ class PollinationsTextProvider implements TextProviderInterface
             ]);
 
             if (str_contains($e->getMessage(), 'timeout')) {
-                throw AiProviderException::timeout(self::PROVIDER_NAME, $this->timeout);
+                throw AiProviderException::timeout(self::PROVIDER_NAME, $timeout);
             }
 
             throw AiProviderException::connectionError(self::PROVIDER_NAME, $e->getMessage());

@@ -1,29 +1,28 @@
-# Text providers and services
-# This file is loaded when text providers are configured
+# Text provider and service
+# This file is loaded when text generation is configured
 
 services:
     _defaults:
         autowire: true
         autoconfigure: true
 
-    # Text Provider (Pollinations only - simplified architecture Dec 2025)
-    # All text generation uses Pollinations API with model selection via TaskConfigService
+    # Text Provider (Pollinations)
     Xmon\AiContentBundle\Provider\Text\PollinationsTextProvider:
         arguments:
-            $model: 'openai'
+            $apiKey: null
+            $model: 'gemini'
             $fallbackModels: []
+            $retriesPerModel: 2
+            $retryDelay: 3
             $timeout: 60
-            $priority: 10
+            $endpointMode: 'openai'
         tags:
-            - { name: 'xmon_ai_content.text_provider', priority: 10 }
             - { name: 'monolog.logger', channel: 'ai' }
 
     # Main Text Service
     Xmon\AiContentBundle\Service\AiTextService:
         arguments:
-            $providers: !tagged_iterator { tag: 'xmon_ai_content.text_provider', default_priority_method: 'getPriority' }
+            $provider: '@Xmon\AiContentBundle\Provider\Text\PollinationsTextProvider'
             $taskConfigService: '@Xmon\AiContentBundle\Service\TaskConfigService'
-            $retries: 2
-            $retryDelay: 3
         tags:
             - { name: 'monolog.logger', channel: 'ai' }
