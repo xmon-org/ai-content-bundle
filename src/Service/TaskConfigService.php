@@ -13,6 +13,11 @@ use Xmon\AiContentBundle\Model\ModelInfo;
  *
  * This service bridges the ModelRegistryService (knows all models) with
  * the user's configuration (which models are allowed for each task).
+ *
+ * Model resolution priority for IMAGE_GENERATION:
+ * 1. Database (via AiStyleService from style providers)
+ * 2. YAML configuration (tasks.image_generation.default_model)
+ * 3. Built-in defaults
  */
 class TaskConfigService
 {
@@ -38,19 +43,32 @@ class TaskConfigService
 
     /**
      * @param array<string, array{default_model?: string, allowed_models?: list<string>}> $tasksConfig
+     * @param AiStyleService|null                                                         $styleService Optional style service for DB-based model override
      */
     public function __construct(
         private readonly ModelRegistryService $modelRegistry,
         private readonly array $tasksConfig = [],
+        private readonly ?AiStyleService $styleService = null,
     ) {
     }
 
     /**
      * Get the default model for a task type.
+     *
+     * For IMAGE_GENERATION, checks style providers first (DB override).
+     * Priority: StyleService (DB) > YAML config > Built-in defaults
      */
     public function getDefaultModel(TaskType $taskType): string
     {
         $taskKey = $taskType->value;
+
+        // For image generation, check style providers first (allows DB override)
+        if ($taskType === TaskType::IMAGE_GENERATION && $this->styleService !== null) {
+            $dbModel = $this->styleService->getDefaultImageModel();
+            if ($dbModel !== null && $dbModel !== '' && $this->isModelAllowed($taskType, $dbModel)) {
+                return $dbModel;
+            }
+        }
 
         return $this->tasksConfig[$taskKey]['default_model']
             ?? self::BUILT_IN_DEFAULTS[$taskKey]['default_model'];

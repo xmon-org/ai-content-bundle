@@ -76,10 +76,12 @@ services:
     # Task Config Service (per-task model configuration)
     # Bridges ModelRegistryService with user configuration.
     # Determines which models are allowed/default for each TaskType.
+    # For IMAGE_GENERATION, checks AiStyleService first (DB override via style providers).
     Xmon\AiContentBundle\Service\TaskConfigService:
         arguments:
             $modelRegistry: '@Xmon\AiContentBundle\Service\ModelRegistryService'
             $tasksConfig: []
+            $styleService: '@Xmon\AiContentBundle\Service\AiStyleService'
 
     # Style Providers
     Xmon\AiContentBundle\Provider\Style\YamlStyleProvider:
