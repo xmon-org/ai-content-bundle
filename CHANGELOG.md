@@ -2,6 +2,18 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.10.1](https://github.com/xmon-org/ai-content-bundle/compare/1.10.0...1.10.1) (2025-12-28)
+
+### 🐛 Bug Fixes
+
+* **image:** prevent real names and likeness phrases in PERSON anchor ([072bc9a](https://github.com/xmon-org/ai-content-bundle/commit/072bc9a1e4da8cfdae89179a2b4e053267865723))
+* **image:** sanitize % in prompts to avoid Cloudflare WAF block ([9f65111](https://github.com/xmon-org/ai-content-bundle/commit/9f651110b8349f660e26c07f2b55486e4bdd618e))
+* **providers:** detecta rate limits envueltos en HTTP 500 de Pollinations ([f1a2272](https://github.com/xmon-org/ai-content-bundle/commit/f1a2272eaa75bab0565c7bdc8c2b4a598b2088ef))
+
+### 📚 Documentation
+
+* actualiza documentación para arquitectura single-provider ([03fc7bf](https://github.com/xmon-org/ai-content-bundle/commit/03fc7bf7401fd6d20cf7ad88db5ad96fad64f6ac))
+
 ## [1.10.0](https://github.com/xmon-org/ai-content-bundle/compare/1.9.0...1.10.0) (2025-12-28)
 
 ### ✨ Features
