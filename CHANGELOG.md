@@ -2,6 +2,12 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.12.0](https://github.com/xmon-org/ai-content-bundle/compare/1.11.0...1.12.0) (2025-12-29)
+
+### ✨ Features
+
+* **ui:** añade soporte para imagen original en lightbox ([044d690](https://github.com/xmon-org/ai-content-bundle/commit/044d69058922b248a010cb93be44e4c5e1870264))
+
 ## [1.11.0](https://github.com/xmon-org/ai-content-bundle/compare/1.10.2...1.11.0) (2025-12-29)
 
 ### ✨ Features
