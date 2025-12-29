@@ -342,6 +342,16 @@
                             </div>
                         </div>
                         {% endif %}
+
+                        {# Debug mode toggle - expert only #}
+                        <div id="debugModeToggle" data-mode="expert" style="margin-top: 10px; padding: 10px 12px; background: #fff3cd; border: 1px solid #ffe69c; border-radius: 4px;">
+                            <label style="margin: 0; display: flex; align-items: center; cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" id="aiDebugMode" {% if aiDebugMode is defined and aiDebugMode %}checked{% endif %} style="margin-right: 8px; width: 16px; height: 16px;">
+                                <i class="fa fa-bug" style="margin-right: 6px; color: #856404;"></i>
+                                <strong style="color: #856404;">{{ 'Debug Mode'|trans }}</strong>
+                                <small style="margin-left: auto; color: #856404; font-weight: normal;">{{ 'No API calls, only logging'|trans }}</small>
+                            </label>
+                        </div>
                     </div>
                 </div>
                 {% if xmon_ai_show_bundle_credit %}
@@ -2218,6 +2228,12 @@ document.addEventListener('DOMContentLoaded', function() {
         var modelSelect = document.getElementById('imageModel');
         if (modelSelect) {
             formData.append('model', modelSelect.value);
+        }
+
+        // Add debug mode (if toggle exists and is checked)
+        var debugCheckbox = document.getElementById('aiDebugMode');
+        if (debugCheckbox && debugCheckbox.checked) {
+            formData.append('debug', '1');
         }
 
         var styleConfig = getStyleConfig();

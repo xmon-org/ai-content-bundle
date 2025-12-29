@@ -74,6 +74,27 @@ final class AiStyleService
     }
 
     /**
+     * Check if AI debug mode is enabled from the highest priority provider.
+     *
+     * Returns false by default if no provider has debug mode configured.
+     */
+    public function getAiDebugMode(): bool
+    {
+        foreach ($this->sortedProviders as $provider) {
+            if (!$provider->isAvailable()) {
+                continue;
+            }
+
+            $debugMode = $provider->getAiDebugMode();
+            if ($debugMode !== null) {
+                return $debugMode;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Get all available providers (for debugging).
      *
      * @return array<array{class: string, priority: int, available: bool}>

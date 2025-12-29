@@ -93,6 +93,13 @@ trait AiStyleConfigurableTrait
     #[ORM\Column(length: 50, nullable: true)]
     protected ?string $aiImageModel = null;
 
+    /**
+     * Debug mode for AI image generation.
+     * When true, no API calls are made - only logging.
+     */
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    protected bool $aiDebugMode = false;
+
     // ==========================================
     // GETTERS AND SETTERS
     // ==========================================
@@ -189,6 +196,18 @@ trait AiStyleConfigurableTrait
     public function setAiImageModel(?string $model): static
     {
         $this->aiImageModel = $model;
+
+        return $this;
+    }
+
+    public function getAiDebugMode(): bool
+    {
+        return $this->aiDebugMode;
+    }
+
+    public function setAiDebugMode(bool $aiDebugMode): static
+    {
+        $this->aiDebugMode = $aiDebugMode;
 
         return $this;
     }

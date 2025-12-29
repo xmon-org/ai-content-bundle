@@ -47,4 +47,11 @@ final class YamlStyleProvider implements AiStyleProviderInterface
         // This allows database-backed providers to override.
         return null;
     }
+
+    public function getAiDebugMode(): ?bool
+    {
+        // YAML provider returns null - debug mode is always configured via BD or env
+        // This allows database-backed providers to control debug mode.
+        return null;
+    }
 }

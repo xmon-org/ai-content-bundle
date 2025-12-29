@@ -100,4 +100,15 @@ interface AiStyleConfigurableInterface
      * Set the default image model.
      */
     public function setAiImageModel(?string $model): static;
+
+    /**
+     * Get whether debug mode is enabled.
+     * When true, no API calls are made - only logging.
+     */
+    public function getAiDebugMode(): bool;
+
+    /**
+     * Set debug mode.
+     */
+    public function setAiDebugMode(bool $aiDebugMode): static;
 }

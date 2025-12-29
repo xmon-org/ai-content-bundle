@@ -218,6 +218,9 @@ abstract class AbstractAiImageController extends AbstractController
             // Navigation
             'backUrl' => $this->getBackUrl($entity),
             'listUrl' => $this->getListUrl($entity),
+
+            // Debug mode (from BD via AiStyleService providers)
+            'aiDebugMode' => $this->getAiDebugModeForPage(),
         ]);
     }
 
@@ -294,6 +297,23 @@ abstract class AbstractAiImageController extends AbstractController
 
         // Fall back to image service default (YAML or bundle default)
         return $this->imageService->getDefaultModel();
+    }
+
+    /**
+     * Get the AI debug mode setting for the page.
+     *
+     * When debug mode is enabled, no API calls are made - only logging.
+     * Uses AiStyleService provider chain (e.g., ConfiguracionStyleProvider).
+     *
+     * Override this method for custom resolution logic.
+     */
+    protected function getAiDebugModeForPage(): bool
+    {
+        if ($this->styleService !== null) {
+            return $this->styleService->getAiDebugMode();
+        }
+
+        return false;
     }
 
     /**
@@ -494,6 +514,12 @@ abstract class AbstractAiImageController extends AbstractController
             $options = [];
             if (!empty($requestedModel)) {
                 $options['model'] = $requestedModel;
+            }
+
+            // Check debug mode from request checkbox (UI toggle overrides BD setting)
+            $debugMode = $request->request->getBoolean('debug', false);
+            if ($debugMode) {
+                $options['debug'] = true;
             }
 
             // Generate the image using TaskType for model selection

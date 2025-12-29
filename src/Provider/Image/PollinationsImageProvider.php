@@ -226,6 +226,19 @@ class PollinationsImageProvider
 
         $url .= '?'.http_build_query($params);
 
+        // DEBUG MODE: Log everything and return mock without calling API
+        if ($options['debug'] ?? false) {
+            $this->logger?->warning('[Pollinations DEBUG MODE] API call skipped', [
+                'url' => $url,
+                'prompt' => $prompt,
+                'model' => $model,
+                'params' => $params,
+                'timestamp' => date('Y-m-d H:i:s'),
+            ]);
+
+            return $this->createDebugMockResult($prompt, $model, $width, $height);
+        }
+
         // Log the EXACT request URL for debugging
         $this->logger?->info('[Pollinations] REQUEST URL', [
             'url' => $url,
@@ -334,5 +347,77 @@ class PollinationsImageProvider
             str_contains($mimeType, 'gif') => 'image/gif',
             default => 'image/png',
         };
+    }
+
+    /**
+     * Create a debug mock result without calling the API.
+     *
+     * Generates a placeholder PNG image with debug information.
+     */
+    private function createDebugMockResult(string $prompt, string $model, int $width, int $height): ImageResult
+    {
+        // Create placeholder image with GD
+        $image = imagecreatetruecolor($width, $height);
+
+        if ($image === false) {
+            throw new AiProviderException(message: 'Failed to create debug mock image (GD library issue)', provider: self::PROVIDER_NAME);
+        }
+
+        // Colors
+        $bgColor = imagecolorallocate($image, 255, 243, 205); // Warning yellow
+        $borderColor = imagecolorallocate($image, 255, 193, 7); // Amber border
+        $textColor = imagecolorallocate($image, 133, 100, 4); // Dark amber text
+        $headerBg = imagecolorallocate($image, 255, 193, 7); // Header background
+
+        // Fill background
+        imagefill($image, 0, 0, $bgColor);
+
+        // Draw border
+        imagerectangle($image, 0, 0, $width - 1, $height - 1, $borderColor);
+        imagerectangle($image, 1, 1, $width - 2, $height - 2, $borderColor);
+
+        // Draw header bar
+        imagefilledrectangle($image, 0, 0, $width, 40, $headerBg);
+
+        // Add text - use built-in font (no external font dependency)
+        $headerText = 'DEBUG MODE - NO API CALL';
+        $modelText = "Model: {$model}";
+        $sizeText = "Size: {$width}x{$height}";
+        $promptPreview = mb_strlen($prompt) > 60 ? mb_substr($prompt, 0, 57).'...' : $prompt;
+
+        // Header text (centered)
+        $headerX = ($width - \strlen($headerText) * imagefontwidth(5)) / 2;
+        imagestring($image, 5, (int) $headerX, 12, $headerText, $textColor);
+
+        // Model and size info
+        imagestring($image, 4, 10, 60, $modelText, $textColor);
+        imagestring($image, 4, 10, 80, $sizeText, $textColor);
+        imagestring($image, 3, 10, 110, 'Prompt:', $textColor);
+        imagestring($image, 2, 10, 130, $promptPreview, $textColor);
+
+        // Timestamp
+        $timestamp = date('Y-m-d H:i:s');
+        imagestring($image, 2, 10, $height - 25, "Generated: {$timestamp}", $textColor);
+
+        // Convert to PNG bytes
+        ob_start();
+        imagepng($image);
+        $bytes = ob_get_clean();
+        // Note: imagedestroy() not needed in PHP 8+ (automatic garbage collection)
+
+        if ($bytes === false) {
+            throw new AiProviderException(message: 'Failed to generate debug mock PNG', provider: self::PROVIDER_NAME);
+        }
+
+        return new ImageResult(
+            bytes: $bytes,
+            mimeType: 'image/png',
+            provider: self::PROVIDER_NAME.'-debug',
+            width: $width,
+            height: $height,
+            model: $model,
+            seed: null,
+            prompt: $prompt,
+        );
     }
 }

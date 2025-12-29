@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Xmon\AiContentBundle\Form;
 
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -141,6 +142,14 @@ class AiStyleConfigType extends AbstractType
                     'class' => 'ai-image-model-selector',
                 ],
                 'help' => $options['model_help'],
+            ])
+            ->add('aiDebugMode', CheckboxType::class, [
+                'label' => $options['debug_mode_label'],
+                'required' => false,
+                'attr' => [
+                    'class' => 'ai-debug-mode-checkbox',
+                ],
+                'help' => $options['debug_mode_help'],
             ]);
     }
 
@@ -171,6 +180,7 @@ class AiStyleConfigType extends AbstractType
             'additional_label' => 'Additional Text',
             'suffix_label' => 'Technical Restrictions',
             'model_label' => 'Default Image Model',
+            'debug_mode_label' => 'Debug Mode',
 
             // Placeholders
             'preset_placeholder' => 'Select a preset...',
@@ -187,6 +197,7 @@ class AiStyleConfigType extends AbstractType
             'additional_help' => null,
             'suffix_help' => 'Text always appended to generated styles (e.g., uniform rules, quality modifiers). Leave empty to use YAML configuration.',
             'model_help' => 'Default model for automatic generation. Dropdown shows images per $1 (higher = cheaper). Preview shows price per image.',
+            'debug_mode_help' => 'When enabled, no API calls are made - only logging. Useful for testing the full workflow without consuming credits.',
 
             // Preview options
             'show_preview' => true,

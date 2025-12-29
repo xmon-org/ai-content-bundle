@@ -79,4 +79,12 @@ interface AiStyleProviderInterface
      * Example: 'flux', 'gptimage', 'turbo'
      */
     public function getDefaultImageModel(): ?string;
+
+    /**
+     * Check if AI debug mode is enabled.
+     *
+     * When debug mode is enabled, no API calls are made - only logging.
+     * Return null to fall back to the next provider.
+     */
+    public function getAiDebugMode(): ?bool;
 }
