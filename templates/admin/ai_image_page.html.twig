@@ -457,6 +457,7 @@
                                     <img src="{{ item.imageUrl }}" alt="{{ 'Image generated on'|trans }} {{ item.createdAt }}">
                                     <div class="historial-image-overlay"
                                          data-image-url="{{ item.imageUrl }}"
+                                         data-image-original="{{ item.originalUrl }}"
                                          data-image-alt="{{ item.subject|e('html_attr') }}"
                                          data-image-style="{{ item.style|default('')|e('html_attr') }}"
                                          data-image-model="{{ item.model|default('')|e('html_attr') }}"
@@ -1966,7 +1967,7 @@ document.addEventListener('DOMContentLoaded', function() {
             '<div class="thumbnail historial-card">' +
                 '<div class="historial-image-wrapper">' +
                     '<img src="' + item.imageUrl + '" alt="{{ "Image generated on"|trans }} ' + item.createdAt + '">' +
-                    '<div class="historial-image-overlay" data-image-url="' + item.imageUrl + '" data-image-alt="' + escapeHtml(subject) + '" data-image-style="' + escapeHtml(style) + '" data-image-model="' + escapeHtml(modelName) + '" data-image-date="' + escapeHtml(item.createdAt) + '" title="{{ "View full size"|trans }}">' +
+                    '<div class="historial-image-overlay" data-image-url="' + item.imageUrl + '" data-image-original="' + (item.originalUrl || item.imageUrl) + '" data-image-alt="' + escapeHtml(subject) + '" data-image-style="' + escapeHtml(style) + '" data-image-model="' + escapeHtml(modelName) + '" data-image-date="' + escapeHtml(item.createdAt) + '" title="{{ "View full size"|trans }}">' +
                         '<i class="fa fa-search-plus"></i>' +
                     '</div>' +
                 '</div>' +
@@ -2506,6 +2507,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 lightboxImages.push({
                     id: item.dataset.id,
                     imageUrl: overlay.dataset.imageUrl,
+                    originalUrl: overlay.dataset.imageOriginal || overlay.dataset.imageUrl,
                     subject: subject,
                     style: style,
                     caption: fullPrompt,
@@ -2526,17 +2528,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show loading state
         container.classList.add('loading');
 
-        // Preload image
+        // Preload image (use originalUrl for lightbox full-size view)
+        var fullSizeUrl = current.originalUrl || current.imageUrl;
         var tempImg = new Image();
         tempImg.onload = function() {
-            lightboxImage.src = current.imageUrl;
+            lightboxImage.src = fullSizeUrl;
             container.classList.remove('loading');
         };
         tempImg.onerror = function() {
             container.classList.remove('loading');
             lightboxImage.alt = '{{ "Error loading image"|trans }}';
         };
-        tempImg.src = current.imageUrl;
+        tempImg.src = fullSizeUrl;
 
         // Update alt and caption (don't wait for image)
         lightboxImage.alt = current.caption;

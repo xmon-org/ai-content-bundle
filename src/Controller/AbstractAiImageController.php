@@ -363,7 +363,7 @@ abstract class AbstractAiImageController extends AbstractController
     /**
      * Get formatted history data for the template.
      *
-     * @return array<int, array{id: int, imageUrl: string, mediaId: int|string, subject: string, style: string, model: string, createdAt: string, isActual: bool}>
+     * @return array<int, array{id: int, imageUrl: string, originalUrl: string, mediaId: int|string, subject: string, style: string, model: string, createdAt: string, isActual: bool}>
      */
     protected function getFormattedHistory(AiImageAwareInterface $entity, int|string|null $currentImageId): array
     {
@@ -371,10 +371,12 @@ abstract class AbstractAiImageController extends AbstractController
         $formatted = [];
 
         foreach ($history as $item) {
-            $mediaId = $this->getMediaId($item->getImage());
+            $image = $item->getImage();
+            $mediaId = $this->getMediaId($image);
             $formatted[] = [
                 'id' => $item->getId(),
-                'imageUrl' => $this->getMediaUrl($item->getImage()),
+                'imageUrl' => $this->getMediaUrl($image),
+                'originalUrl' => $this->getOriginalMediaUrl($image),
                 'mediaId' => $mediaId,
                 'subject' => $item->getSubject(),
                 'style' => $item->getStyle(),
@@ -539,14 +541,16 @@ abstract class AbstractAiImageController extends AbstractController
             $modelUsed = $imageResult->getModel() ?? $imageResult->getProvider();
             $historyItem = $this->createHistoryItem($entity, $media, trim($subject), $baseStyle, $modelUsed);
 
-            // Get image URL for response
+            // Get image URLs for response
             $imageUrl = $media ? $this->getMediaUrl($media) : $imageResult->toDataUri();
+            $originalUrl = $media ? $this->getOriginalMediaUrl($media) : $imageResult->toDataUri();
 
             return new JsonResponse([
                 'success' => true,
                 'message' => 'Image regenerated successfully',
                 'mediaId' => $media ? $this->getMediaId($media) : null,
                 'imageUrl' => $imageUrl,
+                'originalUrl' => $originalUrl,
                 'historialId' => $historyItem?->getId(),
                 'subject' => trim($subject),
                 'style' => $baseStyle,
@@ -575,12 +579,14 @@ abstract class AbstractAiImageController extends AbstractController
 
         try {
             $this->applyHistoryToEntity($entity, $historyItem);
+            $image = $historyItem->getImage();
 
             return new JsonResponse([
                 'success' => true,
                 'message' => 'Image updated successfully',
-                'mediaId' => $this->getMediaId($historyItem->getImage()),
-                'imageUrl' => $this->getMediaUrl($historyItem->getImage()),
+                'mediaId' => $this->getMediaId($image),
+                'imageUrl' => $this->getMediaUrl($image),
+                'originalUrl' => $this->getOriginalMediaUrl($image),
                 'subject' => $historyItem->getSubject(),
                 'style' => $historyItem->getStyle(),
             ]);
@@ -922,9 +928,20 @@ abstract class AbstractAiImageController extends AbstractController
     abstract protected function deleteHistoryItem(AiImageHistoryInterface $history): void;
 
     /**
-     * Get the URL of a media object.
+     * Get the URL of a media object (typically a thumbnail/medium size).
      */
     abstract protected function getMediaUrl(object $media): string;
+
+    /**
+     * Get the original/full-size URL of a media object.
+     *
+     * Used for lightbox viewing. Override to return original size.
+     * Default implementation falls back to getMediaUrl().
+     */
+    protected function getOriginalMediaUrl(object $media): string
+    {
+        return $this->getMediaUrl($media);
+    }
 
     /**
      * Get the ID of a media object.
