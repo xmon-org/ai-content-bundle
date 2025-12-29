@@ -2,6 +2,16 @@
 
 All notable changes to `xmon-org/ai-content-bundle` will be documented in this file.
 
+## [1.11.0](https://github.com/xmon-org/ai-content-bundle/compare/1.10.2...1.11.0) (2025-12-29)
+
+### ✨ Features
+
+* **debug:** añade modo debug para testing sin consumir API ([7b73da1](https://github.com/xmon-org/ai-content-bundle/commit/7b73da140a2b14321a458f0a43be5fbdb962333b))
+
+### 🐛 Bug Fixes
+
+* **form:** render aiDebugMode checkbox in AiStyleConfigType template ([a00e5c7](https://github.com/xmon-org/ai-content-bundle/commit/a00e5c76d1ce6182ae89153b5f0540c48dbdb99a))
+
 ## [1.10.2](https://github.com/xmon-org/ai-content-bundle/compare/1.10.1...1.10.2) (2025-12-28)
 
 ### 🐛 Bug Fixes
